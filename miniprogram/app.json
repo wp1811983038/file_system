@@ -1,0 +1,46 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/admin/index/index",
+    "pages/admin/template/list",
+    "pages/admin/user/list",
+    "pages/user/files/list",
+    "pages/user/profile/list",
+    "pages/user/password/list",
+    "pages/user/profile/edit"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "文件管理系统",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#999",
+    "selectedColor": "#07c160",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/admin/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/admin/template/list",
+        "text": "模板管理"
+      },
+      {
+        "pagePath": "pages/admin/user/list",
+        "text": "用户管理"
+      },
+      {
+        "pagePath": "pages/user/files/list",
+        "text": "文件"
+      },
+      {
+        "pagePath": "pages/user/profile/list",
+        "text": "我的"
+      }
+    ]
+  }
+}

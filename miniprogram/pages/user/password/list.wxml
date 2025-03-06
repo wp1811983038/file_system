@@ -1,0 +1,54 @@
+
+
+
+
+<view class="container">
+  <!-- 修改密码卡片 -->
+  <view class="settings-card">
+    <view class="card-title">修改密码</view>
+    <form bindsubmit="handlePasswordSubmit">
+      <view class="form-group">
+        <text class="label">当前密码</text>
+        <view class="password-input-group">
+          <input type="{{showOldPassword ? 'text' : 'password'}}" 
+                 name="old_password" 
+                 class="input" 
+                 placeholder="请输入当前密码"/>
+          <view class="password-toggle" catchtap="toggleOldPassword">
+            <text class="{{showOldPassword ? 'icon-eye-slash' : 'icon-eye'}}"></text>
+          </view>
+        </view>
+        <view class="error-message" wx:if="{{errors.old_password}}">{{errors.old_password}}</view>
+      </view>
+      <view class="form-group">
+        <text class="label">新密码</text>
+        <view class="password-input-group">
+          <input type="{{showNewPassword ? 'text' : 'password'}}" 
+                 name="new_password" 
+                 class="input" 
+                 placeholder="请输入新密码"/>
+          <view class="password-toggle" catchtap="toggleNewPassword">
+            <text class="{{showNewPassword ? 'icon-eye-slash' : 'icon-eye'}}"></text>
+          </view>
+        </view>
+        <view class="error-message" wx:if="{{errors.new_password}}">{{errors.new_password}}</view>
+      </view>
+      <view class="form-group">
+        <text class="label">确认新密码</text>
+        <view class="password-input-group">
+          <input type="{{showConfirmPassword ? 'text' : 'password'}}" 
+                 name="confirm_password" 
+                 class="input" 
+                 placeholder="请再次输入新密码"/>
+          <view class="password-toggle" catchtap="toggleConfirmPassword">
+            <text class="{{showConfirmPassword ? 'icon-eye-slash' : 'icon-eye'}}"></text>
+          </view>
+        </view>
+        <view class="error-message" wx:if="{{errors.confirm_password}}">{{errors.confirm_password}}</view>
+      </view>
+      <button class="btn btn-primary" form-type="submit" disabled="{{changingPassword}}">
+        {{changingPassword ? '提交中...' : '修改密码'}}
+      </button>
+    </form>
+  </view>
+</view>

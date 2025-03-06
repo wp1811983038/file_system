@@ -1,0 +1,59 @@
+<view class="container">
+  <!-- 个人信息头部区域 -->
+  <view class="profile-header">
+    <view class="avatar-container">
+      <image class="avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+    </view>
+    <view class="user-info" bindtap="toggleUserInfoExpand">
+      <view class="username-container">
+        <text class="username">{{userInfo.username || '未登录'}}</text>
+        <view class="expand-icon {{isUserInfoExpanded ? 'expanded' : ''}}">▼</view>
+      </view>
+      
+      <!-- 展开后显示的个人详细信息 -->
+      <view class="expanded-info {{isUserInfoExpanded ? 'show' : 'hide'}}">
+        <view class="info-item">
+          <text class="info-label">公司：</text>
+          <text class="info-value">{{userInfo.company_name || '未设置'}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">联系方式：</text>
+          <text class="info-value">{{userInfo.contact_info || '未设置'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作菜单区域 -->
+  <view class="action-menu">
+    <!-- 编辑个人资料 -->
+    <view class="menu-item" bindtap="navigateToEditProfile">
+      <view class="menu-icon-container">
+        <image class="menu-icon" src="/images/edit.png" mode="aspectFit"></image>
+      </view>
+      <text class="menu-text">编辑个人资料</text>
+      <view class="arrow-icon">＞</view>
+    </view>
+    
+    <!-- 修改密码 -->
+    <view class="menu-item" bindtap="navigateToChangePassword">
+      <view class="menu-icon-container">
+        <image class="menu-icon" src="/images/lock.png" mode="aspectFit"></image>
+      </view>
+      <text class="menu-text">修改密码</text>
+      <view class="arrow-icon">＞</view>
+    </view>
+    
+    <!-- 安全退出 -->
+    <view class="menu-item logout" bindtap="handleLogout">
+      <view class="menu-icon-container">
+        <image class="menu-icon" src="/images/logout.png" mode="aspectFit"></image>
+      </view>
+      <text class="menu-text">安全退出</text>
+      <view class="arrow-icon">＞</view>
+    </view>
+  </view>
+  
+  <!-- 成功提示 -->
+  <view class="success-tip {{showSuccessTip ? 'show' : ''}}">{{successMessage}}</view>
+</view>

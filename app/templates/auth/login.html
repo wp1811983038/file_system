@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="system-name">文件管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 基础变量定义 - 与其他页面保持一致 */
+        :root {
+            --primary-color: #1890ff;
+            --primary-hover: #40a9ff;
+            --danger-color: #ff4d4f;
+            --danger-hover: #ff7875;
+            --success-color: #52c41a;
+            --dark-color: #001529;
+            --text-color: #333;
+            --text-secondary: #666;
+            --border-color: #e8e8e8;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        /* 重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            position: relative;
+        }
+
+        /* 登录页面背景 */
+        .login-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .login-bg-shape {
+            position: absolute;
+            background-color: var(--primary-color);
+            opacity: 0.1;
+            border-radius: 50%;
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            top: -200px;
+            left: -200px;
+        }
+
+        .shape-2 {
+            width: 300px;
+            height: 300px;
+            bottom: -100px;
+            right: -100px;
+        }
+
+        .shape-3 {
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            right: 15%;
+            opacity: 0.08;
+        }
+
+        /* 页面头部 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+
+        /* 主要内容区 */
+        .main-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 登录卡片 */
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .login-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--primary-color);
+        }
+
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .login-subtitle {
+            margin-top: 5px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .login-body {
+            padding: 30px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .password-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-color);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .submit-btn:disabled {
+            background-color: var(--primary-color);
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 错误消息样式 */
+        .error-message {
+            color: var(--danger-color);
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 77, 79, 0.3);
+            border-radius: 4px;
+            background-color: rgba(255, 77, 79, 0.05);
+            display: none;
+            animation: shakeError 0.6s;
+        }
+
+        @keyframes shakeError {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-5px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-icon {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        /* 版权信息 */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 576px) {
+            .login-container {
+                max-width: 100%;
+            }
+
+            .login-body {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .logo i {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 背景装饰 -->
+    <div class="login-bg">
+        <div class="login-bg-shape shape-1"></div>
+        <div class="login-bg-shape shape-2"></div>
+        <div class="login-bg-shape shape-3"></div>
+    </div>
+
+    <!-- 页面头部 -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-folder"></i>
+            <span class="system-name">文件管理系统</span>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <div class="main-container">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h1 class="login-title system-name">文件管理系统</h1>
+                <p class="login-subtitle">请登录以访问您的文件</p>
+            </div>
+
+            <div class="login-body">
+                <!-- 错误消息容器 -->
+                <div id="error-message" class="error-message">
+                    <i class="fas fa-exclamation-circle error-icon"></i>
+                    <span id="error-text"></span>
+                </div>
+
+                <!-- 登录表单 -->
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password" class="form-control"
+                                placeholder="请输入密码" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="remember-forgot">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">记住我</label>
+                        </div>
+                        <!--<a href="#" class="forgot-link">忘记密码?</a>-->
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        登录
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面底部 -->
+    <footer class="footer">
+        <p>© <span id="current-year"></span> 文件管理系统 - 保留所有权利</p>
+    </footer>
+
+    <script>
+        // 设置当前年份
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // 切换密码显示/隐藏
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.querySelector('.password-toggle i');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            errorText.textContent = message;
+            errorMessage.style.display = 'block';
+
+            // 自动隐藏错误消息
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // 加载系统设置
+        async function loadSystemSettings() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果没有token，使用默认系统名称
+                const defaultSystemName = '文件管理系统';
+                updateSystemName(defaultSystemName);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/settings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateSystemName(data.system_name);
+                    // 保存到本地存储，以便其他页面使用
+                    localStorage.setItem('systemName', data.system_name);
+                } else {
+                    // 如果请求失败，使用默认名称
+                    const defaultSystemName = '文件管理系统';
+                    updateSystemName(defaultSystemName);
+                }
+            } catch (error) {
+                console.error('加载系统设置失败:', error);
+                const defaultSystemName = '文件管理系统';
+                updateSystemName(defaultSystemName);
+            }
+        }
+
+        // 更新所有显示系统名称的元素
+        function updateSystemName(name) {
+            // 更新页面标题
+            document.title = name;
+            // 更新所有带有 system-name 类的元素
+            const systemNameElements = document.querySelectorAll('.system-name');
+            systemNameElements.forEach(element => {
+                element.textContent = name;
+            });
+
+            // 更新底部版权信息
+            const footerText = document.querySelector('.footer p');
+            footerText.textContent = `© ${new Date().getFullYear()} ${name} - 保留所有权利`;
+        }
+
+        // 记住登录状态
+        function initRememberMe() {
+            const rememberCheckbox = document.getElementById('remember-me');
+            const usernameInput = document.getElementById('username');
+
+            // 从本地存储获取记住的用户名
+            const rememberedUser = localStorage.getItem('rememberedUser');
+            if (rememberedUser) {
+                usernameInput.value = rememberedUser;
+                rememberCheckbox.checked = true;
+            }
+
+            // 监听复选框状态变化
+            rememberCheckbox.addEventListener('change', function () {
+                if (!this.checked) {
+                    localStorage.removeItem('rememberedUser');
+                }
+            });
+        }
+
+        // 登录处理
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submit-btn');
+            const rememberCheckbox = document.getElementById('remember-me');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            // 基础表单验证
+            if (!username) {
+                showError('请输入用户名');
+                usernameInput.focus();
+                return;
+            }
+
+            if (!password) {
+                showError('请输入密码');
+                passwordInput.focus();
+                return;
+            }
+
+            // 禁用提交按钮，显示加载状态
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 如果选择了"记住我"，保存用户名
+                    if (rememberCheckbox.checked) {
+                        localStorage.setItem('rememberedUser', username);
+                    } else {
+                        localStorage.removeItem('rememberedUser');
+                    }
+
+                    // 存储token和用户信息
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('isAdmin', data.is_admin);
+                    localStorage.setItem('userId', data.user_id);
+
+                    // 登录成功动画
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> 登录成功';
+
+                    // 登录成功后加载系统设置
+                    await loadSystemSettings();
+
+                    // 根据用户角色跳转到不同页面
+                    setTimeout(() => {
+                        if (data.is_admin) {
+                            window.location.href = '/templates/admin/dashboard.html';
+                        } else {
+                            window.location.href = '/templates/user/files.html';
+                        }
+                    }, 1000);
+                } else {
+                    // 显示错误信息
+                    showError(data.error || '登录失败，请检查用户名和密码');
+                    // 恢复提交按钮状态
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('登录时发生错误，请稍后重试');
+                // 恢复提交按钮状态
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        }
+
+        // 监听设置更新
+        // 监听设置更新
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'settingsUpdated') {
+                // 直接从localStorage获取系统名称并更新
+                const systemName = localStorage.getItem('systemName') || '文件管理系统';
+                updateSystemName(systemName);
+            }
+
+            // 直接监听systemName的变化
+            if (e.key === 'systemName') {
+                updateSystemName(e.newValue || '文件管理系统');
+            }
+        });
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 如果有保存的系统名称，使用它，否则使用默认值
+            const systemName = localStorage.getItem('systemName') || '文件管理系统';
+            updateSystemName(systemName);
+
+            // 初始化记住我功能
+            initRememberMe();
+
+            // 检查是否已经登录
+            const token = localStorage.getItem('token');
+            if (token) {
+                const isAdmin = localStorage.getItem('isAdmin') === 'true';
+                if (isAdmin) {
+                    window.location.href = '/templates/admin/dashboard.html';
+                } else {
+                    window.location.href = '/templates/user/files.html';
+                }
+            }
+
+            // 为输入框添加事件监听
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            // 在按下回车键时提交表单
+            usernameInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!passwordInput.value) {
+                        passwordInput.focus();
+                    } else {
+                        document.getElementById('login-form').requestSubmit();
+                    }
+                }
+            });
+
+            // 自动聚焦用户名输入框
+            if (!usernameInput.value) {
+                usernameInput.focus();
+            } else {
+                passwordInput.focus();
+            }
+        });
+    </script>
+</body>
+
+</html>

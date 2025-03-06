@@ -1,0 +1,259 @@
+.container {
+  padding: 20rpx;
+  background: #f5f5f5;
+  min-height: 100vh;
+  /* 添加底部安全距离，确保内容不会被TabBar覆盖 */
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom) + 20rpx);
+  box-sizing: border-box;
+}
+
+/* 搜索框样式 */
+.search-box {
+  padding: 20rpx;
+  background: #fff;
+  margin-bottom: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.search-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}
+
+/* 表格容器样式 */
+.table-container {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  display: block;
+}
+
+/* 表头样式 */
+.table-header {
+  display: flex;
+  background: #f5f7fa;
+  padding: 20rpx 0;
+  font-weight: bold;
+  border-bottom: 2rpx solid #e8e8e8;
+  width: 100%;
+}
+
+/* 表格行样式 */
+.table-row {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  width: 100%;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* 单元格通用样式 */
+.th, .td {
+  text-align: center;
+  font-size: 28rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* 列宽设置 */
+.th:nth-child(1), .td:nth-child(1) {
+  width: 12%;
+  flex: 0 0 12%;
+}
+
+.th:nth-child(2), .td:nth-child(2) {
+  width: 18%;
+  flex: 0 0 18%;
+}
+
+.th:nth-child(3), .td:nth-child(3) {
+  width: 15%;
+  flex: 0 0 15%;
+}
+
+.th:nth-child(4), .td:nth-child(4) {
+  width: 15%;
+  flex: 0 0 15%;
+}
+
+.th:nth-child(5), .td:nth-child(5) {
+  width: 40%;
+  flex: 0 0 40%;
+}
+
+/* 表头样式 */
+.th {
+  font-weight: bold;
+  color: #666;
+  font-size: 28rpx;
+}
+
+/* 状态标签样式 - 更小更紧凑 */
+.status-badge {
+  display: inline-block;
+  padding: 4rpx 10rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: normal;
+  min-width: 80rpx;
+  text-align: center;
+}
+
+.status-submitted {
+  background: #e6f7ff;
+  border: 1rpx solid #91d5ff;
+  color: #1890ff;
+}
+
+.status-pending {
+  background: #fff7e6;
+  border: 1rpx solid #ffd591;
+  color: #fa8c16;
+}
+
+/* 操作按钮容器 */
+.td.actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+/* 按钮样式 */
+.btn {
+  font-size: 24rpx !important;
+  padding: 8rpx 12rpx !important;
+  border-radius: 6rpx !important;
+  margin: 4rpx !important;
+  line-height: 1.5 !important;
+  min-width: 120rpx !important;
+  height: auto !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  word-break: keep-all !important;
+  white-space: nowrap !important;
+}
+
+.primary-btn {
+  background: #1890ff !important;
+  color: #fff !important;
+}
+
+.download-btn {
+  background: #faad14 !important;
+  color: #fff !important;
+}
+
+.cancel-btn {
+  background: #f5f5f5 !important;
+  color: #666 !important;
+  border: 1rpx solid #ddd !important;
+}
+
+/* 模态框样式 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 80%;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 40rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+}
+
+.modal-title {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 40rpx;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 30rpx;
+}
+
+.selected-file {
+  margin-top: 20rpx;
+  color: #666;
+  font-size: 28rpx;
+  word-break: break-all;
+  background: #f9f9f9;
+  padding: 16rpx;
+  border-radius: 6rpx;
+  border-left: 4rpx solid #1890ff;
+}
+
+.modal-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.no-data {
+  text-align: center;
+  color: #999;
+  padding: 60rpx 0;
+  font-size: 28rpx;
+}
+
+/* 可点击的单元格样式 */
+.td.clickable {
+  cursor: pointer;
+  position: relative;
+  color: #1890ff;
+  text-decoration: underline;
+}
+
+.td.clickable:active {
+  opacity: 0.7;
+}
+
+/* 描述模态框样式 */
+.description-modal .modal-content {
+  width: 80%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.description-content {
+  margin: 20rpx 0 40rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  padding: 20rpx;
+  background: #f9f9f9;
+  border-radius: 8rpx;
+  border-left: 4rpx solid #1890ff;
+  min-height: 100rpx;
+}

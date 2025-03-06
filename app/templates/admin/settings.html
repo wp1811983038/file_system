@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="system-name">系统设置 - 管理后台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 基础变量定义 */
+        :root {
+            --primary-color: #1890ff;
+            --primary-hover: #40a9ff;
+            --danger-color: #ff4d4f;
+            --danger-hover: #ff7875;
+            --success-color: #52c41a;
+            --success-hover: #73d13d;
+            --warning-color: #faad14;
+            --dark-color: #001529;
+            --text-color: #333;
+            --text-secondary: #666;
+            --text-light: #999;
+            --border-color: #e8e8e8;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        /* 重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            height: 60px;
+            background-color: #fff;
+            box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px;
+        }
+
+        .user-name {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .user-role {
+            color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .logout-btn {
+            padding: 8px 15px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--dark-color);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            margin-top: 60px;
+            flex: 1;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 220px;
+            background-color: var(--dark-color);
+            min-height: calc(100vh - 60px);
+            position: fixed;
+            left: 0;
+            top: 60px;
+            transition: var(--transition);
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .menu-item a:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .menu-item.active a {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            flex: 1;
+            min-height: calc(100vh - 60px);
+            transition: var(--transition);
+        }
+
+        /* 设置容器 */
+        .settings-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .container-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .container-title {
+            font-size: 18px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .container-title i {
+            color: var(--primary-color);
+        }
+
+        /* 设置卡片 */
+        .settings-card {
+            padding: 20px;
+        }
+
+        .setting-section {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* 公告预览 */
+        .announcement-preview {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .preview-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        /* 消息提示 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .toast {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            max-width: 100%;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .toast-success i {
+            color: var(--success-color);
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .toast-error i {
+            color: var(--danger-color);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .sidebar.active {
+                width: 220px;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .container-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-cogs"></i>
+            <span id="systemName">文件管理系统</span>
+        </div>
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-right">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span class="user-name" id="username">管理员</span>
+                <span class="user-role">管理员</span>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <ul class="menu">
+                <li class="menu-item">
+                    <a href="/templates/admin/dashboard.html">
+                        <i class="fas fa-tachometer-alt"></i>
+                        控制台
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="/templates/admin/users.html">
+                        <i class="fas fa-users"></i>
+                        用户管理
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="/templates/admin/files.html">
+                        <i class="fas fa-file-alt"></i>
+                        文件管理
+                    </a>
+                </li>
+                <li class="menu-item active">
+                    <a href="/templates/admin/settings.html">
+                        <i class="fas fa-cog"></i>
+                        系统设置
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 设置容器 -->
+            <div class="settings-container">
+                <div class="container-header">
+                    <h2 class="container-title">
+                        <i class="fas fa-cog"></i>
+                        系统设置
+                    </h2>
+                </div>
+
+                <div class="settings-card">
+                    <!-- 系统名称设置 -->
+                    <div class="setting-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-heading"></i>
+                            系统名称
+                        </h3>
+                        <div class="form-group">
+                            <label for="systemNameInput">设置系统显示名称</label>
+                            <input type="text" id="systemNameInput" class="form-control" placeholder="例如：企业文件管理平台">
+                        </div>
+                    </div>
+
+                    <!-- 系统公告设置 -->
+                    <div class="setting-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-bullhorn"></i>
+                            系统公告
+                        </h3>
+                        <div class="form-group">
+                            <label for="announcementInput">公告内容（将显示在用户界面）</label>
+                            <textarea id="announcementInput" class="form-control"
+                                placeholder="例如：欢迎使用文件管理系统，请按时提交所需文件..."></textarea>
+
+                            <div class="announcement-preview">
+                                <div class="preview-title">公告预览：</div>
+                                <div class="preview-content" id="announcementPreview">暂无公告内容</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 保存按钮 -->
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i>
+                            保存设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 消息提示容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // DOM 加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化
+            initApp();
+        });
+
+        // 初始化应用
+        function initApp() {
+            // 初始化菜单
+            initMenu();
+            // 首先加载系统名称，避免闪烁
+            loadSystemName();
+
+
+            // 加载系统设置
+            loadSettings();
+
+            // 初始化公告预览
+            initAnnouncementPreview();
+        }
+
+        // 初始化菜单切换
+        function initMenu() {
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            menuToggle.addEventListener('click', function () {
+                sidebar.classList.toggle('active');
+
+                // 移动端适配
+                if (window.innerWidth <= 768) {
+                    if (sidebar.classList.contains('active')) {
+                        mainContent.style.marginLeft = '220px';
+                    } else {
+                        mainContent.style.marginLeft = '0';
+                    }
+                }
+            });
+
+            // 处理窗口大小变化
+            window.addEventListener('resize', function () {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('active');
+                    mainContent.style.marginLeft = '0';
+                } else {
+                    sidebar.classList.add('active');
+                    mainContent.style.marginLeft = '220px';
+                }
+            });
+
+            // 初始化
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+                mainContent.style.marginLeft = '0';
+            } else {
+                sidebar.classList.add('active');
+                mainContent.style.marginLeft = '220px';
+            }
+        }
+
+        // 初始化公告预览
+        function initAnnouncementPreview() {
+            const announcementInput = document.getElementById('announcementInput');
+            const announcementPreview = document.getElementById('announcementPreview');
+
+            // 输入时实时更新预览
+            announcementInput.addEventListener('input', function () {
+                const content = this.value.trim();
+                announcementPreview.textContent = content || '暂无公告内容';
+            });
+        }
+
+        // 检查认证
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        // 3. 添加 loadSystemName 函数，优先使用 localStorage 中的缓存
+        async function loadSystemName() {
+            // 首先从 localStorage 获取缓存的系统名称
+            const cachedName = localStorage.getItem('systemName');
+            if (cachedName) {
+                updateSystemName(cachedName);
+            }
+
+            // 从 API 获取最新的系统设置
+            await loadSettings();
+        }
+
+        // 4. 修改 loadSettings 函数，专注于获取设置内容
+        async function loadSettings() {
+            const token = checkAuth();
+
+            try {
+                const response = await fetch('/api/v1/admin/settings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // 填充设置表单
+                    document.getElementById('systemNameInput').value = data.system_name || '';
+                    document.getElementById('announcementInput').value = data.system_description || '';
+
+                    // 更新公告预览
+                    const announcementPreview = document.getElementById('announcementPreview');
+                    announcementPreview.textContent = data.system_description || '暂无公告内容';
+
+                    // 更新系统名称显示和缓存
+                    if (data.system_name) {
+                        updateSystemName(data.system_name);
+                        localStorage.setItem('systemName', data.system_name);
+                    }
+                } else {
+                    showToast('加载设置失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+                showToast('加载设置失败', 'error');
+            }
+        }
+
+        // 5. 监听其他页面的系统名称更新
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'systemName' && e.newValue) {
+                updateSystemName(e.newValue);
+            }
+        });
+
+        // 加载系统设置
+        async function loadSettings() {
+            const token = checkAuth();
+
+            try {
+                const response = await fetch('/api/v1/admin/settings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // 填充设置表单
+                    document.getElementById('systemNameInput').value = data.system_name || '';
+                    document.getElementById('announcementInput').value = data.system_description || '';
+
+                    // 更新公告预览
+                    const announcementPreview = document.getElementById('announcementPreview');
+                    announcementPreview.textContent = data.system_description || '暂无公告内容';
+
+                    // 更新页面标题和系统名称
+                    updateSystemName(data.system_name);
+                } else {
+                    showToast('加载设置失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+                showToast('加载设置失败', 'error');
+            }
+        }
+
+        // 保存系统设置
+        // 保存系统设置
+        async function saveSettings() {
+            const token = checkAuth();
+
+            // 获取设置数据
+            const systemName = document.getElementById('systemNameInput').value.trim();
+            const announcement = document.getElementById('announcementInput').value.trim();
+
+            // 验证
+            if (!systemName) {
+                showToast('系统名称不能为空', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        system_name: systemName,
+                        system_description: announcement
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('设置保存成功', 'success');
+
+                    // 更新系统名称显示
+                    updateSystemName(systemName);
+
+                    // 直接保存系统名称到localStorage，以便登录页面使用
+                    localStorage.setItem('systemName', systemName);
+
+                    // 触发其他页面更新设置
+                    localStorage.setItem('settingsUpdated', Date.now().toString());
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '保存设置失败', 'error');
+                }
+            } catch (error) {
+                console.error('保存设置失败:', error);
+                showToast('保存设置失败', 'error');
+            }
+        }
+
+        // 更新系统名称
+        function updateSystemName(name) {
+            document.title = `系统设置 - ${name}`;
+            document.getElementById('systemName').textContent = name;
+        }
+
+        // 获取当前用户信息
+        async function getCurrentUser() {
+            const token = checkAuth();
+            try {
+                const response = await fetch('/api/v1/users/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    document.getElementById('username').textContent = userData.username;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+            }
+        }
+
+        // 退出登录
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('userId');
+                window.location.href = '/';
+            }
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast-' + Date.now();
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.id = id;
+
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <div class="toast-content">
+                    <div class="toast-message">${escapeHtml(message)}</div>
+                </div>
+                <button class="toast-close" onclick="closeToast('${id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // 显示动画
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // 自动关闭
+            setTimeout(() => {
+                closeToast(id);
+            }, 3000);
+
+            return id;
+        }
+
+        // 关闭提示消息
+        function closeToast(id) {
+            const toast = document.getElementById(id);
+            if (toast) {
+                toast.classList.remove('show');
+
+                // 移除元素
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+        }
+
+        // HTML转义，防止XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 初始化加载
+        window.onload = function () {
+            getCurrentUser();
+        };
+    </script>
+</body>
+
+</html>

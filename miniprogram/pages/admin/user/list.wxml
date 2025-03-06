@@ -1,0 +1,87 @@
+<view class="container">
+  <!-- 搜索区域 -->
+  <view class="search-box">
+    <picker mode="selector" range="{{['用户名', '公司名称', '联系方式']}}" bindchange="onSearchTypeChange" value="{{searchTypeIndex}}">
+      <view class="search-type">
+        {{['用户名', '公司名称', '联系方式'][searchTypeIndex]}}
+      </view>
+    </picker>
+    <input type="text" class="search-input" placeholder="输入搜索内容..." bindinput="onSearchInput"/>
+    <button class="search-btn" bindtap="handleSearch">搜索</button>
+    <button class="add-btn" bindtap="addUser">添加用户</button>
+  </view>
+
+  <!-- 用户列表 -->
+  <view class="table-container">
+    <!-- 表头 -->
+    <view class="table-header">
+      <view class="th">用户名</view>
+      <view class="th">公司名称</view>
+      <view class="th">联系方式</view>
+      <view class="th">操作</view>
+    </view>
+
+    <!-- 表格内容 -->
+    <block wx:if="{{!users.length}}">
+      <view class="no-data">暂无用户数据</view>
+    </block>
+    <block wx:else>
+      <view class="table-row" wx:for="{{users}}" wx:key="id">
+        <view class="td">{{item.username}}</view>
+        <view class="td">{{item.company_name || '未设置'}}</view>
+        <view class="td">{{item.contact_info || '未设置'}}</view>
+        <view class="td actions">
+          <button class="action-btn edit-btn" bindtap="editUser" data-user="{{item}}">编辑</button>
+          <button wx:if="{{!item.is_admin}}" class="action-btn delete-btn" bindtap="deleteUser" data-id="{{item.id}}">删除</button>
+        </view>
+      </view>
+    </block>
+
+    <!-- 编辑/添加用户模态框 -->
+    <view class="modal" wx:if="{{showEditModal}}">
+      <view class="modal-content">
+        <view class="modal-title">{{modalTitle}}</view>
+        <form bindsubmit="submitEdit">
+          <input type="text" hidden name="id" value="{{editUser.id}}" />
+          
+          <view class="form-item">
+            <view class="form-label">用户名</view>
+            <input class="form-input" name="username" value="{{editUser.username}}" placeholder="请输入用户名"/>
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">密码</view>
+            <view class="password-input-group">
+              <input class="form-input" name="password" password="{{!showPassword}}" 
+                    placeholder="{{editUser.id ? '不修改请留空' : '请输入密码'}}"
+                    required="{{!editUser.id}}"/>
+              <view class="password-toggle" catchtap="togglePassword">
+                <image class="eye-icon" src="/images/{{showPassword ? 'eye-off' : 'eye'}}.png"></image>
+              </view>
+            </view>
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">公司名称</view>
+            <input class="form-input" name="company_name" value="{{editUser.company_name}}" placeholder="请输入公司名称"/>
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">联系方式</view>
+            <input class="form-input" name="contact_info" value="{{editUser.contact_info}}" placeholder="请输入联系方式"/>
+          </view>
+
+          <view class="form-item">
+            <view class="form-label">管理员权限</view>
+            <switch name="is_admin" checked="{{editUser.is_admin}}" />
+          </view>
+
+          <view class="modal-btns">
+            <button class="btn cancel" bindtap="closeEditModal">取消</button>
+            <button class="btn confirm" form-type="submit">保存</button>
+          </view>
+        </form>
+      </view>
+    </view>
+  </view>
+</view>

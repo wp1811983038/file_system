@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="settings-card">
+    <view class="card-title">编辑个人资料</view>
+    <form bindsubmit="handleProfileSubmit">
+      <view class="form-group">
+        <text class="label">用户名</text>
+        <input type="text" 
+               name="username" 
+               value="{{userInfo.username}}" 
+               class="input" 
+               placeholder="请输入用户名"/>
+        <view class="error-message" wx:if="{{errors.username}}">{{errors.username}}</view>
+      </view>
+      <view class="form-group">
+        <text class="label">公司名称</text>
+        <input type="text" 
+               name="company_name" 
+               value="{{userInfo.company_name}}" 
+               class="input" 
+               placeholder="请输入公司名称"/>
+      </view>
+      <view class="form-group">
+        <text class="label">联系方式</text>
+        <input type="text" 
+               name="contact_info" 
+               value="{{userInfo.contact_info}}" 
+               class="input" 
+               placeholder="请输入联系方式"/>
+      </view>
+      <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
+        {{submitting ? '保存中...' : '保存修改'}}
+      </button>
+    </form>
+  </view>
+</view>

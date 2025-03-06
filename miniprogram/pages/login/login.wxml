@@ -1,0 +1,54 @@
+<view class="container">
+  <view class="logo">
+    <image src="/images/logo.png" mode="aspectFit"></image>
+  </view>
+  
+  <view class="card">
+    <view class="title">欢迎登录</view>
+    
+    <view class="form">
+      <view class="input-group {{usernameError ? 'input-error' : ''}}">
+        <text class="label">用户名</text>
+        <view class="input-wrapper">
+          <input type="text" 
+                placeholder="请输入用户名" 
+                bindinput="onUsernameInput"
+                value="{{username}}"
+          />
+          <icon wx:if="{{username}}" type="clear" size="18" bindtap="onUsernameInput" data-value="" class="clear-icon" />
+        </view>
+        <text wx:if="{{usernameError}}" class="error-text">{{usernameError}}</text>
+      </view>
+      
+      <view class="input-group {{passwordError ? 'input-error' : ''}}">
+        <text class="label">密码</text>
+        <view class="input-wrapper">
+          <input type="password" 
+                placeholder="请输入密码" 
+                bindinput="onPasswordInput"
+                value="{{password}}"
+          />
+        </view>
+        <text wx:if="{{passwordError}}" class="error-text">{{passwordError}}</text>
+      </view>
+      
+      <view class="options-row">
+        <view class="checkbox-group" bindtap="toggleRememberPassword">
+          <icon type="{{rememberPassword ? 'success' : 'circle'}}" size="18" color="{{rememberPassword ? '#07c160' : '#999'}}" />
+          <text>记住密码</text>
+        </view>
+      </view>
+      
+      <button class="login-btn {{isLoading ? 'loading' : ''}}" bindtap="handleLogin" disabled="{{isLoading}}">
+        <view wx:if="{{isLoading}}" class="loading-icon"></view>
+        <text>{{isLoading ? '登录中...' : '登录'}}</text>
+      </button>
+      
+      <!-- 移除注册链接 -->
+    </view>
+  </view>
+  
+  <view class="footer">
+    <text>© 2025 我的文件管理系统</text>
+  </view>
+</view>

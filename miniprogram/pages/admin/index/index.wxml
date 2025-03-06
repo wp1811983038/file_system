@@ -1,0 +1,42 @@
+<!-- index.wxml -->
+<view class="container">
+  <!-- 统计卡片 -->
+  <view class="stats-container">
+    <view class="stat-card">
+      <text class="stat-number">{{stats.user_count}}</text>
+      <text class="stat-label">用户总数</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-number">{{stats.template_count}}</text>
+      <text class="stat-label">模板总数</text>  
+    </view>
+    <view class="stat-card">
+      <text class="stat-number">{{stats.today_uploads}}</text>
+      <text class="stat-label">今日上传</text>
+    </view>
+  </view>
+
+  <!-- 活动列表 -->
+<view class="recent-activity">
+  <view class="section-title">最近活动</view>
+  <view class="table-container">
+    <view class="table-header">
+      <view class="th">用户名</view>
+      <view class="th">文件名</view>
+      <view class="th">文件类型</view>
+      <view class="th">上传时间</view>
+    </view>
+    <block wx:if="{{!activities.length}}">
+      <view class="no-data">暂无活动</view>
+    </block>
+    <block wx:else>
+      <view class="table-row" wx:for="{{activities}}" wx:key="id">
+        <view class="td">{{item.username}}</view>
+        <view class="td">{{item.filename}}</view>
+        <view class="td">{{item.fileType}}</view>
+        <view class="td">{{item.time}}</view>
+      </view>
+    </block>
+  </view>
+</view>
+</view>

@@ -1,0 +1,21 @@
+/**app.wxss**/
+page {
+  background-color: #f8f8f8;
+  font-size: 28rpx;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    'PingFang SC', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  height: 100%;
+}
+
+.container {
+  min-height: 100vh;
+  box-sizing: border-box;
+  /* 添加底部安全距离，确保内容不会被TabBar覆盖 */
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
+} 
+
+/* 针对有TabBar的页面的特殊样式 */
+.has-tabbar {
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
+}

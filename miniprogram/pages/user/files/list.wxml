@@ -1,0 +1,93 @@
+<view class="container">
+  <!-- 搜索区域 -->
+  <view class="search-box">
+    <input type="text" 
+           class="search-input" 
+           placeholder="搜索文件名..." 
+           bindinput="onSearch"/>
+  </view>
+
+  <!-- 文件列表 -->
+  <view class="table-container">
+    <!-- 表头 -->
+    <view class="table-header">
+      <view class="th">序号</view>
+      <view class="th">文件名</view>
+      <view class="th">描述</view>
+      <view class="th">状态</view>
+      <view class="th">操作</view>
+    </view>
+
+    <!-- 表格内容 -->
+    <block wx:if="{{!templates.length}}">
+      <view class="no-data">暂无数据</view>
+    </block>
+    <block wx:else>
+      <view class="table-row" wx:for="{{templates}}" wx:key="id">
+        <view class="td">{{index + 1}}</view>
+        <view class="td">{{item.name || '未命名'}}</view>
+        <view class="td clickable" bindtap="showDescription" data-description="{{item.description || '无'}}">
+          {{item.description || '无'}}
+        </view>
+        <view class="td">
+          <text class="status-badge {{item.status ? 'status-submitted' : 'status-pending'}}">
+            {{item.status ? '已提交' : '未提交'}}
+          </text>
+        </view>
+        <view class="td actions">
+          <button class="btn download-btn" bindtap="downloadTemplate" 
+                  data-id="{{item.id}}" 
+                  data-name="{{item.name}}">
+            下载
+          </button>
+          
+          <block wx:if="{{item.status}}">
+            <button class="btn primary-btn" 
+                    bindtap="openActionSheet" 
+                    data-template-id="{{item.id}}">
+              操作
+            </button>
+          </block>
+          <block wx:else>
+            <button class="btn primary-btn" 
+                    bindtap="openUploadModal" 
+                    data-template-id="{{item.id}}" 
+                    data-is-resubmit="{{false}}">
+              提交
+            </button>
+          </block>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>
+
+<!-- 上传文件弹窗 -->
+<view class="modal" wx:if="{{showUploadModal}}" catchtouchmove="preventTouchMove">
+  <view class="modal-content">
+    <view class="modal-title">{{isResubmit ? '重新提交文件' : '提交文件'}}</view>
+    <form bindsubmit="submitFile">
+      <view class="form-group">
+        <button class="btn primary-btn" bindtap="chooseFile">选择文件</button>
+        <view class="selected-file" wx:if="{{selectedFile}}">
+          已选择：{{selectedFile.name}}
+        </view>
+      </view>
+      <view class="modal-btns">
+        <button class="btn cancel-btn" bindtap="closeUploadModal">取消</button>
+        <button class="btn primary-btn" form-type="submit" disabled="{{!selectedFile}}">确定</button>
+      </view>
+    </form>
+  </view>
+</view>
+
+<!-- 描述内容查看弹窗 -->
+<view class="modal description-modal" wx:if="{{showDescriptionModal}}" catchtouchmove="preventTouchMove" bindtap="closeDescriptionModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-title">详细描述</view>
+    <view class="description-content">{{currentDescription}}</view>
+    <view class="modal-btns">
+      <button class="btn primary-btn" bindtap="closeDescriptionModal">关闭</button>
+    </view>
+  </view>
+</view>

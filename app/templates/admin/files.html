@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理 - 管理后台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 基础样式优化 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1890ff;
+            --danger-color: #ff4d4f;
+            --success-color: #52c41a;
+            --dark-color: #001529;
+            --light-color: #f0f2f5;
+            --border-color: #ddd;
+            --table-header-bg: #fafafa;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: #333;
+            line-height: 1.5;
+            background-color: var(--light-color);
+        }
+
+        /* 顶部导航栏优化 */
+        .header {
+            height: 60px;
+            background-color: #fff;
+            box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px;
+        }
+
+        .user-name {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 8px 15px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background-color: #ff7875;
+        }
+
+        /* 主容器优化 */
+        .main-container {
+            display: flex;
+            margin-top: 60px;
+            flex: 1;
+        }
+
+        /* 侧边栏优化 */
+        .sidebar {
+            width: 220px;
+            background-color: var(--dark-color);
+            min-height: calc(100vh - 60px);
+            position: fixed;
+            left: 0;
+            top: 60px;
+            transition: var(--transition);
+            overflow-y: auto;
+        }
+
+        .menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+            gap: 10px;
+        }
+
+        .menu-item a:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .menu-item.active a {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        /* 主内容区优化 */
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+            flex: 1;
+            background-color: var(--light-color);
+            min-height: calc(100vh - 60px);
+            transition: var(--transition);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header .menu-toggle {
+                display: block;
+            }
+        }
+
+        /* 搜索框和操作组优化 */
+        .action-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-grow: 1;
+            max-width: 500px;
+        }
+
+        .search-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            height: 38px;
+            color: #666;
+            min-width: 120px;
+            background-color: #fff;
+            transition: var(--transition);
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            height: 38px;
+            flex-grow: 1;
+            transition: var(--transition);
+        }
+
+        .search-input:focus,
+        .search-select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .search-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0 16px;
+            height: 38px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .search-button:hover {
+            background-color: #40a9ff;
+        }
+
+        /* 表格容器优化 */
+        .table-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 表格样式优化 */
+        .responsive-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        th {
+            background-color: var(--table-header-bg);
+            font-weight: 500;
+            color: #666;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #fafafa;
+        }
+
+        /* 按钮样式优化 */
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            margin-right: 8px;
+            transition: var(--transition);
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff7875;
+        }
+
+        .btn-secondary {
+            background-color: #f4f4f4;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e6e6e6;
+        }
+
+        /* 模态框样式优化 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--box-shadow);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            font-size: 20px;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 表单样式优化 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-file {
+            margin-top: 10px;
+        }
+
+        .file-placeholder {
+            border: 1px dashed var(--border-color);
+            padding: 20px;
+            border-radius: 4px;
+            text-align: center;
+            color: #666;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-placeholder:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background-color: #f4f4f4;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .file-name {
+            word-break: break-all;
+            max-width: 90%;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .file-remove:hover {
+            color: var(--danger-color);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        /* 提交详情样式优化 */
+        .submission-summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+            color: var(--primary-color);
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-toggle {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .btn-toggle:hover {
+            background-color: rgba(24, 144, 255, 0.1);
+        }
+
+        /* 标签页样式优化 */
+        .tabs {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            margin-right: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #666;
+            position: relative;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Toast消息样式优化 */
+        .messages-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            box-shadow: var(--box-shadow);
+            animation: slideDown 0.3s ease-out;
+            max-width: 100%;
+        }
+
+        .alert-success {
+            background-color: #f6ffed;
+            border-left: 4px solid var(--success-color);
+            color: #52c41a;
+        }
+
+        .alert-error {
+            background-color: #fff2f0;
+            border-left: 4px solid var(--danger-color);
+            color: #ff4d4f;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+
+        /* 加载动画 */
+        #loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #666;
+            gap: 10px;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .action-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: none;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+                padding: 15px;
+            }
+        }
+
+        /* 添加无模板状态的样式 */
+        .no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #999;
+            text-align: center;
+        }
+
+        .no-data i {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 16px;
+        }
+
+        .no-data p {
+            margin: 10px 0;
+        }
+
+        .no-data button {
+            margin-top: 15px;
+        }
+
+        /* 批量操作区域 */
+        .batch-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            align-items: center;
+            display: none;
+        }
+
+        .batch-actions.active {
+            display: flex;
+        }
+
+        .batch-info {
+            margin-right: auto;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 添加可拖拽上传区域 */
+        .dropzone {
+            border: 2px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #fafafa;
+            margin-bottom: 20px;
+        }
+
+        .dropzone:hover,
+        .dropzone.active {
+            border-color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+
+        .dropzone-icon {
+            font-size: 32px;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .dropzone-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .dropzone-subtext {
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-file-alt"></i>
+            <span id="systemName">文件管理系统</span>
+        </div>
+        <button class="menu-toggle" id="menuToggle" style="display: none;">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-right">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span class="user-name" id="username"></span>
+                <span class="user-role">[管理员]</span>
+            </div>
+            <a href="#" class="logout-btn" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
+            </a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <ul class="menu">
+                <li class="menu-item">
+                    <a href="/templates/admin/dashboard.html">
+                        <i class="fas fa-tachometer-alt"></i>
+                        控制台
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="/templates/admin/users.html">
+                        <i class="fas fa-users"></i>
+                        用户管理
+                    </a>
+                </li>
+                <li class="menu-item active">
+                    <a href="/templates/admin/files.html">
+                        <i class="fas fa-file-alt"></i>
+                        文件管理
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="/templates/admin/settings.html">
+                        <i class="fas fa-cog"></i>
+                        系统设置
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 消息提示容器 -->
+            <div class="messages-container">
+                <div id="toast" class="alert" style="display: none;">
+                    <div class="toast-content">
+                        <span class="toast-message"></span>
+                        <button type="button" class="close"
+                            onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批量操作区域 -->
+            <div class="batch-actions" id="batchActions">
+                <div class="batch-info">已选择 <span id="selectedCount">0</span> 个文件</div>
+                <button class="action-btn btn-danger" onclick="batchDelete()">
+                    <i class="fas fa-trash-alt"></i> 批量删除
+                </button>
+                <button class="action-btn btn-secondary" onclick="cancelBatchSelection()">
+                    <i class="fas fa-times"></i> 取消选择
+                </button>
+            </div>
+
+            <!-- 文件列表 -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-file-alt"></i>
+                        <h2>文件管理</h2>
+                    </div>
+                    <div class="action-group">
+                        <div class="search-box">
+                            <select id="searchType" class="search-select">
+                                <option value="name">文件名</option>
+                                <option value="description">描述</option>
+                            </select>
+                            <input type="text" id="searchInput" class="search-input" placeholder="输入搜索内容...">
+                            <button class="search-button" onclick="handleSearch()">
+                                <i class="fas fa-search"></i>
+                                搜索
+                            </button>
+                        </div>
+                        <button class="action-btn btn-primary" onclick="openUploadModal()">
+                            <i class="fas fa-upload"></i>
+                            上传模板
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 加载状态 -->
+                <div id="loading" style="display: none;">
+                    <i class="fas fa-spinner spinner"></i>
+                    <span>正在加载数据...</span>
+                </div>
+
+                <div class="responsive-table">
+                    <table id="fileTable">
+                        <thead>
+                            <tr>
+                                <th width="5%">
+                                    <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                                </th>
+                                <th width="5%">ID</th>
+                                <th width="15%">文件名</th>
+                                <th width="20%">描述</th>
+                                <th width="15%">上传时间</th>
+                                <th width="20%">提交情况</th>
+                                <th width="20%">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileTableBody">
+                            <!-- 数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 上传文件模态框 -->
+            <div id="uploadModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">上传文件模板</h2>
+                        <button type="button" class="modal-close" onclick="closeModal('uploadModal')">&times;</button>
+                    </div>
+                    <form id="uploadForm">
+                        <div class="form-group">
+                            <label for="name">模板名称</label>
+                            <input type="text" id="name" name="name" class="form-control" required>
+                            <div class="validation-message" id="nameValidation"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">描述</label>
+                            <textarea id="description" name="description" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>上传文件</label>
+                            <div class="dropzone" id="fileDropzone"
+                                onclick="document.getElementById('templateFile').click()">
+                                <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
+                                <div class="dropzone-text">点击或拖拽文件到此处上传</div>
+                                <div class="dropzone-subtext">支持Excel、Word、PDF等文件格式</div>
+                            </div>
+                            <input type="file" id="templateFile" name="file" style="display: none;" required>
+                            <div class="file-info" style="display: none;">
+                                <span class="file-name"></span>
+                                <button type="button" class="file-remove" onclick="removeFile()">×</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="action-btn btn-secondary"
+                                onclick="closeModal('uploadModal')">取消</button>
+                            <button type="submit" class="action-btn btn-primary" id="uploadButton">
+                                <i class="fas fa-upload"></i> 上传
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 编辑文件模态框 -->
+            <div id="editModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">编辑文件模板</h2>
+                        <button type="button" class="modal-close" onclick="closeModal('editModal')">&times;</button>
+                    </div>
+                    <form id="editForm">
+                        <input type="hidden" id="editTemplateId">
+                        <div class="form-group">
+                            <label for="editTemplateName">模板名称</label>
+                            <input type="text" id="editTemplateName" name="name" class="form-control" required>
+                            <div class="validation-message" id="editNameValidation"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTemplateDescription">描述</label>
+                            <textarea id="editTemplateDescription" name="description" class="form-control"
+                                rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>当前文件</label>
+                            <div class="file-info" style="display: block; margin-top: 0;">
+                                <span id="currentFileName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>更新文件（可选）</label>
+                            <div class="dropzone" id="editFileDropzone"
+                                onclick="document.getElementById('editTemplateFile').click()">
+                                <i class="fas fa-exchange-alt dropzone-icon"></i>
+                                <div class="dropzone-text">点击或拖拽文件到此处替换当前文件</div>
+                                <div class="dropzone-subtext">留空则保留原文件</div>
+                            </div>
+                            <input type="file" id="editTemplateFile" name="file" style="display: none;">
+                            <div class="edit-file-info file-info" style="display: none;">
+                                <span class="file-name"></span>
+                                <button type="button" class="file-remove" onclick="removeEditFile()">×</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="action-btn btn-secondary"
+                                onclick="closeModal('editModal')">取消</button>
+                            <button type="submit" class="action-btn btn-primary">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 查看提交详情模态框 -->
+            <div id="submissionDetailsModal" class="modal">
+                <div class="modal-content" style="max-width: 800px; width: 90%;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">
+                            <span id="templateName">模板提交详情</span>
+                        </h2>
+                        <button type="button" class="modal-close"
+                            onclick="closeModal('submissionDetailsModal')">&times;</button>
+                    </div>
+                    <div id="submissionDetailsContent">
+                        <div class="tabs" id="submissionDetailsTabs">
+                            <button class="tab-btn active" onclick="switchTab(this, 'submitted-users')">
+                                已提交用户 (<span id="submittedCount">0</span>)
+                            </button>
+                            <button class="tab-btn" onclick="switchTab(this, 'pending-users')">
+                                未提交用户 (<span id="pendingCount">0</span>)
+                            </button>
+                        </div>
+                        <div id="submitted-users" class="tab-content active">
+                            <div id="submittedUsersContent" class="responsive-table">
+                                <!-- 动态加载内容 -->
+                            </div>
+                        </div>
+                        <div id="pending-users" class="tab-content">
+                            <div id="pendingUsersContent" class="responsive-table">
+                                <!-- 动态加载内容 -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="action-btn btn-secondary"
+                            onclick="closeModal('submissionDetailsModal')">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 全局变量和状态管理
+        let selectedTemplates = new Set();
+        let allTemplates = [];
+
+        // ============= 认证和基础功能 =============
+
+        // 认证检查
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        // 移动端菜单切换
+        function toggleMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            if (sidebar.style.width === '220px' || sidebar.style.width === '') {
+                sidebar.style.width = '0';
+                mainContent.style.marginLeft = '0';
+            } else {
+                sidebar.style.width = '220px';
+                mainContent.style.marginLeft = '220px';
+            }
+        }
+
+        // 获取当前用户信息
+        async function fetchUserProfile() {
+            const token = checkAuth();
+            try {
+                const response = await fetch('/api/v1/users/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    document.getElementById('username').textContent = userData.username;
+                    return userData;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                showToast('获取用户信息失败', 'error');
+            }
+        }
+
+        // 退出登录
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('userId');
+                window.location.href = '/';
+            }
+        }
+
+        // ============= 模板管理功能 =============
+
+        // 加载模板列表
+        async function loadTemplates() {
+            const token = checkAuth();
+            showLoading(); // 显示加载状态
+
+            try {
+                const response = await fetch('/api/v1/admin/templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    allTemplates = data; // 存储到全局变量
+                    renderTemplates(data);
+                } else {
+                    showToast('加载模板列表失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载模板列表失败:', error);
+                showToast('加载数据失败', 'error');
+            } finally {
+                hideLoading(); // 隐藏加载状态
+            }
+        }
+
+        // 渲染模板列表
+        function renderTemplates(templates) {
+            const tbody = document.getElementById('fileTableBody');
+
+            if (!templates || templates.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-data">
+                            <i class="fas fa-file-upload"></i>
+                            <p>暂无模板</p>
+                            <p>点击右上角按钮上传第一个模板</p>
+                            <button class="action-btn btn-primary" onclick="openUploadModal()">
+                                <i class="fas fa-upload"></i> 立即上传
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = templates.map((template, index) => `
+                <tr class="template-row" data-id="${template.id}">
+                    <td>
+                        <input type="checkbox" class="template-checkbox" value="${template.id}" 
+                               onchange="handleTemplateSelection(this)" ${selectedTemplates.has(template.id.toString()) ? 'checked' : ''}>
+                    </td>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(template.name)}</td>
+                    <td>${escapeHtml(template.description || '无')}</td>
+                    <td>${formatDate(template.upload_date)}</td>
+                    <td>
+                        <div class="submission-summary">
+                            <span class="status-badge">
+                                <i class="fas fa-users"></i> 
+                                已提交: ${template.submitted_count || 0}/${template.total_users || 0}
+                            </span>
+                            <button class="btn-toggle" onclick="viewSubmissionDetails('${template.id}')">
+                                <i class="fas fa-eye"></i> 查看详情
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="action-btn btn-primary" onclick="openEditModal('${template.id}', '${escapeHtml(template.name)}', '${escapeHtml(template.description || '')}', '${escapeHtml(template.filename)}')">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="downloadTemplate('${template.id}', '${escapeHtml(template.name)}')">
+                            <i class="fas fa-download"></i> 下载
+                        </button>
+                        <button class="action-btn btn-danger" onclick="deleteTemplate('${template.id}')">
+                            <i class="fas fa-trash-alt"></i> 删除
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            updateBatchActionDisplay();
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '未知';
+
+            // 创建日期对象时明确指定这是UTC时间
+            const date = new Date(dateString + 'Z');
+
+            if (isNaN(date.getTime())) return dateString; // 如果无法解析，返回原始字符串
+
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        // HTML转义，防止XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // ============= 搜索和筛选功能 =============
+
+        // 处理搜索
+        function handleSearch() {
+            const searchType = document.getElementById('searchType').value;
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+
+            if (!allTemplates || allTemplates.length === 0) return;
+
+            const filteredTemplates = allTemplates.filter(template => {
+                if (searchType === 'name') {
+                    return template.name.toLowerCase().includes(searchValue);
+                } else if (searchType === 'description') {
+                    return (template.description || '').toLowerCase().includes(searchValue);
+                }
+                return true;
+            });
+
+            renderTemplates(filteredTemplates);
+        }
+
+        // ============= 模板批量操作 =============
+
+        // 处理模板选择
+        function handleTemplateSelection(checkbox) {
+            const templateId = checkbox.value;
+
+            if (checkbox.checked) {
+                selectedTemplates.add(templateId);
+            } else {
+                selectedTemplates.delete(templateId);
+            }
+
+            updateBatchActionDisplay();
+        }
+
+        // 全选/全不选
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.template-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                handleTemplateSelection(checkbox);
+            });
+        }
+
+        // 更新批量操作区域显示
+        function updateBatchActionDisplay() {
+            const batchActions = document.getElementById('batchActions');
+            const selectedCount = document.getElementById('selectedCount');
+
+            selectedCount.textContent = selectedTemplates.size;
+            batchActions.style.display = selectedTemplates.size > 0 ? 'flex' : 'none';
+
+            // 更新全选框状态
+            const checkboxes = document.querySelectorAll('.template-checkbox');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (checkboxes.length > 0) {
+                selectAllCheckbox.checked = selectedTemplates.size === checkboxes.length;
+                selectAllCheckbox.indeterminate = selectedTemplates.size > 0 && selectedTemplates.size < checkboxes.length;
+            }
+        }
+
+        // 取消选择
+        function cancelBatchSelection() {
+            selectedTemplates.clear();
+            document.querySelectorAll('.template-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('selectAll').checked = false;
+            updateBatchActionDisplay();
+        }
+
+        // 批量删除
+        async function batchDelete() {
+            if (selectedTemplates.size === 0) return;
+
+            if (!confirm(`确定要删除选中的 ${selectedTemplates.size} 个模板吗？此操作不可恢复。`)) {
+                return;
+            }
+
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                const response = await fetch('/api/v1/admin/templates/batch', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        operation: 'delete',
+                        template_ids: Array.from(selectedTemplates)
+                    })
+                });
+
+                if (response.ok) {
+                    showToast(`成功删除 ${selectedTemplates.size} 个模板`);
+                    selectedTemplates.clear();
+                    updateBatchActionDisplay();
+                    await loadTemplates();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '批量删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('批量删除失败:', error);
+                showToast('批量删除失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============= 模板操作功能 =============
+
+        // 删除单个模板
+        async function deleteTemplate(templateId) {
+            if (!confirm('确定要删除此模板吗？此操作不可恢复。')) {
+                return;
+            }
+
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/v1/admin/templates/${templateId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('删除成功');
+                    // 如果此模板在已选列表中，移除它
+                    selectedTemplates.delete(templateId.toString());
+                    updateBatchActionDisplay();
+                    await loadTemplates();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('删除失败:', error);
+                showToast('删除失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 下载模板
+        async function downloadTemplate(templateId, templateName) {
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/v1/files/download/template/${templateId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '下载失败');
+                }
+
+                // 获取文件后缀
+                const contentDisposition = response.headers.get('content-disposition');
+                const originalFileName = contentDisposition ?
+                    decodeURIComponent(contentDisposition.split('filename=')[1].replace(/['"]/g, '')) :
+                    'template.file';
+                const fileExtension = originalFileName.split('.').pop();
+
+                // 使用模板名称和原文件后缀组合新的文件名
+                const downloadFileName = `${templateName}.${fileExtension}`;
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = downloadFileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+
+                showToast('下载成功');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showToast('下载失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============= 模板提交详情 =============
+
+        // 查看提交详情
+        async function viewSubmissionDetails(templateId) {
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/v1/files/templates/${templateId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '获取提交详情失败');
+                }
+
+                const data = await response.json();
+
+                // 更新模态框内容
+                document.getElementById('templateName').textContent = `${data.template_name} - 提交详情`;
+                document.getElementById('submittedCount').textContent = data.submitted_count;
+                document.getElementById('pendingCount').textContent = data.pending_users.length;
+
+                // 渲染已提交用户
+                const submittedContent = document.getElementById('submittedUsersContent');
+                if (data.submissions && data.submissions.length > 0) {
+                    submittedContent.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>公司名称</th>
+                                    <th>提交时间</th>
+                                    <th>文件名</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.submissions.map(sub => `
+                                    <tr>
+                                        <td>${escapeHtml(sub.username)}</td>
+                                        <td>${escapeHtml(sub.company_name || '未设置')}</td>
+                                        <td>${formatDate(sub.submission.upload_date)}</td>
+                                        <td>${escapeHtml(sub.submission.filename)}</td>
+                                        <td>
+                                            <button class="action-btn btn-secondary" onclick="downloadSubmission('${sub.user_id}', '${sub.template_id}')">
+                                                <i class="fas fa-download"></i> 下载
+                                            </button>
+                                            <button class="action-btn btn-primary" onclick="viewSubmission('${sub.user_id}', '${sub.template_id}')">
+                                                <i class="fas fa-eye"></i> 查看
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    submittedContent.innerHTML = `
+                        <div class="no-data">
+                            <i class="fas fa-info-circle"></i>
+                            <p>暂无提交记录</p>
+                        </div>
+                    `;
+                }
+
+                // 渲染未提交用户
+                const pendingContent = document.getElementById('pendingUsersContent');
+                if (data.pending_users && data.pending_users.length > 0) {
+                    pendingContent.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>公司名称</th>
+                                    <th>联系方式</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.pending_users.map(user => `
+                                    <tr>
+                                        <td>${escapeHtml(user.username)}</td>
+                                        <td>${escapeHtml(user.company_name || '未设置')}</td>
+                                        <td>${escapeHtml(user.contact_info || '未设置')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    pendingContent.innerHTML = `
+                        <div class="no-data">
+                            <i class="fas fa-check-circle"></i>
+                            <p>所有用户都已提交</p>
+                        </div>
+                    `;
+                }
+
+                // 显示模态框
+                document.getElementById('submissionDetailsModal').style.display = 'block';
+
+                // 确保默认显示"已提交用户"标签页
+                const tabButtons = document.querySelectorAll('#submissionDetailsTabs .tab-btn');
+                const tabContents = document.querySelectorAll('#submissionDetailsContent .tab-content');
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                tabButtons[0].classList.add('active');
+                document.getElementById('submitted-users').classList.add('active');
+
+            } catch (error) {
+                console.error('获取提交详情失败:', error);
+                showToast('获取提交详情失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 下载提交文件
+        async function downloadSubmission(userId, templateId) {
+            if (!userId || !templateId) {
+                showToast('无效的下载请求', 'error');
+                return;
+            }
+
+            userId = parseInt(userId);
+            templateId = parseInt(templateId);
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                // 1. 获取模板信息
+                const templatesResponse = await fetch('/api/v1/admin/templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!templatesResponse.ok) {
+                    throw new Error('获取模板信息失败');
+                }
+
+                const templates = await templatesResponse.json();
+                const template = templates.find(t => t.id === templateId);
+
+                if (!template) {
+                    throw new Error('找不到模板信息');
+                }
+
+                // 2. 获取用户提交信息
+                const submissionsResponse = await fetch(`/api/v1/files/templates/${templateId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!submissionsResponse.ok) {
+                    throw new Error('获取用户信息失败');
+                }
+
+                const submissionsData = await submissionsResponse.json();
+                const userSubmission = submissionsData.submissions.find(sub => parseInt(sub.user_id) === userId);
+
+                if (!userSubmission) {
+                    throw new Error('找不到用户提交记录');
+                }
+
+                // 3. 下载文件
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/v1/files/download/submission/${userId}/${templateId}?t=${timestamp}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '下载失败');
+                }
+
+                // 4. 获取文件扩展名
+                const contentDisposition = response.headers.get('content-disposition');
+                let fileExtension = '';
+
+                if (contentDisposition) {
+                    const matches = /filename\*=UTF-8''([^;]*)/.exec(contentDisposition);
+                    if (matches) {
+                        const originalFilename = decodeURIComponent(matches[1]);
+                        fileExtension = originalFilename.split('.').pop();
+                    } else {
+                        const regularMatch = /filename=["']?([^"']+)["']?/.exec(contentDisposition);
+                        if (regularMatch) {
+                            const originalFilename = decodeURIComponent(regularMatch[1]);
+                            fileExtension = originalFilename.split('.').pop();
+                        }
+                    }
+                }
+
+                // 5. 构造新的文件名：用户名_模板名.扩展名
+                const customFileName = `${userSubmission.username}_${template.name}${fileExtension ? '.' + fileExtension : ''}`;
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = customFileName;
+                document.body.appendChild(a);
+                a.click();
+
+                // 6. 清理资源
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showToast('文件下载成功', 'success');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showToast(error.message || '下载失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 预览提交文件
+        async function viewSubmission(userId, templateId) {
+            if (!userId || !templateId) {
+                showToast('无效的请求参数', 'error');
+                return;
+            }
+
+            userId = parseInt(userId);
+            templateId = parseInt(templateId);
+            const token = checkAuth();
+            showLoading();
+
+            try {
+                // 1. 获取模板信息
+                const templatesResponse = await fetch('/api/v1/admin/templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!templatesResponse.ok) {
+                    throw new Error('获取模板信息失败');
+                }
+
+                const templates = await templatesResponse.json();
+                const template = templates.find(t => t.id === templateId);
+
+                if (!template) {
+                    throw new Error('找不到模板信息');
+                }
+
+                // 2. 获取用户提交信息
+                const submissionsResponse = await fetch(`/api/v1/files/templates/${templateId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!submissionsResponse.ok) {
+                    throw new Error('获取用户信息失败');
+                }
+
+                const submissionsData = await submissionsResponse.json();
+                const userSubmission = submissionsData.submissions.find(sub => parseInt(sub.user_id) === userId);
+
+                if (!userSubmission) {
+                    throw new Error('找不到用户提交记录');
+                }
+
+                // 3. 获取文件内容
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/v1/files/preview/submission/${userId}/${templateId}?t=${timestamp}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '预览失败');
+                }
+
+                // 4. 获取 Content-Type 和文件名
+                const contentType = response.headers.get('content-type');
+                const contentDisposition = response.headers.get('content-disposition');
+                let fileExtension = '';
+
+                if (contentDisposition) {
+                    const matches = /filename\*=UTF-8''([^;]*)/.exec(contentDisposition);
+                    if (matches) {
+                        const originalFilename = decodeURIComponent(matches[1]);
+                        fileExtension = originalFilename.split('.').pop();
+                    }
+                }
+
+                // 5. 获取文件内容
+                const blob = await response.blob();
+
+                // 6. 定义可预览的文件类型
+                const previewableTypes = {
+                    'application/pdf': true,
+                    'text/plain': true,
+                    'text/html': true,
+                    'text/css': true,
+                    'text/javascript': true,
+                    'text/xml': true,
+                    'text/csv': true,
+                    'text/markdown': true,
+                    'image/jpeg': true,
+                    'image/png': true,
+                    'image/gif': true,
+                    'image/svg+xml': true,
+                    'image/webp': true,
+                    'image/bmp': true,
+                    'video/mp4': true,
+                    'video/webm': true,
+                    'audio/mpeg': true,
+                    'audio/ogg': true,
+                    'audio/wav': true,
+                    'application/json': true,
+                    'application/xml': true
+                };
+
+                const previewableExtensions = {
+                    'pdf': true,
+                    'txt': true,
+                    'jpg': true,
+                    'jpeg': true,
+                    'png': true,
+                    'gif': true,
+                    'svg': true,
+                    'html': true,
+                    'htm': true,
+                    'mp4': true,
+                    'mp3': true
+                };
+
+                // 7. 处理文件预览或下载
+                if (previewableTypes[contentType] || previewableExtensions[fileExtension]) {
+                    const url = window.URL.createObjectURL(blob);
+
+                    // 如果是 Office 文档，使用在线预览（这里可能需要符合您的实际情况）
+                    if (contentType.includes('officedocument') || contentType.includes('msword') ||
+                        contentType.includes('ms-excel') || contentType.includes('ms-powerpoint')) {
+                        const encodedUrl = encodeURIComponent(window.location.origin + `/api/v1/files/preview/submission/${userId}/${templateId}`);
+                        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodedUrl}`, '_blank');
+                    } else {
+                        // 其他可预览文件直接在新标签页打开
+                        window.open(url, '_blank');
+                    }
+
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(url);
+                    }, 1000);
+
+                    showToast('文件已在新标签页打开', 'success');
+                } else {
+                    // 不支持预览的文件，执行下载
+                    const customFileName = `${userSubmission.username}_${template.name}${fileExtension ? '.' + fileExtension : ''}`;
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = customFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showToast('此文件类型不支持在线预览，已自动下载', 'success');
+                }
+            } catch (error) {
+                console.error('预览错误:', error);
+                showToast(error.message || '文件预览失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============= 模态框操作 =============
+
+        // 打开上传模态框
+        function openUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            const uploadButton = document.getElementById('uploadButton');
+            const nameInput = document.getElementById('name');
+
+            // 重置表单
+            document.getElementById('uploadForm').reset();
+            document.querySelector('.file-info').style.display = 'none';
+            nameInput.classList.remove('invalid');
+            document.getElementById('nameValidation').textContent = '';
+            uploadButton.disabled = false;
+
+            // 重置拖放区域
+            resetDropzone(document.getElementById('fileDropzone'));
+
+            modal.style.display = 'block';
+        }
+
+        // 打开编辑模态框
+        function openEditModal(templateId, name, description, filename) {
+            const modal = document.getElementById('editModal');
+            const nameInput = document.getElementById('editTemplateName');
+
+            // 填充表单数据
+            document.getElementById('editTemplateId').value = templateId;
+            nameInput.value = name;
+            nameInput.dataset.originalName = name; // 保存原始名称以供验证
+            document.getElementById('editTemplateDescription').value = description || '';
+            nameInput.classList.remove('invalid');
+            document.getElementById('editNameValidation').textContent = '';
+
+            // 显示当前文件名
+            const currentFileNameElement = document.getElementById('currentFileName');
+            currentFileNameElement.textContent = filename || '未上传文件';
+
+            // 重置文件输入
+            document.getElementById('editTemplateFile').value = '';
+            document.querySelector('.edit-file-info').style.display = 'none';
+
+            // 重置拖放区域
+            resetDropzone(document.getElementById('editFileDropzone'));
+
+            modal.style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'none';
+
+            // 重置表单
+            if (modalId === 'uploadModal') {
+                document.getElementById('uploadForm').reset();
+                document.querySelector('.file-info').style.display = 'none';
+            } else if (modalId === 'editModal') {
+                document.getElementById('editForm').reset();
+                document.querySelector('.edit-file-info').style.display = 'none';
+            }
+        }
+
+        // 标签页切换
+        function switchTab(button, contentId) {
+            const tabButtons = button.parentElement.getElementsByClassName('tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // 移除所有 active 类
+            Array.from(tabButtons).forEach(btn => {
+                btn.classList.remove('active');
+            });
+            Array.from(tabContents).forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 添加 active 类到当前选中的标签和内容
+            button.classList.add('active');
+            document.getElementById(contentId).classList.add('active');
+        }
+
+        // ============= 文件上传相关 =============
+
+        // 移除上传的文件
+        function removeFile() {
+            document.getElementById('templateFile').value = '';
+            document.querySelector('.file-info').style.display = 'none';
+            resetDropzone(document.getElementById('fileDropzone'));
+        }
+
+        // 移除编辑时上传的文件
+        function removeEditFile() {
+            document.getElementById('editTemplateFile').value = '';
+            document.querySelector('.edit-file-info').style.display = 'none';
+            resetDropzone(document.getElementById('editFileDropzone'));
+        }
+
+        // 重置拖放区域
+        function resetDropzone(dropzone) {
+            dropzone.classList.remove('active');
+        }
+
+        // 检查模板名称是否存在
+        async function checkTemplateName(name, originalName = '') {
+            if (!name) return false;
+
+            // 如果是编辑模式且名称没有改变，直接返回 true
+            if (originalName && name === originalName) return true;
+
+            const token = checkAuth();
+            try {
+                const response = await fetch('/api/v1/admin/templates/check-name', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await response.json();
+                return data.available;
+            } catch (error) {
+                console.error('检查模板名称失败:', error);
+                return false;
+            }
+        }
+
+        // 处理模板名称输入验证
+        async function validateTemplateName(inputElement, validationElement, submitButton, isEdit = false) {
+            const name = inputElement.value.trim();
+            const originalName = isEdit ? inputElement.dataset.originalName : '';
+
+            // 重置验证状态
+            inputElement.classList.remove('invalid');
+            validationElement.textContent = '';
+            submitButton.disabled = false;
+
+            if (!name) {
+                inputElement.classList.add('invalid');
+                validationElement.textContent = '模板名称不能为空';
+                submitButton.disabled = true;
+                return false;
+            }
+
+            const isAvailable = await checkTemplateName(name, originalName);
+            if (!isAvailable) {
+                inputElement.classList.add('invalid');
+                validationElement.textContent = '已存在相同名称的模板';
+                submitButton.disabled = true;
+                return false;
+            }
+
+            return true;
+        }
+
+        // 处理文件上传表单提交
+        async function handleUploadSubmit(event) {
+            event.preventDefault();
+
+            // 验证名称
+            const nameInput = document.getElementById('name');
+            const validationElement = document.getElementById('nameValidation');
+            const submitButton = document.getElementById('uploadButton');
+
+            const isValid = await validateTemplateName(nameInput, validationElement, submitButton);
+            if (!isValid) return;
+
+            // 验证文件
+            const fileInput = document.getElementById('templateFile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast('请选择要上传的文件', 'error');
+                return;
+            }
+
+            const token = checkAuth();
+            const formData = new FormData(event.target);
+            showLoading();
+
+            try {
+                const response = await fetch('/api/v1/admin/templates', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('模板上传成功', 'success');
+                    closeModal('uploadModal');
+                    await loadTemplates();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '上传失败', 'error');
+                }
+            } catch (error) {
+                console.error('上传失败:', error);
+                showToast('上传失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 处理编辑表单提交
+        async function handleEditSubmit(event) {
+            event.preventDefault();
+
+            // 验证名称
+            const nameInput = document.getElementById('editTemplateName');
+            const validationElement = document.getElementById('editNameValidation');
+            const submitButton = event.target.querySelector('button[type="submit"]');
+
+            const isValid = await validateTemplateName(nameInput, validationElement, submitButton, true);
+            if (!isValid) return;
+
+            const token = checkAuth();
+            const templateId = document.getElementById('editTemplateId').value;
+            const formData = new FormData(event.target);
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/v1/admin/templates/${templateId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('模板更新成功', 'success');
+                    closeModal('editModal');
+                    await loadTemplates();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || '更新失败', 'error');
+                }
+            } catch (error) {
+                console.error('更新失败:', error);
+                showToast('更新失败，请重试', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadSystemName() {
+            const cachedName = localStorage.getItem('systemName');
+            if (cachedName) {
+                updateSystemName(cachedName);
+            }
+
+            const token = checkAuth();
+            if (token) {
+                try {
+                    const response = await fetch('/api/v1/admin/settings', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.system_name) {
+                            updateSystemName(data.system_name);
+                            localStorage.setItem('systemName', data.system_name);
+                        }
+                    }
+                } catch (error) {
+                    console.error('获取系统名称失败:', error);
+                }
+            }
+        }
+
+        function updateSystemName(name) {
+            if (!name) return;
+
+            // 更新页面标题
+            document.title = `文件管理 - ${name}`;
+
+            // 安全地更新systemName元素的文本内容
+            const systemNameElement = document.getElementById('systemName');
+            if (systemNameElement) {
+                systemNameElement.textContent = name;
+            }
+        }
+
+        // 添加 storage 事件监听器
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'systemName' || e.key === 'settingsUpdated') {
+                if (e.key === 'systemName') {
+                    updateSystemName(e.newValue);
+                } else {
+                    loadSystemName();
+                }
+            }
+        });
+
+        // ============= 工具函数 =============
+
+        // 显示/隐藏加载状态
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 显示消息提示
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = toast.querySelector('.toast-message');
+
+            toast.className = `alert alert-${type}`;
+            toastMessage.textContent = message;
+
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // ============= 文件拖放功能 =============
+
+        // 处理文件拖放
+        function setupDropzone(dropzoneId, fileInputId, fileInfoClass) {
+            const dropzone = document.getElementById(dropzoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileInfo = document.querySelector(`.${fileInfoClass}`);
+            const fileName = fileInfo.querySelector('.file-name');
+
+            // 文件选择监听
+            fileInput.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    fileName.textContent = this.files[0].name;
+                    fileInfo.style.display = 'flex';
+                    dropzone.classList.add('active');
+                } else {
+                    fileInfo.style.display = 'none';
+                    dropzone.classList.remove('active');
+                }
+            });
+
+            // 拖放区域事件
+            dropzone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.classList.add('active');
+            });
+
+            dropzone.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                this.classList.remove('active');
+            });
+
+            dropzone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                this.classList.remove('active');
+
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileName.textContent = e.dataTransfer.files[0].name;
+                    fileInfo.style.display = 'flex';
+                    this.classList.add('active');
+
+                    // 触发change事件，确保其他绑定的处理程序能被调用
+                    const event = new Event('change', { bubbles: true });
+                    fileInput.dispatchEvent(event);
+                }
+            });
+        }
+
+        // ============= 页面初始化 =============
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 检查登录状态
+            if (!checkAuth()) return;
+
+            loadSystemName();
+
+            // 获取当前用户信息
+            fetchUserProfile();
+
+            // 加载模板列表
+            loadTemplates();
+
+            // 绑定表单提交事件
+            document.getElementById('uploadForm').addEventListener('submit', handleUploadSubmit);
+            document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+
+            // 名称输入验证
+            document.getElementById('name').addEventListener('blur', function () {
+                validateTemplateName(
+                    this,
+                    document.getElementById('nameValidation'),
+                    document.getElementById('uploadButton')
+                );
+            });
+
+            document.getElementById('editTemplateName').addEventListener('blur', function () {
+                validateTemplateName(
+                    this,
+                    document.getElementById('editNameValidation'),
+                    document.querySelector('#editForm button[type="submit"]'),
+                    true
+                );
+            });
+
+            // 搜索框事件
+            document.getElementById('searchInput').addEventListener('input', function () {
+                if (this.value === '') handleSearch();
+            });
+
+            document.getElementById('searchInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') handleSearch();
+            });
+
+            // 设置拖放区域
+            setupDropzone('fileDropzone', 'templateFile', 'file-info');
+            setupDropzone('editFileDropzone', 'editTemplateFile', 'edit-file-info');
+
+            // 移动端菜单处理
+            const menuToggle = document.getElementById('menuToggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', toggleMenu);
+            }
+
+            // 响应窗口大小变化
+            function handleResize() {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                if (window.innerWidth <= 768) {
+                    menuToggle.style.display = 'block';
+                    sidebar.style.width = '0';
+                    mainContent.style.marginLeft = '0';
+                } else {
+                    menuToggle.style.display = 'none';
+                    sidebar.style.width = '220px';
+                    mainContent.style.marginLeft = '220px';
+                }
+            }
+
+            // 监听窗口大小变化
+            window.addEventListener('resize', handleResize);
+
+            // 初始处理
+            handleResize();
+
+            // 设置点击模态框外部关闭
+            window.onclick = function (event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            };
+        });
+    </script>
+</body>
+
+</html>
