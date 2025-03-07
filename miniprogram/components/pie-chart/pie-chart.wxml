@@ -1,13 +1,14 @@
 <!-- components/pie-chart/pie-chart.wxml -->
-<view class="pie-chart" style="width: {{radius*2}}rpx; height: {{radius*2}}rpx;">
-  <!-- 背景圆形（未提交部分） -->
-  <view class="pie-background" style="background-color: {{secondaryColor}};"></view>
-  
-  <!-- 已提交部分（扇形） -->
-  <view wx:if="{{showSubmitted}}" class="pie-slice" style="background-color: {{primaryColor}}; clip-path: {{clipPath}};"></view>
-  
-  <!-- 中心百分比显示 -->
-  <view class="pie-center" style="width: {{radius}}rpx; height: {{radius}}rpx;">
-    <text style="font-size: {{fontSize}}rpx;">{{percentage}}%</text>
+<view class="pie-chart-container" style="width: {{size}}rpx; height: {{size}}rpx;">
+  <canvas type="2d" id="pieCanvas" style="width: {{size}}rpx; height: {{size}}rpx;"></canvas>
+  <view class="pie-legend">
+    <view class="legend-item">
+      <view class="legend-color" style="background-color: {{primaryColor}};"></view>
+      <text class="legend-text">已提交 ({{submittedCount}})</text>
+    </view>
+    <view class="legend-item">
+      <view class="legend-color" style="background-color: {{secondaryColor}};"></view>
+      <text class="legend-text">未提交 ({{pendingCount}})</text>
+    </view>
   </view>
 </view>

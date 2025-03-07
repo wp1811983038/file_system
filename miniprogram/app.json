@@ -3,13 +3,12 @@
     "pages/login/login",
     "pages/admin/index/index",
     "pages/admin/template/list",
+    "pages/admin/template/detail",
     "pages/admin/user/list",
     "pages/user/files/list",
     "pages/user/profile/list",
     "pages/user/password/list",
-    "pages/user/profile/edit",
-    "pages/admin/template/detail",
-    "components/pie-chart/pie-chart"
+    "pages/user/profile/edit"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -44,5 +43,8 @@
         "text": "我的"
       }
     ]
+  },
+  "usingComponents": {
+    "pie-chart": "/components/pie-chart/pie-chart"
   }
 }

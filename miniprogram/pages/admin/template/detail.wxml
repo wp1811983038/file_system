@@ -133,39 +133,15 @@
     <view class="analytics-card">
       <view class="card-title">提交率分析</view>
       <view class="pie-chart-container">
-        <!-- 饼图 -->
-        <view class="pie-chart">
-          <!-- 背景圆形（未提交部分）-->
-          <view class="pie-background pending"></view>
-          
-          <!-- 已提交部分（扇形） -->
-          <view class="pie-slice submitted" wx:if="{{submissionRate > 0}}" style="clip-path: polygon(50% 50%, 50% 0%, {{submissionRate >= 50 ? '100% 0%, 100% 100%, 0% 100%, 0% 0%,' : ''}} {{submissionRate > 0 && submissionRate < 50 ? '50% 50%, ' + (50 - 50*Math.sin((submissionRate/100)*6.28)) + '% ' + (50 - 50*Math.cos((submissionRate/100)*6.28)) + '%,' : ''}} 50% 0%);">
-          </view>
-          
-          <view class="pie-center">
-            <text>{{submissionRate}}%</text>
-          </view>
-        </view>
-        
-        <!-- 图例 -->
-        <view class="pie-legend">
-          <view class="legend-item">
-            <view class="legend-color submitted"></view>
-            <text class="legend-text">已提交 ({{submittedCount}})</text>
-          </view>
-          <view class="legend-item">
-            <view class="legend-color pending"></view>
-            <text class="legend-text">未提交 ({{pendingCount}})</text>
-          </view>
-        </view>
-        
-        <!-- 调试信息 -->
-        <!-- <view class="debug-info">
-          <text>提交率: {{submissionRate}}%</text>
-          <text>转换公式: {{(submissionRate/100)*360}}度</text>
-          <text>已提交: {{submittedCount}}</text>
-          <text>未提交: {{pendingCount}}</text>
-        </view> -->
+        <!-- 使用饼图组件 -->
+        <pie-chart 
+          percentage="{{submissionRate}}" 
+          size="300" 
+          primaryColor="#10b981" 
+          secondaryColor="#f59e0b"
+          submittedCount="{{submittedCount}}"
+          pendingCount="{{pendingCount}}">
+        </pie-chart>
       </view>
     </view>
   </view>
