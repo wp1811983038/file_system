@@ -48,6 +48,7 @@
         <view class="th">用户名</view>
         <view class="th">公司名称</view>
         <view class="th">提交时间</view>
+        <view class="th">状态</view>
         <view class="th">操作</view>
       </view>
 
@@ -60,6 +61,11 @@
           <view class="td">{{item.username}}</view>
           <view class="td">{{item.company_name || '未设置'}}</view>
           <view class="td">{{item.submission.upload_date}}</view>
+          <view class="td">
+            <view class="status-badge {{getStatusClass(item.submission.status)}}">
+              {{getStatusText(item.submission.status)}}
+            </view>
+          </view>
           <view class="td actions">
             <button class="action-btn preview-btn" 
                     bindtap="previewSubmission" 
@@ -71,6 +77,17 @@
                     data-user-id="{{item.user_id}}">
               下载
             </button>
+            <!-- 根据审批状态显示不同的审批按钮 -->
+            <block wx:if="{{item.submission.status === 'submitted' || item.submission.status === 'under_review'}}">
+              <button class="action-btn approve-btn" 
+                      bindtap="showApprovalModal" 
+                      data-user-id="{{item.user_id}}"
+                      data-file-id="{{item.submission.id}}"
+                      data-username="{{item.username}}"
+                      data-filename="{{item.submission.filename}}">
+                审批
+              </button>
+            </block>
           </view>
         </view>
       </block>
@@ -144,7 +161,78 @@
         </pie-chart>
       </view>
     </view>
+    
+    <!-- 审批状态分析 -->
+    <view class="analytics-card">
+      <view class="card-title">审批状态分析</view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">{{approvalStats.pendingCount || 0}}</text>
+          <text class="stat-label">待审批</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{approvalStats.approvedCount || 0}}</text>
+          <text class="stat-label">已通过</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{approvalStats.rejectedCount || 0}}</text>
+          <text class="stat-label">已拒绝</text>
+        </view>
+      </view>
+    </view>
   </view>
 
-
+  <!-- 审批模态框 -->
+  <view class="modal approval-modal" wx:if="{{showApprovalModal}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideApprovalModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text>审批文件</text>
+        <text class="close" bindtap="hideApprovalModal">×</text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="file-info">
+          <view class="info-item">
+            <text class="info-label">用户名：</text>
+            <text class="info-value">{{currentApproval.username}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">文件名：</text>
+            <text class="info-value">{{currentApproval.filename}}</text>
+          </view>
+        </view>
+        
+        <view class="approval-options">
+          <view class="option-label">审批决定：</view>
+          <view class="radio-group">
+            <view class="radio {{approvalDecision === 'approved' ? 'selected' : ''}}" 
+                  bindtap="selectApprovalDecision" 
+                  data-decision="approved">
+              <view class="radio-dot"></view>
+              <text>通过</text>
+            </view>
+            <view class="radio {{approvalDecision === 'rejected' ? 'selected' : ''}}" 
+                  bindtap="selectApprovalDecision" 
+                  data-decision="rejected">
+              <view class="radio-dot"></view>
+              <text>拒绝</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="comment-area">
+          <view class="option-label">审批意见：</view>
+          <textarea placeholder="请输入审批意见（可选）" 
+                    bindinput="onApprovalCommentInput" 
+                    value="{{approvalComment}}"></textarea>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="btn-cancel" bindtap="hideApprovalModal">取消</button>
+        <button class="btn-submit" bindtap="submitApproval" disabled="{{!approvalDecision}}">提交</button>
+      </view>
+    </view>
+  </view>
 </view>

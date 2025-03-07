@@ -18,7 +18,41 @@ Page({
     submittedCount: 0,
     pendingCount: 0,
     totalUsers: 0,
-    submissionRate: 0
+    submissionRate: 0,
+    showApprovalModal: false,
+    currentApproval: {
+      fileId: '',
+      userId: '',
+      username: '',
+      filename: ''
+    },
+    approvalDecision: '',
+    approvalComment: '',
+    approvalStats: {
+      pendingCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0
+    }
+  },
+
+  // 获取状态类名
+  getStatusClass(status) {
+    if (!status || status === 'draft') return 'status-draft';
+    if (status === 'submitted') return 'status-submitted';
+    if (status === 'under_review') return 'status-under-review';
+    if (status === 'approved') return 'status-approved';
+    if (status === 'rejected') return 'status-rejected';
+    return 'status-draft';
+  },
+
+  // 获取状态文本
+  getStatusText(status) {
+    if (!status || status === 'draft') return '草稿';
+    if (status === 'submitted') return '已提交';
+    if (status === 'under_review') return '审核中';
+    if (status === 'approved') return '已通过';
+    if (status === 'rejected') return '已拒绝';
+    return '草稿';
   },
 
   onLoad(options) {
@@ -74,6 +108,9 @@ Page({
         ? Math.round((result.submitted_count / result.total_users) * 100) 
         : 0;
       
+      // 计算审批状态统计
+      const approvalStats = this.calculateApprovalStats(result.submissions || []);
+      
       this.setData({
         submittedUsers: result.submissions || [],
         pendingUsers: result.pending_users || [],
@@ -82,7 +119,8 @@ Page({
         submittedCount: result.submitted_count || 0,
         pendingCount: result.pending_users ? result.pending_users.length : 0,
         totalUsers: result.total_users || 0,
-        submissionRate
+        submissionRate,
+        approvalStats
       });
       
       // 如果当前标签是分析标签，生成分析数据
@@ -102,16 +140,34 @@ Page({
     }
   },
 
-  // 生成分析数据 - 简化版，只关注提交率
+  // 计算审批状态统计数据
+  calculateApprovalStats(submissions) {
+    let pendingCount = 0;
+    let approvedCount = 0;
+    let rejectedCount = 0;
+    
+    submissions.forEach(item => {
+      const status = item.submission.status;
+      if (status === 'submitted' || status === 'under_review') {
+        pendingCount++;
+      } else if (status === 'approved') {
+        approvedCount++;
+      } else if (status === 'rejected') {
+        rejectedCount++;
+      }
+    });
+    
+    return {
+      pendingCount,
+      approvedCount,
+      rejectedCount
+    };
+  },
+
+  // 生成分析数据 - 添加审批状态分析
   generateAnalyticsData() {
     // 提交率分析已在加载数据时完成
-    // 这里可以处理其他分析数据（如果需要）
-    
-    // 提交率数据已经在页面的状态中:
-    // - submittedCount: 已提交数量
-    // - pendingCount: 未提交数量
-    // - totalUsers: 总用户数
-    // - submissionRate: 提交率百分比
+    // 审批状态分析已在loadTemplateData中完成
   },
 
   // 搜索已提交用户
@@ -246,5 +302,92 @@ Page({
     }
   },
 
-
+  // 显示审批模态框
+  showApprovalModal(e) {
+    const userId = e.currentTarget.dataset.userId;
+    const fileId = e.currentTarget.dataset.fileId;
+    const username = e.currentTarget.dataset.username;
+    const filename = e.currentTarget.dataset.filename;
+    
+    this.setData({
+      showApprovalModal: true,
+      approvalDecision: '',
+      approvalComment: '',
+      currentApproval: {
+        fileId,
+        userId,
+        username,
+        filename
+      }
+    });
+  },
+  
+  // 隐藏审批模态框
+  hideApprovalModal() {
+    this.setData({
+      showApprovalModal: false
+    });
+  },
+  
+  // 选择审批决定
+  selectApprovalDecision(e) {
+    const decision = e.currentTarget.dataset.decision;
+    this.setData({
+      approvalDecision: decision
+    });
+  },
+  
+  // 处理审批意见输入
+  onApprovalCommentInput(e) {
+    this.setData({
+      approvalComment: e.detail.value
+    });
+  },
+  
+  // 提交审批
+  async submitApproval() {
+    if (!this.data.approvalDecision) {
+      wx.showToast({
+        title: '请选择审批决定',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    const { fileId, userId } = this.data.currentApproval;
+    const { approvalDecision, approvalComment } = this.data;
+    
+    try {
+      wx.showLoading({ title: '提交中...' });
+      
+      // 获取或创建审批记录
+      const approvalData = await post(`/api/v1/files/${fileId}/approve`, {
+        decision: approvalDecision,
+        comments: approvalComment
+      });
+      
+      if (approvalData.success) {
+        wx.showToast({
+          title: '审批提交成功',
+          icon: 'success'
+        });
+        
+        // 关闭模态框
+        this.hideApprovalModal();
+        
+        // 重新加载数据
+        await this.loadTemplateData(this.data.templateId);
+      } else {
+        throw new Error(approvalData.error || '审批提交失败');
+      }
+    } catch (err) {
+      console.error('审批提交失败:', err);
+      wx.showToast({
+        title: err.message || '审批失败',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  }
 });

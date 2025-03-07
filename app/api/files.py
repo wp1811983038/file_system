@@ -591,3 +591,66 @@ def get_approval_progress(current_user, file_id):
         current_app.logger.error(f"获取审批进度失败: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+    
+
+
+@bp.route('/<int:file_id>/approve', methods=['POST'])
+@token_required
+@admin_required
+def approve_file(current_user, file_id):
+    """管理员审批文件"""
+    try:
+        current_app.logger.info(f'开始处理文件审批请求: file_id={file_id}, admin_id={current_user.id}')
+        
+        # 获取文件信息
+        file = UserFile.query.get_or_404(file_id)
+        
+        # 获取请求数据
+        data = request.get_json()
+        decision = data.get('decision')
+        comments = data.get('comments', '')
+        
+        if decision not in ['approved', 'rejected']:
+            current_app.logger.warning(f'无效的审批决定: decision={decision}')
+            return jsonify({'error': '无效的审批决定', 'success': False}), 400
+        
+        # 查找现有审批记录，如果没有则创建新的
+        approval = FileApproval.query.filter_by(
+            file_id=file.id,
+            approver_id=current_user.id,
+        ).first()
+        
+        if not approval:
+            approval = FileApproval(
+                file_id=file.id,
+                approver_id=current_user.id,
+                status='pending'
+            )
+            db.session.add(approval)
+        
+        # 更新审批记录
+        approval.status = decision
+        approval.comments = comments
+        approval.approval_date = datetime.utcnow()
+        
+        # 更新文件状态
+        if decision == 'approved':
+            file.status = 'approved'
+        else:
+            file.status = 'rejected'
+        
+        db.session.commit()
+        
+        current_app.logger.info(f'文件审批成功: file_id={file.id}, decision={decision}, status={file.status}')
+        
+        return jsonify({
+            'message': '审批成功',
+            'status': file.status,
+            'success': True
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"审批文件失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e), 'success': False}), 500
