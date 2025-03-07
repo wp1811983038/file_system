@@ -125,10 +125,12 @@
 /* 搜索框 */
 .search-box {
   margin-bottom: 20rpx;
+  display: flex;
+  gap: 20rpx;
 }
 
 .search-input {
-  width: 100%;
+  flex: 1;
   height: 72rpx;
   background: #f9fafb;
   border: 1rpx solid #e5e7eb;
@@ -136,6 +138,18 @@
   padding: 0 20rpx;
   font-size: 28rpx;
   box-sizing: border-box;
+}
+
+.batch-approve-btn {
+  background: #8b5cf6;
+  color: white;
+  font-size: 26rpx;
+  padding: 0 20rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 /* 表格样式 */
@@ -148,20 +162,53 @@
   display: flex;
   background: #f9fafb;
   border-bottom: 1rpx solid #e5e7eb;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .th {
-  flex: 1;
-  padding: 20rpx 16rpx;
   font-size: 28rpx;
   font-weight: 600;
   color: #374151;
-  min-width: 150rpx;
+  padding: 20rpx 10rpx;
+  text-align: left;
 }
 
+/* 列宽定义 - 显著减少用户名列宽度，消除多余空白 */
+.th-username, .td-username {
+  width: 15%;
+  min-width: 80rpx;
+  padding-right: 0;
+}
+
+.th-company, .td-company {
+  width: 35%; 
+  min-width: 160rpx;
+}
+
+.th-date, .td-date {
+  width: 25%;
+  min-width: 140rpx;
+}
+
+.th-actions, .td-actions {
+  width: 25%;
+  min-width: 160rpx;
+}
+
+/* 未提交用户表格的联系方式列 */
+.th-contact, .td-contact {
+  width: 25%;
+  min-width: 140rpx;
+}
+
+/* 表格行样式 */
 .table-row {
   display: flex;
   border-bottom: 1rpx solid #e5e7eb;
+  min-height: 80rpx; /* 稍微减小行高 */
+  width: 100%;
+  table-layout: fixed;
 }
 
 .table-row:last-child {
@@ -173,28 +220,42 @@
 }
 
 .td {
-  flex: 1;
-  padding: 20rpx 16rpx;
   font-size: 28rpx;
   color: #4b5563;
+  padding: 20rpx 10rpx;
+  text-align: left;
+  /* 修改为支持换行 */
+  white-space: normal;
+  word-wrap: break-word;
   word-break: break-all;
-  min-width: 150rpx;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
 
 .actions {
   display: flex;
-  gap: 10rpx;
+  gap: 6rpx;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
 
 .action-btn {
   font-size: 24rpx !important;
-  padding: 6rpx 16rpx !important;
+  padding: 4rpx 12rpx !important;
   border-radius: 6rpx;
   min-width: auto;
   margin: 0 !important;
   line-height: 1.6 !important;
+}
+
+/* 优化按钮组样式 */
+.compact-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .preview-btn {
@@ -207,7 +268,82 @@
   color: white;
 }
 
+.approve-btn {
+  background: #8b5cf6;
+  color: white;
+}
 
+/* 审批按钮状态样式 */
+.btn-approved {
+  background: #10b981 !important;
+  color: white;
+}
+
+.btn-rejected {
+  background: #ef4444 !important;
+  color: white;
+}
+
+/* 审批状态标签样式 */
+.status-badge {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  min-width: 80rpx;
+  text-align: center;
+  align-self: flex-start;
+}
+
+.status-approved {
+  background: #dcfce7;
+  border: 1rpx solid #86efac;
+  color: #16a34a;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  border: 1rpx solid #fca5a5;
+  color: #dc2626;
+}
+
+.status-pending {
+  background: #fef3c7;
+  border: 1rpx solid #fcd34d;
+  color: #d97706;
+}
+
+/* 日期和状态显示 */
+.date-and-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.text-approved {
+  color: #16a34a;
+}
+
+.text-rejected {
+  color: #dc2626;
+}
+
+.text-pending {
+  color: #d97706;
+}
+
+/* 分析页面审批状态颜色 */
+.approved-text {
+  color: #16a34a;
+}
+
+.rejected-text {
+  color: #dc2626;
+}
+
+.pending-text {
+  color: #d97706;
+}
 
 /* 无数据提示 */
 .no-data {
@@ -496,4 +632,104 @@ textarea {
   font-size: 28rpx;
   padding: 12rpx 32rpx;
   border-radius: 6rpx;
+}
+
+/* 审批模态框样式 */
+.approval-info {
+  padding: 24rpx;
+  background-color: #f9fafb;
+  border-bottom: 1rpx solid #e5e7eb;
+}
+
+.approval-item {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+
+.approval-item:last-child {
+  margin-bottom: 0;
+}
+
+.approval-item .label {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #4b5563;
+}
+
+.approval-item .value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1f2937;
+}
+
+.btn-approve {
+  background: #10b981;
+  color: white;
+  font-size: 28rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 6rpx;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+  font-size: 28rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 6rpx;
+}
+
+/* 审批历史样式 */
+.approval-history {
+  padding: 20rpx 24rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.history-content {
+  padding: 16rpx;
+  background: #f3f4f6;
+  border-radius: 8rpx;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.history-date {
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+.history-user {
+  font-size: 26rpx;
+  color: #4b5563;
+}
+
+.history-status {
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.history-comments {
+  font-size: 26rpx;
+  color: #4b5563;
+  margin-top: 8rpx;
+  word-break: break-all;
+}
+
+/* 批量审批样式 */
+.batch-info {
+  padding: 24rpx;
+  font-size: 28rpx;
+  color: #4b5563;
+  text-align: center;
 }

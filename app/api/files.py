@@ -458,3 +458,170 @@ def download_template(current_user, template_id):
 #     except Exception as e:
 #         current_app.logger.error(f"下载失败: {str(e)}")
 #         return jsonify({'error': '下载失败'}), 500
+
+
+
+
+# 导入文件审批模型
+from app.models.file_approval import FileApproval
+
+@bp.route('/submissions/approve/<int:file_id>', methods=['POST'])
+@token_required
+@admin_required
+def approve_submission(current_user, file_id):
+    """管理员审批用户提交的文件"""
+    try:
+        current_app.logger.info(f'开始处理文件审批请求: file_id={file_id}, approver_id={current_user.id}')
+        
+        # 检查文件是否存在
+        user_file = UserFile.query.get_or_404(file_id)
+        current_app.logger.info(f'找到文件: id={user_file.id}, user_id={user_file.user_id}, template_id={user_file.template_id}')
+        
+        data = request.get_json()
+        approval_status = data.get('status')
+        comments = data.get('comments', '')
+        
+        if approval_status not in ['approved', 'rejected']:
+            current_app.logger.error(f'无效的审批状态: {approval_status}')
+            return jsonify({'error': '无效的审批状态'}), 400
+        
+        # 检查是否已存在审批记录
+        existing_approval = FileApproval.query.filter_by(file_id=file_id).first()
+        
+        if existing_approval:
+            # 更新现有审批记录
+            existing_approval.status = approval_status
+            existing_approval.comments = comments
+            existing_approval.approval_date = datetime.utcnow()
+            existing_approval.approver_id = current_user.id
+            current_app.logger.info(f'更新审批记录: id={existing_approval.id}, status={approval_status}')
+        else:
+            # 创建新的审批记录
+            approval = FileApproval(
+                file_id=file_id,
+                approver_id=current_user.id,
+                status=approval_status,
+                comments=comments,
+                approval_date=datetime.utcnow()
+            )
+            db.session.add(approval)
+            current_app.logger.info(f'创建新审批记录: status={approval_status}')
+        
+        # 更新用户文件状态
+        user_file.status = approval_status
+        db.session.commit()
+        
+        return jsonify({
+            'message': '审批成功',
+            'status': approval_status
+        })
+    except Exception as e:
+        current_app.logger.error(f'审批文件时出错: {str(e)}')
+        current_app.logger.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+
+@bp.route('/submissions/approval/<int:file_id>', methods=['GET'])
+@token_required
+def get_submission_approval(current_user, file_id):
+    """获取文件的审批信息"""
+    try:
+        # 检查文件是否存在
+        user_file = UserFile.query.get_or_404(file_id)
+        
+        # 检查权限 - 管理员可以查看所有，普通用户只能查看自己的
+        if not current_user.is_admin and user_file.user_id != current_user.id:
+            return jsonify({'error': '无权访问此文件审批信息'}), 403
+        
+        # 获取审批记录
+        approval = FileApproval.query.filter_by(file_id=file_id).first()
+        
+        if not approval:
+            return jsonify({
+                'file_id': file_id,
+                'status': user_file.status,
+                'has_approval': False
+            })
+        
+        return jsonify({
+            'file_id': file_id,
+            'approval': approval.to_dict(),
+            'status': user_file.status,
+            'has_approval': True
+        })
+    except Exception as e:
+        current_app.logger.error(f'获取审批信息时出错: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@bp.route('/submissions/approve/batch', methods=['POST'])
+@token_required
+@admin_required
+def batch_approve_submissions(current_user):
+    """批量审批用户提交的文件"""
+    try:
+        data = request.get_json()
+        file_ids = data.get('file_ids', [])
+        approval_status = data.get('status')
+        comments = data.get('comments', '')
+        
+        if not file_ids:
+            return jsonify({'error': '未指定文件ID'}), 400
+            
+        if approval_status not in ['approved', 'rejected']:
+            return jsonify({'error': '无效的审批状态'}), 400
+        
+        current_app.logger.info(f'开始批量审批文件: file_ids={file_ids}, status={approval_status}')
+        
+        approved_count = 0
+        for file_id in file_ids:
+            try:
+                # 检查文件是否存在
+                user_file = UserFile.query.get(file_id)
+                if not user_file:
+                    current_app.logger.warning(f'文件不存在: id={file_id}')
+                    continue
+                
+                # 检查是否已存在审批记录
+                existing_approval = FileApproval.query.filter_by(file_id=file_id).first()
+                
+                if existing_approval:
+                    # 更新现有审批记录
+                    existing_approval.status = approval_status
+                    existing_approval.comments = comments
+                    existing_approval.approval_date = datetime.utcnow()
+                    existing_approval.approver_id = current_user.id
+                else:
+                    # 创建新的审批记录
+                    approval = FileApproval(
+                        file_id=file_id,
+                        approver_id=current_user.id,
+                        status=approval_status,
+                        comments=comments,
+                        approval_date=datetime.utcnow()
+                    )
+                    db.session.add(approval)
+                
+                # 更新用户文件状态
+                user_file.status = approval_status
+                approved_count += 1
+                
+            except Exception as e:
+                current_app.logger.error(f'审批文件 {file_id} 时出错: {str(e)}')
+                # 继续处理下一个文件，不中断批量处理
+        
+        db.session.commit()
+        current_app.logger.info(f'批量审批完成，成功处理 {approved_count}/{len(file_ids)} 个文件')
+        
+        return jsonify({
+            'message': f'批量审批成功，已处理 {approved_count}/{len(file_ids)} 个文件',
+            'approved_count': approved_count,
+            'total_count': len(file_ids)
+        })
+    except Exception as e:
+        current_app.logger.error(f'批量审批文件时出错: {str(e)}')
+        current_app.logger.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

@@ -41,14 +41,15 @@
   <view class="tab-content" wx:if="{{activeTab === 'submitted'}}">
     <view class="search-box">
       <input type="text" class="search-input" placeholder="搜索用户名或公司名称..." bindinput="onSearchSubmitted"/>
+      <button class="action-btn batch-approve-btn" bindtap="showBatchApprovalModal" wx:if="{{filteredSubmittedUsers.length > 0}}">批量审批</button>
     </view>
 
     <view class="table-container">
       <view class="table-header">
-        <view class="th">用户名</view>
-        <view class="th">公司名称</view>
-        <view class="th">提交时间</view>
-        <view class="th">操作</view>
+        <view class="th th-username">用户名</view>
+        <view class="th th-company">公司名称</view>
+        <view class="th th-date">提交时间</view>
+        <view class="th th-actions">操作</view>
       </view>
 
       <view class="no-data" wx:if="{{!filteredSubmittedUsers.length}}">
@@ -57,20 +58,29 @@
 
       <block wx:else>
         <view class="table-row" wx:for="{{filteredSubmittedUsers}}" wx:key="user_id">
-          <view class="td">{{item.username}}</view>
-          <view class="td">{{item.company_name || '未设置'}}</view>
-          <view class="td">{{item.submission.upload_date}}</view>
-          <view class="td actions">
-            <button class="action-btn preview-btn" 
-                    bindtap="previewSubmission" 
-                    data-user-id="{{item.user_id}}">
-              预览
-            </button>
-            <button class="action-btn download-btn" 
-                    bindtap="downloadSubmission" 
-                    data-user-id="{{item.user_id}}">
-              下载
-            </button>
+          <text class="td td-username">{{item.username}}</text>
+          <text class="td td-company">{{item.company_name || '未设置'}}</text>
+          <text class="td td-date">{{item.submission.upload_date}}</text>
+          <view class="td td-actions">
+            <view class="compact-btn-group">
+              <button class="action-btn download-btn" 
+                      bindtap="downloadSubmission" 
+                      data-user-id="{{item.user_id}}">
+                下载
+              </button>
+              <button class="action-btn preview-btn" 
+                      bindtap="previewSubmission" 
+                      data-user-id="{{item.user_id}}">
+                查看
+              </button>
+              <button class="action-btn approve-btn {{item.submission.status === 'approved' ? 'btn-approved' : (item.submission.status === 'rejected' ? 'btn-rejected' : '')}}" 
+                      bindtap="showApprovalModal" 
+                      data-file-id="{{item.submission.id}}"
+                      data-user-name="{{item.username}}"
+                      data-status="{{item.submission.status}}">
+                {{item.submission.status === 'approved' ? '已批准' : (item.submission.status === 'rejected' ? '已拒绝' : '审批')}}
+              </button>
+            </view>
           </view>
         </view>
       </block>
@@ -85,9 +95,9 @@
 
     <view class="table-container">
       <view class="table-header">
-        <view class="th">用户名</view>
-        <view class="th">公司名称</view>
-        <view class="th">联系方式</view>
+        <view class="th th-username">用户名</view>
+        <view class="th th-company">公司名称</view>
+        <view class="th th-contact">联系方式</view>
       </view>
 
       <view class="no-data" wx:if="{{!filteredPendingUsers.length}}">
@@ -96,9 +106,9 @@
 
       <block wx:else>
         <view class="table-row" wx:for="{{filteredPendingUsers}}" wx:key="user_id">
-          <view class="td">{{item.username}}</view>
-          <view class="td">{{item.company_name || '未设置'}}</view>
-          <view class="td">{{item.contact_info || '未设置'}}</view>
+          <text class="td td-username">{{item.username}}</text>
+          <text class="td td-company">{{item.company_name || '未设置'}}</text>
+          <text class="td td-contact">{{item.contact_info || '未设置'}}</text>
         </view>
       </block>
     </view>
@@ -129,6 +139,29 @@
       </view>
     </view>
 
+    <!-- 审批统计 -->
+    <view class="analytics-card">
+      <view class="card-title">审批情况</view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value approved-text">{{approvedCount || 0}}</text>
+          <text class="stat-label">已批准</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value rejected-text">{{rejectedCount || 0}}</text>
+          <text class="stat-label">已拒绝</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value pending-text">{{pendingApprovalCount || 0}}</text>
+          <text class="stat-label">待审批</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{submittedCount}}</text>
+          <text class="stat-label">提交总数</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 提交率饼图 -->
     <view class="analytics-card">
       <view class="card-title">提交率分析</view>
@@ -146,5 +179,82 @@
     </view>
   </view>
 
-
+  <!-- 审批模态框 -->
+  <view class="modal" wx:if="{{showApproval}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideApprovalModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text>文件审批</text>
+        <text class="close" bindtap="hideApprovalModal">×</text>
+      </view>
+      
+      <view class="approval-info">
+        <view class="approval-item">
+          <text class="label">提交用户:</text>
+          <text class="value">{{currentApproval.userName}}</text>
+        </view>
+        <view class="approval-item">
+          <text class="label">当前状态:</text>
+          <text class="value">
+            <text class="status-text {{currentApproval.status === 'approved' ? 'text-approved' : (currentApproval.status === 'rejected' ? 'text-rejected' : 'text-pending')}}">
+              {{currentApproval.status === 'approved' ? '已批准' : (currentApproval.status === 'rejected' ? '已拒绝' : '待审批')}}
+            </text>
+          </text>
+        </view>
+      </view>
+      
+      <form bindsubmit="handleApproval">
+        <view class="form-item">
+          <text class="label">审批意见</text>
+          <textarea name="comments" placeholder="请输入审批意见..." value="{{currentApproval.comments}}" bindinput="onCommentsInput"></textarea>
+        </view>
+        
+        <view class="approval-history" wx:if="{{approvalHistory}}">
+          <text class="section-title">审批历史</text>
+          <view class="history-content">
+            <view class="history-item">
+              <text class="history-date">{{approvalHistory.approval_date}}</text>
+              <text class="history-user">审批人: {{approvalHistory.approver_name}}</text>
+              <text class="history-status {{approvalHistory.status === 'approved' ? 'text-approved' : 'text-rejected'}}">
+                状态: {{approvalHistory.status === 'approved' ? '批准' : '拒绝'}}
+              </text>
+              <text class="history-comments">{{approvalHistory.comments || '无审批意见'}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="form-actions">
+          <button class="btn-reject" bindtap="handleReject">拒绝</button>
+          <button class="btn-approve" bindtap="handleApprove">批准</button>
+        </view>
+      </form>
+    </view>
+  </view>
+  
+  <!-- 批量审批模态框 -->
+  <view class="modal" wx:if="{{showBatchApproval}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideBatchApprovalModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text>批量审批</text>
+        <text class="close" bindtap="hideBatchApprovalModal">×</text>
+      </view>
+      
+      <form bindsubmit="handleBatchApproval">
+        <view class="batch-info">
+          <text>已选择 {{selectedFiles.length}} 个文件进行审批</text>
+        </view>
+        
+        <view class="form-item">
+          <text class="label">审批意见</text>
+          <textarea name="comments" placeholder="请输入批量审批意见..."></textarea>
+        </view>
+        
+        <view class="form-actions">
+          <button class="btn-reject" bindtap="handleBatchReject">批量拒绝</button>
+          <button class="btn-approve" bindtap="handleBatchApprove">批量批准</button>
+        </view>
+      </form>
+    </view>
+  </view>
 </view>
