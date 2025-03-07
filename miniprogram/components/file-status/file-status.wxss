@@ -1,0 +1,36 @@
+.status-badge {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.status-draft {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.status-submitted {
+  background: #e6f7ff;
+  border: 1rpx solid #91d5ff;
+  color: #1890ff;
+}
+
+.status-under-review {
+  background: #fff7e6;
+  border: 1rpx solid #ffd591;
+  color: #fa8c16;
+}
+
+.status-approved {
+  background: #f6ffed;
+  border: 1rpx solid #b7eb8f;
+  color: #52c41a;
+}
+
+.status-rejected {
+  background: #fff1f0;
+  border: 1rpx solid #ffa39e;
+  color: #f5222d;
+}

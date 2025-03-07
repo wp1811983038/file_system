@@ -1,5 +1,6 @@
 // pages/user/files/list.js
 const app = getApp()
+const fileUtils = require('../../../utils/file')
 
 // 文件处理工具函数 - 下载并直接打开预览
 async function handleFileWithPreview(tempFilePath, options = {}) {
@@ -75,14 +76,32 @@ Page({
     currentTemplateId: null,
     isResubmit: false,
     currentUserId: null,
-    showDescriptionModal: false,  // 控制描述模态框显示
-    currentDescription: ''        // 当前查看的描述内容
+    showDescriptionModal: false,   // 控制描述模态框显示
+    currentDescription: '',        // 当前查看的描述内容
+    showApprovalModal: false,      // 控制审批进度模态框显示
+    currentApproval: null,         // 当前审批信息
+    showFileViewModal: false,      // 控制文件查看模态框显示
+    currentFileId: null            // 当前查看的文件ID
   },
 
-  onLoad() {
-    console.log('页面加载')
+  onLoad(options) {
+    console.log('页面加载', options)
     this.loadUserInfo()
     this.loadTemplates()
+    
+    // 如果是从审批页面返回并需要重新提交
+    if (options && options.resubmit === 'true' && options.templateId) {
+      setTimeout(() => {
+        this.openUploadModal({
+          currentTarget: {
+            dataset: {
+              templateId: options.templateId,
+              isResubmit: true
+            }
+          }
+        })
+      }, 500)
+    }
   },
 
   onShow() {
@@ -121,6 +140,88 @@ Page({
   closeDescriptionModal() {
     this.setData({
       showDescriptionModal: false
+    });
+  },
+  
+  // 显示审批进度模态框
+  async viewApprovalProgress(e) {
+    const fileId = e.currentTarget.dataset.fileId;
+    if (!fileId) {
+      wx.showToast({
+        title: '文件ID不能为空',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    try {
+      wx.showLoading({ title: '加载中...' });
+      
+      const token = wx.getStorageSync('token');
+      
+      if (!token) {
+        wx.redirectTo({ url: '/pages/login/login' });
+        return;
+      }
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/files/${fileId}/approval-progress`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      if (res.statusCode === 200) {
+        this.setData({
+          showApprovalModal: true,
+          currentApproval: {
+            status: res.data.file_info.status,
+            steps: res.data.approval_history
+          }
+        });
+      } else {
+        throw new Error(res.data.error || '获取审批进度失败');
+      }
+    } catch (err) {
+      console.error('加载审批进度失败:', err);
+      wx.showToast({
+        title: err.message || '加载失败',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+  
+  // 关闭审批进度模态框
+  closeApprovalModal() {
+    this.setData({
+      showApprovalModal: false,
+      currentApproval: null
+    });
+  },
+  
+  // 显示文件查看模态框
+  viewFile(e) {
+    const fileId = e.currentTarget.dataset.fileId;
+    if (!fileId) return;
+    
+    this.setData({
+      showFileViewModal: true,
+      currentFileId: fileId
+    });
+  },
+  
+  // 关闭文件查看模态框
+  closeFileViewModal() {
+    this.setData({
+      showFileViewModal: false,
+      currentFileId: null
     });
   },
 
@@ -286,121 +387,162 @@ Page({
   },
 
   // 提交文件
-  // 修改文件上传部分代码
-
-// 提交文件
-// 通过URL参数传递文件名
-async submitFile() {
-  if (!this.data.selectedFile) {
-    wx.showToast({
-      title: '请选择文件',
-      icon: 'none'
-    })
-    return
-  }
-
-  try {
-    const file = this.data.selectedFile
-    console.log('开始提交文件:', {
-      templateId: this.data.currentTemplateId,
-      fileName: file.name,
-      size: file.size,
-      type: file.type
-    })
-
-    const token = wx.getStorageSync('token')
-    const timestamp = new Date().getTime()
-
-    // 对文件名进行URL编码，以便能在URL中安全传递
-    const encodedFileName = encodeURIComponent(file.name)
-    
-    wx.showLoading({ title: '准备上传...' })
-
-    const uploadRes = await new Promise((resolve, reject) => {
-      const uploadTask = wx.uploadFile({
-        // 在URL中添加originalName参数
-        url: `${app.globalData.baseUrl}/api/v1/files/upload/${this.data.currentTemplateId}?t=${timestamp}&originalName=${encodedFileName}`,
-        filePath: file.path,
-        name: 'file',
-        formData: {
-          // 在表单数据中也添加，以确保至少一种方式能被后端接收
-          originalFilename: file.name,
-          original_filename: file.name,
-          filename: file.name
-        },
-        header: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          // 同时在HTTP头中添加
-          'X-Original-Filename': file.name
-        },
-        success: (res) => {
-          console.log('上传成功响应:', res)
-          resolve(res)
-        },
-        fail: (error) => {
-          console.error('上传失败:', error)
-          reject(error)
-        }
+  async submitFile() {
+    if (!this.data.selectedFile) {
+      wx.showToast({
+        title: '请选择文件',
+        icon: 'none'
       })
-
-      uploadTask.onProgressUpdate((res) => {
-        wx.showLoading({
-          title: `上传中 ${res.progress}%`
-        })
-      })
-    })
-
-    console.log('完整上传响应:', uploadRes)
-
-    if (uploadRes.statusCode === 200) {
-      try {
-        const responseData = JSON.parse(uploadRes.data)
-        console.log('解析后的响应数据:', responseData)
-
-        if (responseData.error) {
-          throw new Error(responseData.error)
-        }
-
-        wx.showToast({
-          title: '提交成功',
-          icon: 'success',
-          duration: 2000
-        })
-
-        this.closeUploadModal()
-        await this.loadTemplates()
-      } catch (parseError) {
-        console.error('解析响应数据失败:', {
-          error: parseError,
-          responseData: uploadRes.data
-        })
-        throw new Error('提交失败，请重试')
-      }
-    } else {
-      console.error('上传失败，状态码:', uploadRes.statusCode)
-      let errorMessage = '上传失败'
-      try {
-        const errorData = JSON.parse(uploadRes.data)
-        errorMessage = errorData.error || errorMessage
-      } catch (e) {
-        console.warn('解析错误响应失败:', e)
-      }
-      throw new Error(errorMessage)
+      return
     }
-  } catch (err) {
-    console.error('提交文件失败:', err, err.stack)
-    wx.showToast({
-      title: err.message || '提交失败',
-      icon: 'none',
-      duration: 2000
-    })
-  } finally {
-    setTimeout(() => {
-      wx.hideLoading()
-    }, 100)
-  }
-},
+
+    try {
+      const file = this.data.selectedFile
+      console.log('开始提交文件:', {
+        templateId: this.data.currentTemplateId,
+        fileName: file.name,
+        size: file.size,
+        type: file.type
+      })
+
+      const token = wx.getStorageSync('token')
+      const timestamp = new Date().getTime()
+
+      // 对文件名进行URL编码，以便能在URL中安全传递
+      const encodedFileName = encodeURIComponent(file.name)
+      
+      wx.showLoading({ title: '准备上传...' })
+
+      const uploadRes = await new Promise((resolve, reject) => {
+        const uploadTask = wx.uploadFile({
+          // 在URL中添加originalName参数
+          url: `${app.globalData.baseUrl}/api/v1/files/upload/${this.data.currentTemplateId}?t=${timestamp}&originalName=${encodedFileName}`,
+          filePath: file.path,
+          name: 'file',
+          formData: {
+            // 在表单数据中也添加，以确保至少一种方式能被后端接收
+            originalFilename: file.name,
+            original_filename: file.name,
+            filename: file.name
+          },
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            // 同时在HTTP头中添加
+            'X-Original-Filename': file.name
+          },
+          success: (res) => {
+            console.log('上传成功响应:', res)
+            resolve(res)
+          },
+          fail: (error) => {
+            console.error('上传失败:', error)
+            reject(error)
+          }
+        })
+
+        uploadTask.onProgressUpdate((res) => {
+          wx.showLoading({
+            title: `上传中 ${res.progress}%`
+          })
+        })
+      })
+
+      console.log('完整上传响应:', uploadRes)
+
+      if (uploadRes.statusCode === 200) {
+        try {
+          const responseData = JSON.parse(uploadRes.data)
+          console.log('解析后的响应数据:', responseData)
+
+          if (responseData.error) {
+            throw new Error(responseData.error)
+          }
+          
+          // 提交文件进入审批流程
+          await this.submitForApproval(responseData.file_id);
+
+          wx.showToast({
+            title: '提交成功',
+            icon: 'success',
+            duration: 2000
+          })
+
+          this.closeUploadModal()
+          await this.loadTemplates()
+        } catch (parseError) {
+          console.error('解析响应数据失败:', {
+            error: parseError,
+            responseData: uploadRes.data
+          })
+          throw new Error('提交失败，请重试')
+        }
+      } else {
+        console.error('上传失败，状态码:', uploadRes.statusCode)
+        let errorMessage = '上传失败'
+        try {
+          const errorData = JSON.parse(uploadRes.data)
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          console.warn('解析错误响应失败:', e)
+        }
+        throw new Error(errorMessage)
+      }
+    } catch (err) {
+      console.error('提交文件失败:', err, err.stack)
+      wx.showToast({
+        title: err.message || '提交失败',
+        icon: 'none',
+        duration: 2000
+      })
+    } finally {
+      setTimeout(() => {
+        wx.hideLoading()
+      }, 100)
+    }
+  },
+  
+  // 提交审批
+  async submitForApproval(fileId) {
+    try {
+      if (!fileId) {
+        throw new Error('文件ID不能为空');
+      }
+      
+      const token = wx.getStorageSync('token');
+      if (!token) {
+        throw new Error('未登录');
+      }
+      
+      wx.showLoading({ title: '正在提交审批...' });
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/files/submit/${fileId}`,
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      if (res.statusCode === 200) {
+        console.log('审批提交成功:', res.data);
+        return true;
+      } else {
+        throw new Error(res.data.error || '提交审批失败');
+      }
+    } catch (err) {
+      console.error('提交审批失败:', err);
+      // 这里不显示提示，因为主流程中已经有成功提示了
+      return false;
+    } finally {
+      wx.hideLoading();
+    }
+  },
 
   // 打开操作菜单
   openActionSheet(e) {
@@ -565,13 +707,12 @@ async submitFile() {
 
   // 下载提交文件 - 优化版
   async downloadSubmission(e) {
-    const { templateId } = e.currentTarget.dataset;
-    const userId = this.data.currentUserId;
-    console.log('下载提交文件:', { userId, templateId });
+    const fileId = e.currentTarget.dataset.fileId;
+    console.log('下载提交文件:', { fileId });
 
-    if (!userId || !templateId) {
+    if (!fileId) {
       wx.showToast({
-        title: '无效的请求参数',
+        title: '无效的文件ID',
         icon: 'none'
       });
       return;
@@ -587,7 +728,7 @@ async submitFile() {
       // 下载文件
       const downloadRes = await new Promise((resolve, reject) => {
         const downloadTask = wx.downloadFile({
-          url: `${app.globalData.baseUrl}/api/v1/files/download/submission/${userId}/${templateId}?t=${timestamp}&r=${random}`,
+          url: `${app.globalData.baseUrl}/api/v1/files/download/submission/${fileId}?t=${timestamp}&r=${random}`,
           header: {
             'Authorization': `Bearer ${token}`,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -610,14 +751,8 @@ async submitFile() {
       wx.hideLoading();
 
       if (downloadRes.statusCode === 200) {
-        // 获取模板名作为文件名
-        const template = this.data.templates.find(t => t.id === templateId);
-        const fileName = template ? template.name : '下载文件';
-        
         // 处理文件直接预览
-        await handleFileWithPreview(downloadRes.tempFilePath, {
-          fileName: fileName
-        });
+        await handleFileWithPreview(downloadRes.tempFilePath);
         
         wx.showToast({
           title: '下载成功',
@@ -630,6 +765,66 @@ async submitFile() {
       console.error('下载文件失败:', err);
       wx.showToast({
         title: '下载失败',
+        icon: 'none'
+      });
+    }
+  },
+  
+  // 预览提交文件
+  async previewSubmission(e) {
+    const fileId = e.currentTarget.dataset.fileId;
+    console.log('预览提交文件:', { fileId });
+
+    if (!fileId) {
+      wx.showToast({
+        title: '无效的文件ID',
+        icon: 'none'
+      });
+      return;
+    }
+
+    try {
+      const token = wx.getStorageSync('token');
+      const timestamp = new Date().getTime();
+      const random = Math.floor(Math.random() * 10000);
+
+      wx.showLoading({ title: '加载中...' });
+
+      // 下载文件
+      const downloadRes = await new Promise((resolve, reject) => {
+        const downloadTask = wx.downloadFile({
+          url: `${app.globalData.baseUrl}/api/v1/files/preview/submission/${fileId}?t=${timestamp}&r=${random}`,
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          success: resolve,
+          fail: reject
+        });
+        
+        // 监听下载进度
+        downloadTask.onProgressUpdate((res) => {
+          wx.showLoading({
+            title: `加载中 ${res.progress}%`
+          });
+        });
+      });
+
+      console.log('预览响应:', downloadRes);
+      wx.hideLoading();
+
+      if (downloadRes.statusCode === 200) {
+        // 处理文件并直接打开预览
+        await handleFileWithPreview(downloadRes.tempFilePath);
+      } else {
+        throw new Error('预览失败');
+      }
+    } catch (err) {
+      console.error('预览文件失败:', err);
+      wx.showToast({
+        title: '预览失败',
         icon: 'none'
       });
     }

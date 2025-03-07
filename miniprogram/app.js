@@ -1,7 +1,7 @@
 App({
   globalData: {
     // 固定配置 baseUrl，不再使用 process.env
-    baseUrl: 'http://47.115.207.238:5000',
+    baseUrl: 'http://192.168.1.101:5000', //192.168.1.101,47.115.207.238
     // 如需在生产环境使用其他URL，可以手动切换或通过其他方式配置
     // baseUrl: 'https://pdswjgl.cn:5000',
     userInfo: null,

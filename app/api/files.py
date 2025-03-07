@@ -458,3 +458,136 @@ def download_template(current_user, template_id):
 #     except Exception as e:
 #         current_app.logger.error(f"下载失败: {str(e)}")
 #         return jsonify({'error': '下载失败'}), 500
+
+
+
+
+# 审批
+@bp.route('/submit/<int:file_id>', methods=['POST'])
+@token_required
+def submit_file_for_approval(current_user, file_id):
+    """提交文件进入审批流程"""
+    try:
+        current_app.logger.info(f'开始处理文件提交审批请求: file_id={file_id}, user_id={current_user.id}')
+        
+        file = UserFile.query.get_or_404(file_id)
+        
+        # 检查权限
+        if file.user_id != current_user.id and not current_user.is_admin:
+            current_app.logger.warning(f'权限不足: user_id={current_user.id}, file_id={file_id}')
+            return jsonify({'error': '无权限操作此文件'}), 403
+        
+        # 检查文件是否已提交
+        if file.status != 'draft':
+            current_app.logger.warning(f'文件状态错误: file_id={file_id}, status={file.status}')
+            return jsonify({'error': '文件已经提交，无法重复提交'}), 400
+        
+        # 获取审批流程
+        workflow = None
+        if file.workflow_id:
+            workflow = ApprovalWorkflow.query.get(file.workflow_id)
+        elif file.template and file.template.workflow_id:
+            workflow = ApprovalWorkflow.query.get(file.template.workflow_id)
+        
+        if not workflow:
+            current_app.logger.warning(f'未找到审批流程: file_id={file_id}')
+            return jsonify({'error': '未找到审批流程配置'}), 400
+        
+        # 更新文件状态
+        file.status = 'submitted'
+        file.workflow_id = workflow.id
+        file.current_approval_step = 1
+        
+        # 创建第一个审批任务
+        first_step = WorkflowStep.query.filter_by(
+            workflow_id=workflow.id, 
+            step_order=1
+        ).first()
+        
+        if not first_step:
+            current_app.logger.error(f'审批流程配置错误: workflow_id={workflow.id}')
+            return jsonify({'error': '审批流程配置错误'}), 400
+        
+        # 确定审批人
+        approver_id = None
+        if first_step.approver_type == 'user':
+            approver_id = first_step.approver_id
+        else:
+            # 根据角色查找审批人
+            approvers = User.query.filter_by(is_admin=True).all()
+            if approvers:
+                approver_id = approvers[0].id
+        
+        if not approver_id:
+            current_app.logger.error(f'未找到合适的审批人: workflow_id={workflow.id}, step_order=1')
+            return jsonify({'error': '未找到合适的审批人'}), 400
+        
+        # 创建审批记录
+        approval = FileApproval(
+            file_id=file.id,
+            approver_id=approver_id,
+            status='pending'
+        )
+        
+        db.session.add(approval)
+        db.session.commit()
+        
+        current_app.logger.info(f'文件提交审批成功: file_id={file.id}, status={file.status}')
+        
+        return jsonify({
+            'message': '文件已提交审批',
+            'file_id': file.id,
+            'status': file.status
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"提交审批失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/files/<int:file_id>/approval-progress', methods=['GET'])
+@token_required
+def get_approval_progress(current_user, file_id):
+    """获取文件审批进度"""
+    try:
+        file = UserFile.query.get_or_404(file_id)
+        
+        # 检查权限
+        if file.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({'error': '无权限查看此文件审批进度'}), 403
+        
+        # 获取文件信息
+        file_info = {
+            'id': file.id,
+            'filename': file.filename,
+            'template_name': file.template.name if file.template else '',
+            'upload_date': file.upload_date.strftime('%Y-%m-%d %H:%M:%S') if file.upload_date else '',
+            'status': file.status,
+            'current_step': file.current_approval_step
+        }
+        
+        # 获取审批历史
+        approvals = FileApproval.query.filter_by(file_id=file.id).order_by(FileApproval.created_at).all()
+        approval_history = []
+        
+        for approval in approvals:
+            approval_data = {
+                'id': approval.id,
+                'approver_id': approval.approver_id,
+                'approver_name': approval.approver.username if approval.approver else '未知',
+                'status': approval.status,
+                'comments': approval.comments,
+                'approval_date': approval.approval_date.strftime('%Y-%m-%d %H:%M:%S') if approval.approval_date else None
+            }
+            approval_history.append(approval_data)
+        
+        return jsonify({
+            'file_info': file_info,
+            'approval_history': approval_history
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"获取审批进度失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500

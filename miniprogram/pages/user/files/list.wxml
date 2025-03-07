@@ -30,9 +30,13 @@
           {{item.description || '无'}}
         </view>
         <view class="td">
-          <text class="status-badge {{item.status ? 'status-submitted' : 'status-pending'}}">
-            {{item.status ? '已提交' : '未提交'}}
-          </text>
+          <view class="status-badge {{item.status ? 'status-'+item.status : 'status-draft'}}">
+  {{item.status === 'draft' || !item.status ? '草稿' : 
+    item.status === 'submitted' ? '已提交' : 
+    item.status === 'under_review' ? '审核中' : 
+    item.status === 'approved' ? '已通过' : 
+    item.status === 'rejected' ? '已拒绝' : '草稿'}}
+</view>
         </view>
         <view class="td actions">
           <button class="btn download-btn" bindtap="downloadTemplate" 
@@ -41,19 +45,28 @@
             下载
           </button>
           
-          <block wx:if="{{item.status}}">
-            <button class="btn primary-btn" 
-                    bindtap="openActionSheet" 
-                    data-template-id="{{item.id}}">
-              操作
-            </button>
-          </block>
-          <block wx:else>
+          <!-- 根据状态动态显示不同按钮 -->
+          <block wx:if="{{item.status === 'draft' || !item.status}}">
             <button class="btn primary-btn" 
                     bindtap="openUploadModal" 
                     data-template-id="{{item.id}}" 
                     data-is-resubmit="{{false}}">
-              提交
+              上传
+            </button>
+          </block>
+          <block wx:elif="{{item.status === 'submitted' || item.status === 'under_review'}}">
+            <button class="btn info-btn" bindtap="viewApprovalProgress" data-file-id="{{item.submission_id}}">
+              查看进度
+            </button>
+          </block>
+          <block wx:elif="{{item.status === 'rejected'}}">
+            <button class="btn warning-btn" bindtap="openUploadModal" data-template-id="{{item.id}}" data-is-resubmit="{{true}}">
+              重新提交
+            </button>
+          </block>
+          <block wx:elif="{{item.status === 'approved'}}">
+            <button class="btn success-btn" bindtap="viewFile" data-file-id="{{item.submission_id}}">
+              查看文件
             </button>
           </block>
         </view>
@@ -88,6 +101,71 @@
     <view class="description-content">{{currentDescription}}</view>
     <view class="modal-btns">
       <button class="btn primary-btn" bindtap="closeDescriptionModal">关闭</button>
+    </view>
+  </view>
+</view>
+
+<!-- 审批进度查看弹窗 -->
+<view class="modal approval-modal" wx:if="{{showApprovalModal}}" catchtouchmove="preventTouchMove" bindtap="closeApprovalModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-title">审批进度</view>
+    <view class="approval-status">
+      <view class="status-info">
+        <text class="status-label">当前状态：</text>
+        <view class="status-badge {{currentApproval.status === 'submitted' ? 'status-submitted' : 
+                                   currentApproval.status === 'under_review' ? 'status-under-review' : 
+                                   currentApproval.status === 'approved' ? 'status-approved' : 
+                                   currentApproval.status === 'rejected' ? 'status-rejected' : 'status-draft'}}">
+          {{currentApproval.status === 'submitted' ? '已提交' : 
+            currentApproval.status === 'under_review' ? '审核中' : 
+            currentApproval.status === 'approved' ? '已通过' : 
+            currentApproval.status === 'rejected' ? '已拒绝' : '草稿'}}
+        </view>
+      </view>
+    </view>
+    
+    <view class="approval-steps">
+      <view class="approval-step {{step.status === 'pending' ? '' : step.status === 'approved' ? 'approved' : 'rejected'}}" 
+            wx:for="{{currentApproval.steps}}" 
+            wx:for-item="step" 
+            wx:key="index">
+        <view class="step-number">{{index + 1}}</view>
+        <view class="step-info">
+          <view class="step-title">
+            <text>{{step.approver_name || '审批人'}}</text>
+            <text class="step-date" wx:if="{{step.approval_date}}">{{step.approval_date}}</text>
+          </view>
+          <view class="step-comment" wx:if="{{step.comments}}">{{step.comments}}</view>
+        </view>
+        <view class="step-status">
+          <text class="status-text {{step.status}}">
+            {{step.status === 'pending' ? '待审批' : 
+              step.status === 'approved' ? '已通过' : '已拒绝'}}
+          </text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="modal-btns">
+      <button class="btn primary-btn" bindtap="closeApprovalModal">关闭</button>
+    </view>
+  </view>
+</view>
+
+<!-- 文件查看弹窗 -->
+<view class="modal file-view-modal" wx:if="{{showFileViewModal}}" catchtouchmove="preventTouchMove" bindtap="closeFileViewModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-title">查看文件</view>
+    <view class="file-view-options">
+      <button class="btn download-btn" bindtap="downloadSubmission" data-file-id="{{currentFileId}}">
+        下载文件
+      </button>
+      <button class="btn preview-btn" bindtap="previewSubmission" data-file-id="{{currentFileId}}">
+        预览文件
+      </button>
+    </view>
+    <view class="modal-btns">
+      <button class="btn primary-btn" bindtap="closeFileViewModal">关闭</button>
     </view>
   </view>
 </view>

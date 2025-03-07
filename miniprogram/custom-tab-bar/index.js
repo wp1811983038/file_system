@@ -18,6 +18,11 @@ Component({
       text: "用户管理",
       iconPath: "/images/user.png",
       selectedIconPath: "/images/user-active.png"
+    }, {
+      pagePath: "/pages/approval/list",
+      text: "审批",
+      iconPath: "/images/approval.png",
+      selectedIconPath: "/images/approval-active.png"
     }],
     userList: [{
       pagePath: "/pages/user/files/list",

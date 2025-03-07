@@ -524,3 +524,100 @@ def update_settings(current_user):
         db.session.rollback()
         current_app.logger.error(f"更新设置失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+
+
+@bp.route('/workflows', methods=['GET'])
+@token_required
+@admin_required
+def get_workflows(current_user):
+    """获取所有审批流程"""
+    try:
+        current_app.logger.info('获取审批流程列表')
+        
+        workflows = ApprovalWorkflow.query.all()
+        result = []
+        
+        for workflow in workflows:
+            steps = WorkflowStep.query.filter_by(workflow_id=workflow.id).order_by(WorkflowStep.step_order).all()
+            
+            workflow_data = {
+                'id': workflow.id,
+                'name': workflow.name,
+                'description': workflow.description,
+                'is_active': workflow.is_active,
+                'created_at': workflow.created_at.strftime('%Y-%m-%d %H:%M:%S') if workflow.created_at else None,
+                'steps': []
+            }
+            
+            for step in steps:
+                approver_name = None
+                if step.approver_type == 'user' and step.approver_id:
+                    user = User.query.get(step.approver_id)
+                    approver_name = user.username if user else None
+                
+                step_data = {
+                    'id': step.id,
+                    'order': step.step_order,
+                    'approver_type': step.approver_type,
+                    'approver_id': step.approver_id,
+                    'approver_name': approver_name,
+                    'role': step.role
+                }
+                workflow_data['steps'].append(step_data)
+                
+            result.append(workflow_data)
+            
+        current_app.logger.info(f'获取审批流程成功: count={len(result)}')
+        return jsonify({'workflows': result})
+        
+    except Exception as e:
+        current_app.logger.error(f"获取审批流程失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/workflows', methods=['POST'])
+@token_required
+@admin_required
+def create_workflow(current_user):
+    """创建新的审批流程"""
+    try:
+        data = request.get_json()
+        
+        if not data.get('name'):
+            return jsonify({'error': '流程名称不能为空'}), 400
+        
+        workflow = ApprovalWorkflow(
+            name=data.get('name'),
+            description=data.get('description', ''),
+            is_active=data.get('is_active', True)
+        )
+        
+        db.session.add(workflow)
+        db.session.flush()  # 获取ID
+        
+        # 添加审批步骤
+        steps = data.get('steps', [])
+        for i, step_data in enumerate(steps, 1):
+            step = WorkflowStep(
+                workflow_id=workflow.id,
+                step_order=i,
+                approver_type=step_data.get('approver_type', 'role'),
+                approver_id=step_data.get('approver_id'),
+                role=step_data.get('role')
+            )
+            db.session.add(step)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': '审批流程创建成功',
+            'workflow': workflow.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"创建审批流程失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500

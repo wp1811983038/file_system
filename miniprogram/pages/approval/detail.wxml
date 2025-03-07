@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="file-preview">
+    <!-- 文件预览区域 -->
+    <button class="btn-preview" bindtap="previewFile">预览文件</button>
+  </view>
+  
+  <view class="file-info-card">
+    <view class="info-row">
+      <text class="label">文件名:</text>
+      <text class="value">{{fileInfo.filename}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">提交人:</text>
+      <text class="value">{{fileInfo.submitter.username}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">提交时间:</text>
+      <text class="value">{{fileInfo.submitted_date}}</text>
+    </view>
+    <view class="info-row">
+      <text class="label">模板:</text>
+      <text class="value">{{fileInfo.template.name}}</text>
+    </view>
+  </view>
+  
+  <view class="approval-form">
+    <view class="form-title">审批决定</view>
+    
+    <view class="radio-group">
+      <view class="radio-item {{decision === 'approved' ? 'selected' : ''}}" bindtap="selectDecision" data-value="approved">
+        <view class="radio-icon"></view>
+        <text>通过</text>
+      </view>
+      <view class="radio-item {{decision === 'rejected' ? 'selected' : ''}}" bindtap="selectDecision" data-value="rejected">
+        <view class="radio-icon"></view>
+        <text>拒绝</text>
+      </view>
+    </view>
+    
+    <view class="form-group">
+      <text class="label">审批意见</text>
+      <textarea class="comments" placeholder="请输入审批意见..." bindinput="onCommentsInput" value="{{comments}}"></textarea>
+    </view>
+    
+    <button class="btn-submit" bindtap="submitApproval" disabled="{{!decision}}">提交审批</button>
+  </view>
+</view>

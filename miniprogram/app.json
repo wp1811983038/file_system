@@ -8,7 +8,10 @@
     "pages/user/files/list",
     "pages/user/profile/list",
     "pages/user/password/list",
-    "pages/user/profile/edit"
+    "pages/user/profile/edit",
+    "components/file-status/file-status",
+    "pages/approval/progress",
+    "pages/approval/list"
   ],
   "window": {
     "backgroundTextStyle": "light",

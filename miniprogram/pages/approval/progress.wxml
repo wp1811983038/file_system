@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="approval-card">
+    <view class="file-info">
+      <view class="file-name">{{fileInfo.filename}}</view>
+      <view class="file-meta">
+        <text>模板: {{fileInfo.template_name}}</text>
+        <text>提交时间: {{fileInfo.upload_date}}</text>
+      </view>
+    </view>
+    
+    <view class="approval-status">
+      <file-status status="{{fileInfo.status}}" />
+    </view>
+  </view>
+  
+  <view class="section-title">审批流程</view>
+  
+  <view class="approval-steps">
+    <view class="step {{step.status === 'pending' ? 'current' : (step.status === 'approved' ? 'completed' : 'rejected')}}" 
+          wx:for="{{approvalHistory}}" 
+          wx:for-item="step" 
+          wx:key="index">
+      <view class="step-icon">{{index + 1}}</view>
+      <view class="step-content">
+        <view class="step-title">
+          {{step.approver_name}}
+          <text class="step-date" wx:if="{{step.approval_date}}">{{step.approval_date}}</text>
+        </view>
+        <view class="step-comments" wx:if="{{step.comments}}">{{step.comments}}</view>
+      </view>
+      <view class="step-status">
+        <block wx:if="{{step.status === 'pending'}}">
+          <text class="status-text waiting">等待审批</text>
+        </block>
+        <block wx:elif="{{step.status === 'approved'}}">
+          <text class="status-text approved">已通过</text>
+        </block>
+        <block wx:elif="{{step.status === 'rejected'}}">
+          <text class="status-text rejected">已拒绝</text>
+        </block>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 如果被拒绝，显示重新提交按钮 -->
+  <block wx:if="{{fileInfo.status === 'rejected'}}">
+    <view class="button-area">
+      <button class="btn-resubmit" bindtap="resubmitFile">重新提交</button>
+    </view>
+  </block>
+</view>
