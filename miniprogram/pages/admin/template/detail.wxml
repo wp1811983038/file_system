@@ -1,0 +1,174 @@
+<!-- pages/admin/template/detail.wxml -->
+<view class="container">
+  <!-- 顶部信息卡片 -->
+  <view class="header-card">
+    <view class="template-info">
+      <view class="template-name">{{templateName}}</view>
+      <view class="template-meta">
+        <text class="meta-item">ID: {{templateId}}</text>
+        <text class="meta-item">提交情况: {{submittedCount}}/{{totalUsers}}</text>
+        <text class="meta-item">提交率: {{submissionRate}}%</text>
+      </view>
+    </view>
+    
+    <view class="action-buttons">
+      <button class="btn btn-back" bindtap="goBack">返回</button>
+      <button class="btn btn-export" bindtap="exportData">导出数据</button>
+      <button class="btn btn-download" bindtap="downloadTemplate">下载模板</button>
+    </view>
+  </view>
+
+  <!-- 切换标签栏 -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'submitted' ? 'active' : ''}}" 
+          data-tab="submitted" 
+          bindtap="switchTab">
+      已提交 ({{submittedCount}})
+    </view>
+    <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" 
+          data-tab="pending" 
+          bindtap="switchTab">
+      未提交 ({{pendingCount}})
+    </view>
+    <view class="tab {{activeTab === 'analytics' ? 'active' : ''}}" 
+          data-tab="analytics" 
+          bindtap="switchTab">
+      提交率分析
+    </view>
+  </view>
+
+  <!-- 已提交用户列表 -->
+  <view class="tab-content" wx:if="{{activeTab === 'submitted'}}">
+    <view class="search-box">
+      <input type="text" class="search-input" placeholder="搜索用户名或公司名称..." bindinput="onSearchSubmitted"/>
+    </view>
+
+    <view class="table-container">
+      <view class="table-header">
+        <view class="th">用户名</view>
+        <view class="th">公司名称</view>
+        <view class="th">提交时间</view>
+        <view class="th">操作</view>
+      </view>
+
+      <view class="no-data" wx:if="{{!filteredSubmittedUsers.length}}">
+        <text>暂无提交数据</text>
+      </view>
+
+      <block wx:else>
+        <view class="table-row" wx:for="{{filteredSubmittedUsers}}" wx:key="user_id">
+          <view class="td">{{item.username}}</view>
+          <view class="td">{{item.company_name || '未设置'}}</view>
+          <view class="td">{{item.submission.upload_date}}</view>
+          <view class="td actions">
+            <button class="action-btn preview-btn" 
+                    bindtap="previewSubmission" 
+                    data-user-id="{{item.user_id}}">
+              预览
+            </button>
+            <button class="action-btn download-btn" 
+                    bindtap="downloadSubmission" 
+                    data-user-id="{{item.user_id}}">
+              下载
+            </button>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 未提交用户列表 -->
+  <view class="tab-content" wx:if="{{activeTab === 'pending'}}">
+    <view class="search-box">
+      <input type="text" class="search-input" placeholder="搜索用户名或公司名称..." bindinput="onSearchPending"/>
+    </view>
+
+    <view class="table-container">
+      <view class="table-header">
+        <view class="th">用户名</view>
+        <view class="th">公司名称</view>
+        <view class="th">联系方式</view>
+      </view>
+
+      <view class="no-data" wx:if="{{!filteredPendingUsers.length}}">
+        <text>暂无未提交用户</text>
+      </view>
+
+      <block wx:else>
+        <view class="table-row" wx:for="{{filteredPendingUsers}}" wx:key="user_id">
+          <view class="td">{{item.username}}</view>
+          <view class="td">{{item.company_name || '未设置'}}</view>
+          <view class="td">{{item.contact_info || '未设置'}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 提交分析 -->
+  <view class="tab-content analytics-container" wx:if="{{activeTab === 'analytics'}}">
+    <!-- 提交率卡片 -->
+    <view class="analytics-card">
+      <view class="card-title">提交概况</view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">{{submissionRate}}%</text>
+          <text class="stat-label">提交率</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{submittedCount}}</text>
+          <text class="stat-label">已提交</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{pendingCount}}</text>
+          <text class="stat-label">未提交</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{totalUsers}}</text>
+          <text class="stat-label">总用户数</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提交率饼图 -->
+    <view class="analytics-card">
+      <view class="card-title">提交率分析</view>
+      <view class="pie-chart-container">
+        <!-- 饼图 -->
+        <view class="pie-chart">
+          <!-- 背景圆形（未提交部分）-->
+          <view class="pie-background pending"></view>
+          
+          <!-- 已提交部分（扇形） -->
+          <view class="pie-slice submitted" wx:if="{{submissionRate > 0}}" style="clip-path: polygon(50% 50%, 50% 0%, {{submissionRate >= 50 ? '100% 0%, 100% 100%, 0% 100%, 0% 0%,' : ''}} {{submissionRate > 0 && submissionRate < 50 ? '50% 50%, ' + (50 - 50*Math.sin((submissionRate/100)*6.28)) + '% ' + (50 - 50*Math.cos((submissionRate/100)*6.28)) + '%,' : ''}} 50% 0%);">
+          </view>
+          
+          <view class="pie-center">
+            <text>{{submissionRate}}%</text>
+          </view>
+        </view>
+        
+        <!-- 图例 -->
+        <view class="pie-legend">
+          <view class="legend-item">
+            <view class="legend-color submitted"></view>
+            <text class="legend-text">已提交 ({{submittedCount}})</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-color pending"></view>
+            <text class="legend-text">未提交 ({{pendingCount}})</text>
+          </view>
+        </view>
+        
+        <!-- 调试信息 -->
+        <!-- <view class="debug-info">
+          <text>提交率: {{submissionRate}}%</text>
+          <text>转换公式: {{(submissionRate/100)*360}}度</text>
+          <text>已提交: {{submittedCount}}</text>
+          <text>未提交: {{pendingCount}}</text>
+        </view> -->
+      </view>
+    </view>
+  </view>
+
+
+</view>

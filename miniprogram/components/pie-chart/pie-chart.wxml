@@ -1,0 +1,13 @@
+<!-- components/pie-chart/pie-chart.wxml -->
+<view class="pie-chart" style="width: {{radius*2}}rpx; height: {{radius*2}}rpx;">
+  <!-- 背景圆形（未提交部分） -->
+  <view class="pie-background" style="background-color: {{secondaryColor}};"></view>
+  
+  <!-- 已提交部分（扇形） -->
+  <view wx:if="{{showSubmitted}}" class="pie-slice" style="background-color: {{primaryColor}}; clip-path: {{clipPath}};"></view>
+  
+  <!-- 中心百分比显示 -->
+  <view class="pie-center" style="width: {{radius}}rpx; height: {{radius}}rpx;">
+    <text style="font-size: {{fontSize}}rpx;">{{percentage}}%</text>
+  </view>
+</view>

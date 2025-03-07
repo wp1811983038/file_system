@@ -1,125 +1,84 @@
-<!--pages/admin/template/list.wxml-->
+<!-- pages/admin/template/list.wxml -->
 <view class="container">
- <!-- 操作栏 -->
- <view class="action-bar">
-   <button class="btn-upload" bindtap="showUploadModal">上传新模板</button>
- </view>
+  <!-- 顶部操作栏 -->
+  <view class="action-bar">
+    <view class="search-box">
+      <input type="text" class="search-input" placeholder="搜索模板名称..." bindinput="onSearchInput"/>
+      <button class="search-btn" bindtap="handleSearch">搜索</button>
+    </view>
+    <button class="btn-upload" bindtap="showUploadModal">上传新模板</button>
+  </view>
 
+  <!-- 模板列表表格 -->
+  <view class="table-container">
+    <!-- 表头 -->
+    <view class="table-header">
+      <view class="th th-name">模板名称</view>
+      <view class="th th-desc">描述</view>
+      <view class="th th-date">上传日期</view>
+      <view class="th th-status">提交情况</view>
+      <view class="th th-actions">操作</view>
+    </view>
 
- <!-- 模板列表 -->
- <view class="template-list">
-   <view wx:for="{{templates}}" wx:key="id" class="template-item">
-     <view class="template-info">
-       <text class="template-name">{{item.name}}</text>
-       <text class="template-desc">{{item.description || '暂无描述'}}</text>
-       <text class="template-meta">上传时间：{{item.created_at}}</text>
-       <text class="template-meta">提交情况：{{item.submitted_count || 0}}/{{item.total_users || 0}}</text>
-     </view>
-     
-     <view class="template-actions">
-       <button class="btn-download" 
-               bindtap="downloadTemplate" 
-               data-id="{{item.id}}" 
-               data-name="{{item.name}}">下载模板</button>
-       
-       <button class="btn-view" 
-               bindtap="viewSubmissions" 
-               data-id="{{item.id}}" 
-               data-name="{{item.name}}">查看提交</button>
-               
-       <button class="btn-delete" 
-               bindtap="deleteTemplate" 
-               data-id="{{item.id}}">删除</button>
-     </view>
-   </view>
- </view>
+    <!-- 无数据提示 -->
+    <view class="no-data" wx:if="{{!templates.length}}">
+      <text>暂无模板数据</text>
+    </view>
 
- <!-- 上传模态框 -->
- <view class="modal" wx:if="{{showUpload}}">
-   <view class="modal-mask" bindtap="hideUploadModal"></view>
-   <view class="modal-content">
-     <view class="modal-header">
-       <text>上传模板</text>
-       <text class="close" bindtap="hideUploadModal">×</text>
-     </view>
-     <form bindsubmit="handleUpload">
-       <view class="form-item">
-         <text class="label">模板名称</text>
-         <input name="name" placeholder="请输入模板名称" />
-       </view>
-       <view class="form-item">
-         <text class="label">模板描述</text>
-         <textarea name="description" placeholder="请输入模板描述" />
-       </view>
-       <view class="form-item">
-         <text class="label">选择文件</text>
-         <button class="btn-choose" bindtap="chooseFile">选择文件</button>
-         <text wx:if="{{chosenFile}}" class="file-name">{{chosenFile.name}}</text>
-       </view>
-       <view class="form-actions">
-         <button class="btn-cancel" bindtap="hideUploadModal">取消</button>
-         <button class="btn-submit" form-type="submit">确定</button>
-       </view>
-     </form>
-   </view>
- </view>
+    <!-- 表格内容 -->
+    <block wx:else>
+      <view class="table-row" wx:for="{{templates}}" wx:key="id" bindtap="viewSubmissionDetails" data-id="{{item.id}}" data-name="{{item.name}}">
+        <view class="td td-name">{{item.name}}</view>
+        <view class="td td-desc">{{item.description || '无描述'}}</view>
+        <view class="td td-date">{{item.upload_date}}</view>
+        <view class="td td-status">
+          <text class="status-text">{{item.submitted_count || 0}}/{{item.total_users || 0}}</text>
+          <progress class="status-progress" percent="{{(item.submitted_count / item.total_users) * 100 || 0}}" stroke-width="4" color="#10b981" active />
+        </view>
+        <view class="td td-actions" catchtap="stopPropagation">
+          <button class="btn btn-download" catchtap="downloadTemplate" data-id="{{item.id}}" data-name="{{item.name}}">下载</button>
+          <button class="btn btn-delete" catchtap="deleteTemplate" data-id="{{item.id}}">删除</button>
+        </view>
+      </view>
+    </block>
+  </view>
 
- <!-- 提交详情模态框 -->
- <view class="modal" wx:if="{{showSubmissions}}">
-   <view class="modal-mask" bindtap="hideSubmissionsModal"></view>
-   <view class="modal-content">
-     <view class="modal-header">
-       <text>提交详情</text>
-       <text class="close" bindtap="hideSubmissionsModal">×</text>
-     </view>
-     
-     <!-- Tab切换 -->
-     <view class="tabs">
-       <view class="tab {{activeTab === 'submitted' ? 'active' : ''}}" 
-             data-tab="submitted" 
-             bindtap="switchTab">
-         已提交 ({{submittedCount}})
-       </view>
-       <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" 
-             data-tab="pending" 
-             bindtap="switchTab">
-         未提交 ({{pendingCount}})
-       </view>
-     </view>
+  <!-- 加载更多提示 -->
+  <view class="load-more" wx:if="{{templates.length > 0 && hasMoreData}}">
+    <text wx:if="{{isLoading}}">正在加载...</text>
+    <text wx:else bindtap="loadMoreData">加载更多</text>
+  </view>
 
-     <!-- 已提交列表 -->
-     <view class="tab-content" wx:if="{{activeTab === 'submitted'}}">
-       <view wx:for="{{submittedUsers}}" wx:key="id" class="submission-item">
-         <view class="user-info">
-           <text>{{item.username}}</text>
-           <text>{{item.company_name || '未设置公司'}}</text>
-           <text>提交时间：{{item.submission.upload_date}}</text>
-         </view>
-         <view class="action-buttons">
-           <button class="btn-preview" 
-                   bindtap="viewSubmission" 
-                   data-user-id="{{item.user_id}}"
-                   data-template-id="{{currentTemplate.id}}"
-                   data-username="{{item.username}}"
-                   data-template-name="{{currentTemplate.name}}">查看</button>
-           <button class="btn-download" 
-                   bindtap="downloadSubmission" 
-                   data-user-id="{{item.user_id}}"
-                   data-template-id="{{currentTemplate.id}}"
-                   data-username="{{item.username}}"
-                   data-template-name="{{currentTemplate.name}}">下载</button>
-         </view>
-       </view>
-     </view>
-
-     <!-- 未提交列表 -->
-     <view class="tab-content" wx:if="{{activeTab === 'pending'}}">
-       <view wx:for="{{pendingUsers}}" wx:key="id" class="user-item">
-         <text>{{item.username}}</text>
-         <text>{{item.company_name || '未设置公司'}}</text>
-         <text>{{item.contact_info || '未设置联系方式'}}</text>
-       </view>
-     </view>
-   </view>
- </view>
+  <!-- 上传模板模态框 -->
+  <view class="modal" wx:if="{{showUpload}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideUploadModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text>上传模板</text>
+        <text class="close" bindtap="hideUploadModal">×</text>
+      </view>
+      <form bindsubmit="handleUpload">
+        <view class="form-item">
+          <text class="label">模板名称</text>
+          <input name="name" placeholder="请输入模板名称" />
+        </view>
+        <view class="form-item">
+          <text class="label">模板描述</text>
+          <textarea name="description" placeholder="请输入模板描述" />
+        </view>
+        <view class="form-item">
+          <text class="label">选择文件</text>
+          <button class="btn-choose" bindtap="chooseFile">选择文件</button>
+          <text wx:if="{{chosenFile}}" class="file-name">{{chosenFile.name}}</text>
+        </view>
+        <view class="upload-progress" wx:if="{{uploadProgress > 0}}">
+          <progress percent="{{uploadProgress}}" show-info stroke-width="3" />
+        </view>
+        <view class="form-actions">
+          <button class="btn-cancel" bindtap="hideUploadModal">取消</button>
+          <button class="btn-submit" form-type="submit" disabled="{{!chosenFile}}">确定</button>
+        </view>
+      </form>
+    </view>
+  </view>
 </view>

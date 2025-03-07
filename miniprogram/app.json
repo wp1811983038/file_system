@@ -7,7 +7,9 @@
     "pages/user/files/list",
     "pages/user/profile/list",
     "pages/user/password/list",
-    "pages/user/profile/edit"
+    "pages/user/profile/edit",
+    "pages/admin/template/detail",
+    "components/pie-chart/pie-chart"
   ],
   "window": {
     "backgroundTextStyle": "light",

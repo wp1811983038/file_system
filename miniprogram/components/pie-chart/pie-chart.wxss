@@ -1,0 +1,38 @@
+/* components/pie-chart/pie-chart.wxss */
+.pie-chart {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.pie-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+}
+
+.pie-slice {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+}
+
+.pie-center {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.1);
+}
