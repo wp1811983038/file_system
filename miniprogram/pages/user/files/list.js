@@ -84,6 +84,26 @@ Page({
     currentFileId: null            // 当前查看的文件ID
   },
 
+  // 获取状态类名
+  getStatusClass(status) {
+    if (!status || status === 'draft') return 'status-draft';
+    if (status === 'submitted') return 'status-submitted';
+    if (status === 'under_review') return 'status-under-review';
+    if (status === 'approved') return 'status-approved';
+    if (status === 'rejected') return 'status-rejected';
+    return 'status-draft';
+  },
+
+  // 获取状态文本
+  getStatusText(status) {
+    if (!status || status === 'draft') return '草稿';
+    if (status === 'submitted') return '已提交';
+    if (status === 'under_review') return '审核中';
+    if (status === 'approved') return '已通过';
+    if (status === 'rejected') return '已拒绝';
+    return '草稿';
+  },
+
   onLoad(options) {
     console.log('页面加载', options)
     this.loadUserInfo()

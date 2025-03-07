@@ -30,13 +30,9 @@
           {{item.description || '无'}}
         </view>
         <view class="td">
-          <view class="status-badge {{item.status ? 'status-'+item.status : 'status-draft'}}">
-  {{item.status === 'draft' || !item.status ? '草稿' : 
-    item.status === 'submitted' ? '已提交' : 
-    item.status === 'under_review' ? '审核中' : 
-    item.status === 'approved' ? '已通过' : 
-    item.status === 'rejected' ? '已拒绝' : '草稿'}}
-</view>
+          <view class="status-badge {{getStatusClass(item.status)}}">
+            {{getStatusText(item.status)}}
+          </view>
         </view>
         <view class="td actions">
           <button class="btn download-btn" bindtap="downloadTemplate" 
@@ -112,14 +108,8 @@
     <view class="approval-status">
       <view class="status-info">
         <text class="status-label">当前状态：</text>
-        <view class="status-badge {{currentApproval.status === 'submitted' ? 'status-submitted' : 
-                                   currentApproval.status === 'under_review' ? 'status-under-review' : 
-                                   currentApproval.status === 'approved' ? 'status-approved' : 
-                                   currentApproval.status === 'rejected' ? 'status-rejected' : 'status-draft'}}">
-          {{currentApproval.status === 'submitted' ? '已提交' : 
-            currentApproval.status === 'under_review' ? '审核中' : 
-            currentApproval.status === 'approved' ? '已通过' : 
-            currentApproval.status === 'rejected' ? '已拒绝' : '草稿'}}
+        <view class="status-badge {{getStatusClass(currentApproval.status)}}">
+          {{getStatusText(currentApproval.status)}}
         </view>
       </view>
     </view>
