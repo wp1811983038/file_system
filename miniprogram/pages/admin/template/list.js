@@ -567,10 +567,11 @@ Page({
         return;
       }
       
-      // 调用更新API
+      // 添加_format: 'form'标记，告诉请求函数使用表单格式
       const formData = {
         name: editingTemplate.name,
-        description: editingTemplate.description || ''
+        description: editingTemplate.description || '',
+        _format: 'form' // 关键标记！
       };
       
       await post(`/api/v1/admin/templates/${editingTemplate.id}`, formData);
@@ -603,6 +604,11 @@ Page({
       
       wx.showToast({ title: '保存成功' });
       this.hideEditModal();
+      
+      // 添加重新加载逻辑，确保显示最新数据
+      setTimeout(() => {
+        this.loadTemplates();
+      }, 500);
     } catch (err) {
       console.error('更新模板失败:', err);
       wx.showToast({

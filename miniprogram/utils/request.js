@@ -37,12 +37,29 @@ const request = (url, options = {}) => {
       });
     }
     
+    // 检查是否需要使用表单格式
+    const isFormData = options.data && options.data._format === 'form';
+    let contentType = 'application/json';
+    let data = options.data;
+    
+    if (isFormData) {
+      contentType = 'application/x-www-form-urlencoded';
+      // 删除标记字段
+      if (data) {
+        const newData = {...data};
+        delete newData._format;
+        data = newData;
+      }
+      console.log('使用表单格式发送数据:', data);
+    }
+    
     wx.request({
       url: fullUrl,
-      ...options,
+      method: options.method || 'GET',
+      data: data,
       header: {
         'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
+        'Content-Type': contentType,
         ...options.header
       },
       success: (res) => {
