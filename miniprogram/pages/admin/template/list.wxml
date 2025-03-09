@@ -19,10 +19,8 @@
       <view class="th th-checkbox">
         <checkbox checked="{{selectAll}}" bindtap="toggleSelectAll" />
       </view>
-      <view class="th th-name">模板名称</view>
-      <view class="th th-desc">描述</view>
+      <view class="th th-info">模板信息</view>
       <view class="th th-date">上传日期</view>
-      <view class="th th-status">提交情况</view>
       <view class="th th-actions">操作</view>
     </view>
 
@@ -37,12 +35,20 @@
         <view class="td td-checkbox" catchtap="stopPropagation">
           <checkbox checked="{{selectedIds[item.id]}}" catchtap="toggleSelect" data-id="{{item.id}}" />
         </view>
-        <view class="td td-name">{{item.name}}</view>
-        <view class="td td-desc">{{item.description || '无描述'}}</view>
-        <view class="td td-date">{{item.upload_date}}</view>
-        <view class="td td-status">
-          <text class="status-text">{{item.submitted_count || 0}}/{{item.total_users || 0}}</text>
-          <progress class="status-progress" percent="{{(item.submitted_count / item.total_users) * 100 || 0}}" stroke-width="4" color="#10b981" active />
+        <view class="td td-info">
+          <view class="template-name">{{item.name}}</view>
+          <view class="template-desc">{{item.description || '无描述'}}</view>
+          <view class="template-status">
+            <text class="status-text">提交情况: {{item.submitted_count || 0}}/{{item.total_users || 0}}</text>
+            <progress class="status-progress" percent="{{(item.submitted_count / item.total_users) * 100 || 0}}" stroke-width="4" color="#10b981" active />
+          </view>
+        </view>
+        <view class="td td-date">
+          <block wx:if="{{item.upload_date}}">
+            <text>{{item.upload_date.includes(' ') ? item.upload_date.split(' ')[0] : item.upload_date}}</text>
+            <text wx:if="{{item.upload_date.includes(' ')}}">{{item.upload_date.split(' ')[1]}}</text>
+          </block>
+          <text wx:else>暂无日期</text>
         </view>
         <view class="td td-actions" catchtap="stopPropagation">
           <button class="btn btn-download" catchtap="downloadTemplate" data-id="{{item.id}}" data-name="{{item.name}}">下载</button>
