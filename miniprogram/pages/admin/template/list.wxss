@@ -155,29 +155,41 @@
   margin-bottom: 12rpx;
 }
 
-.template-status {
-  margin-top: 4rpx;
-}
-
+/* 日期区域包含提交情况、日期和编辑按钮 */
 .th-date, .td-date {
-  flex: 2;
-  min-width: 180rpx;
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-all;
-  line-height: 1.4;
+  flex: 3;
+  min-width: 220rpx;
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
-  font-size: 26rpx;
+  gap: 8rpx;
 }
 
+/* 操作区只包含下载和删除按钮 */
 .th-actions, .td-actions {
   flex: 2;
-  min-width: 200rpx;
+  min-width: 180rpx;
   display: flex;
-  justify-content: flex-end;
-  gap: 10rpx;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+/* 操作区按钮样式调整 */
+.td-actions .btn {
+  width: 100%;
+  justify-content: center;
+  margin: 4rpx 0;
+}
+
+/* 日期和提交情况 */
+.date-section {
+  margin: 12rpx 0;
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+/* 提交情况移动到日期栏 */
+.template-status {
+  margin-bottom: 16rpx;
 }
 
 /* 状态进度条样式 */
@@ -191,6 +203,14 @@
 .status-progress {
   width: 100%;
   height: 6rpx;
+}
+
+/* 编辑按钮区域 */
+.edit-button-section {
+  margin-top: 8rpx;
+  margin-bottom: 4rpx;
+  display: flex;
+  justify-content: center;
 }
 
 /* 按钮样式 */
@@ -212,6 +232,23 @@
 .btn-delete {
   background-color: #ef4444;
   color: white;
+}
+
+/* 编辑按钮样式 */
+.btn-edit {
+  background-color: #6366f1;
+  color: white;
+}
+
+/* 调小编辑按钮样式 */
+.edit-button-section .btn-edit {
+  font-size: 20rpx; /* 减小字体大小 */
+  padding: 4rpx 8rpx; /* 减小内边距 */
+  height: 44rpx; /* 减小高度 */
+  line-height: 1.2; /* 调整行高 */
+  width: 80%; /* 减小宽度 */
+  margin: 0 auto; /* 居中显示 */
+  min-width: 60rpx; /* 减小最小宽度 */
 }
 
 /* 无数据提示 */
@@ -556,4 +593,15 @@
 .btn-delete-confirm[disabled] {
   background: #fca5a5;
   color: white;
+}
+
+/* 提示文本样式 */
+.form-tip {
+  padding: 12rpx 16rpx;
+  background-color: #f8fafc;
+  border-left: 4rpx solid #3b82f6;
+  margin: 16rpx 0;
+  font-size: 24rpx;
+  color: #6b7280;
+  line-height: 1.5;
 }

@@ -38,17 +38,22 @@
         <view class="td td-info">
           <view class="template-name">{{item.name}}</view>
           <view class="template-desc">{{item.description || '无描述'}}</view>
+        </view>
+        <view class="td td-date">
           <view class="template-status">
             <text class="status-text">提交情况: {{item.submitted_count || 0}}/{{item.total_users || 0}}</text>
             <progress class="status-progress" percent="{{(item.submitted_count / item.total_users) * 100 || 0}}" stroke-width="4" color="#10b981" active />
           </view>
-        </view>
-        <view class="td td-date">
-          <block wx:if="{{item.upload_date}}">
-            <text>{{item.upload_date.includes(' ') ? item.upload_date.split(' ')[0] : item.upload_date}}</text>
-            <text wx:if="{{item.upload_date.includes(' ')}}">{{item.upload_date.split(' ')[1]}}</text>
-          </block>
-          <text wx:else>暂无日期</text>
+          <view class="date-section">
+            <block wx:if="{{item.upload_date}}">
+              <text>{{item.upload_date.includes(' ') ? item.upload_date.split(' ')[0] : item.upload_date}}</text>
+              <text wx:if="{{item.upload_date.includes(' ')}}">{{item.upload_date.split(' ')[1]}}</text>
+            </block>
+            <text wx:else>暂无日期</text>
+          </view>
+          <view class="edit-button-section">
+            <button class="btn btn-edit" catchtap="showEditModal" data-id="{{item.id}}">编辑</button>
+          </view>
         </view>
         <view class="td td-actions" catchtap="stopPropagation">
           <button class="btn btn-download" catchtap="downloadTemplate" data-id="{{item.id}}" data-name="{{item.name}}">下载</button>
@@ -147,6 +152,38 @@
         <button class="btn-delete-confirm" bindtap="executeBatchDelete" disabled="{{isDeleting}}">
           {{isDeleting ? '删除中...' : '确认删除'}}
         </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 模板编辑模态框 -->
+  <view class="modal" wx:if="{{showEdit}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideEditModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">编辑模板</text>
+        <text class="close" bindtap="hideEditModal">×</text>
+      </view>
+      
+      <view class="form-body">
+        <view class="form-item">
+          <text class="label required">模板名称</text>
+          <input class="input" value="{{editingTemplate.name}}" bindinput="onEditNameInput" placeholder="请输入模板名称" />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">模板描述</text>
+          <textarea class="textarea" value="{{editingTemplate.description}}" bindinput="onEditDescriptionInput" placeholder="请简要描述此模板的用途或注意事项" />
+        </view>
+        
+        <view class="form-tip">
+          <text>注意：此操作只会修改模板信息，不会替换模板文件。如需替换文件，请删除后重新上传。</text>
+        </view>
+      </view>
+      
+      <view class="form-actions">
+        <button class="btn-cancel" bindtap="hideEditModal">取消</button>
+        <button class="btn-submit" bindtap="handleEditSubmit">保存修改</button>
       </view>
     </view>
   </view>
