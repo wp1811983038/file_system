@@ -329,12 +329,13 @@ def get_template_status(current_user, template_id):
                     'username': user.username,
                     'company_name': user.company_name,
                     'contact_info': user.contact_info,
-                    'template_id': template_id,  # 添加模板ID
+                    'template_id': template_id,
                     'submission': {
                         'id': submission.id,
-                        'template_id': template_id,  # 添加到 submission 对象中
+                        'template_id': template_id,
                         'filename': submission.filename,
-                        'upload_date': submission.upload_date.strftime('%Y-%m-%d %H:%M:%S')
+                        'upload_date': submission.upload_date.strftime('%Y-%m-%d %H:%M:%S'),
+                        'status': submission.status  # 添加这一行，返回文件的审批状态
                     }
                 })
             else:
@@ -356,6 +357,8 @@ def get_template_status(current_user, template_id):
     except Exception as e:
         current_app.logger.error(f"获取模板状态失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+    
 
 @bp.route('/search', methods=['GET'])
 @token_required
