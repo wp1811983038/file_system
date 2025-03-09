@@ -174,12 +174,37 @@ def batch_template_operation(current_user):
         
     try:
         if operation == 'delete':
+            from app.models.file_approval import FileApproval
+            
             for template_id in template_ids:
                 template = FileTemplate.query.get(template_id)
                 if template:
-                    # 删除物理文件
+                    # 先查找关联的用户文件
+                    user_files = UserFile.query.filter_by(template_id=template_id).all()
+                    
+                    # 处理每个关联的用户文件
+                    for user_file in user_files:
+                        # 查找用户文件相关的审批记录并删除
+                        file_approvals = FileApproval.query.filter_by(file_id=user_file.id).all()
+                        for approval in file_approvals:
+                            db.session.delete(approval)
+                        
+                        # 然后删除用户文件
+                        if os.path.exists(user_file.file_path):
+                            try:
+                                os.remove(user_file.file_path)
+                            except Exception as e:
+                                current_app.logger.warning(f"删除文件失败: {user_file.file_path}, 错误: {str(e)}")
+                        
+                        db.session.delete(user_file)
+                    
+                    # 最后删除模板文件和数据库记录
                     if os.path.exists(template.file_path):
-                        os.remove(template.file_path)
+                        try:
+                            os.remove(template.file_path)
+                        except Exception as e:
+                            current_app.logger.warning(f"删除模板文件失败: {template.file_path}, 错误: {str(e)}")
+                    
                     db.session.delete(template)
                     
             db.session.commit()
@@ -190,6 +215,7 @@ def batch_template_operation(current_user):
             
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"批量操作模板失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/templates', methods=['POST'])
@@ -262,18 +288,40 @@ def delete_template(current_user, template_id):
     try:
         template = FileTemplate.query.get_or_404(template_id)
         
-        # 删除物理文件
-        if os.path.exists(template.file_path):
-            os.remove(template.file_path)
+        # 先查找关联的用户文件
+        user_files = UserFile.query.filter_by(template_id=template_id).all()
+        
+        # 处理每个关联的用户文件
+        for user_file in user_files:
+            # 查找用户文件相关的审批记录并删除
+            from app.models.file_approval import FileApproval
+            file_approvals = FileApproval.query.filter_by(file_id=user_file.id).all()
+            for approval in file_approvals:
+                db.session.delete(approval)
             
-        # 删除数据库记录
+            # 然后删除用户文件
+            if os.path.exists(user_file.file_path):
+                try:
+                    os.remove(user_file.file_path)
+                except Exception as e:
+                    current_app.logger.warning(f"删除文件失败: {user_file.file_path}, 错误: {str(e)}")
+            
+            db.session.delete(user_file)
+        
+        # 最后删除模板文件和数据库记录
+        if os.path.exists(template.file_path):
+            try:
+                os.remove(template.file_path)
+            except Exception as e:
+                current_app.logger.warning(f"删除模板文件失败: {template.file_path}, 错误: {str(e)}")
+                
         db.session.delete(template)
         db.session.commit()
         
         return jsonify({'message': '模板删除成功'})
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error deleting template: {str(e)}")
+        current_app.logger.error(f"删除模板失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
     
 
@@ -282,7 +330,11 @@ def delete_template(current_user, template_id):
 @admin_required
 def get_templates(current_user):
     try:
-        templates = FileTemplate.query.filter_by(is_active=True).all()
+        # templates = FileTemplate.query.filter_by(is_active=True).all()
+       
+        templates = FileTemplate.query.filter_by(is_active=True).order_by(FileTemplate.created_at.desc()).all()
+# 按照创建时间降序排列
+        # templates = FileTemplate.query.filter_by(is_active=True).order_by(FileTemplate.created_at.asc()).all()
         template_list = []
         
         # 获取非管理员用户总数

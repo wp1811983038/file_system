@@ -1,13 +1,14 @@
 <!-- components/pie-chart/pie-chart.wxml -->
-<view class="pie-chart-container" style="width: {{size}}rpx; height: {{size}}rpx;">
-  <canvas type="2d" id="pieCanvas" style="width: {{size}}rpx; height: {{size}}rpx;"></canvas>
+<view class="pie-chart-container">
+  <canvas type="2d" id="pieCanvas" class="pie-canvas" style="width:{{size}}rpx; height:{{size}}rpx;"></canvas>
+  
   <view class="pie-legend">
     <view class="legend-item">
-      <view class="legend-color" style="background-color: {{primaryColor}};"></view>
+      <view class="legend-color submitted"></view>
       <text class="legend-text">已提交 ({{submittedCount}})</text>
     </view>
     <view class="legend-item">
-      <view class="legend-color" style="background-color: {{secondaryColor}};"></view>
+      <view class="legend-color pending"></view>
       <text class="legend-text">未提交 ({{pendingCount}})</text>
     </view>
   </view>

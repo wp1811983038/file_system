@@ -1,17 +1,20 @@
 /* components/pie-chart/pie-chart.wxss */
 .pie-chart-container {
-  position: relative;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+}
+
+.pie-canvas {
+  margin: 20rpx auto;
 }
 
 .pie-legend {
   display: flex;
   justify-content: center;
-  gap: 30rpx;
-  margin-top: 40rpx;
+  margin-top: 30rpx;
+  gap: 40rpx;
 }
 
 .legend-item {
@@ -24,6 +27,14 @@
   width: 24rpx;
   height: 24rpx;
   border-radius: 4rpx;
+}
+
+.legend-color.submitted {
+  background-color: #10b981;
+}
+
+.legend-color.pending {
+  background-color: #f59e0b;
 }
 
 .legend-text {

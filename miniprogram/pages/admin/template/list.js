@@ -3,8 +3,8 @@ const app = getApp();
 const requestModule = require('../../../utils/request');
 const fileUtils = require('../../../utils/file');
 
-// 从模块中获取需要的方法
-const { get, post, del, upload } = requestModule;
+// 正确导入模块中的delete方法，重命名为del（因为delete是关键字）
+const { get, post, delete: del, upload } = requestModule;
 
 Page({
   data: {
@@ -17,7 +17,12 @@ Page({
     isLoading: false,
     hasMoreData: false,
     pageSize: 10,
-    currentPage: 1
+    currentPage: 1,
+    selectedIds: {}, // 用于存储已选中的模板ID
+    selectedTemplates: [], // 存储已选中的模板对象
+    selectAll: false, // 是否全选
+    showBatchDelete: false, // 是否显示批量删除确认框
+    isDeleting: false, // 是否正在删除
   },
 
   onLoad() {
@@ -61,10 +66,14 @@ Page({
         total_users: template.total_users || 0
       }));
       
+      // 重置选择状态
       this.setData({ 
         templates: templatesWithSubmissions,
         filteredTemplates: templatesWithSubmissions,
-        hasMoreData: templatesWithSubmissions.length >= this.data.pageSize
+        hasMoreData: templatesWithSubmissions.length >= this.data.pageSize,
+        selectedIds: {},
+        selectedTemplates: [],
+        selectAll: false
       });
       
       return templatesWithSubmissions;
@@ -111,6 +120,8 @@ Page({
       this.setData({
         filteredTemplates: templates
       });
+      // 更新选中状态以匹配新的过滤结果
+      this.updateSelectedTemplates(this.data.selectedIds);
       return;
     }
     
@@ -122,6 +133,9 @@ Page({
     this.setData({
       filteredTemplates: filtered
     });
+    
+    // 更新选中状态以匹配新的过滤结果
+    this.updateSelectedTemplates(this.data.selectedIds);
   },
 
   // 打开上传模态框
@@ -220,31 +234,207 @@ Page({
   },
 
   // 删除模板
-  deleteTemplate(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.showModal({
-      title: '确认删除',
-      content: '确定要删除这个模板吗？此操作不可恢复，并且会影响所有已提交的文件。',
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '删除中...' });
+ // 删除模板 - 优化错误处理
+deleteTemplate(e) {
+  const id = e.currentTarget.dataset.id;
+  const name = e.currentTarget.dataset.name;
+  
+  wx.showModal({
+    title: '确认删除',
+    content: `确定要删除模板"${name}"吗？此操作不可恢复，并且会影响所有已提交的文件。`,
+    success: async (res) => {
+      if (res.confirm) {
+        wx.showLoading({ title: '删除中...' });
+        
+        try {
+          await del(`/api/v1/admin/templates/${id}`);
           
-          try {
-            await del(`/api/v1/admin/templates/${id}`);
-            wx.showToast({ title: '删除成功' });
-            this.loadTemplates();
-          } catch (err) {
-            wx.showToast({
-              title: err.message || '删除失败',
-              icon: 'none'
-            });
-          } finally {
-            wx.hideLoading();
+          // 更新选中状态
+          if (this.data.selectedIds[id]) {
+            const selectedIds = { ...this.data.selectedIds };
+            delete selectedIds[id];
+            this.updateSelectedTemplates(selectedIds);
           }
+          
+          wx.showToast({ title: '删除成功' });
+          this.loadTemplates();
+        } catch (err) {
+          console.error('删除失败:', err);
+          
+          // 提取更有意义的错误信息
+          let errorMessage = err.message || '删除失败';
+          
+          // 检查是否包含外键约束错误
+          if (errorMessage.includes("IntegrityError") || 
+              errorMessage.includes("cannot be null") ||
+              errorMessage.includes("foreign key constraint")) {
+            errorMessage = "该模板有关联的审批记录或提交文件，无法删除";
+          }
+          
+          wx.showModal({
+            title: '删除失败',
+            content: errorMessage,
+            showCancel: false
+          });
+        } finally {
+          wx.hideLoading();
         }
       }
+    }
+  });
+},
+  
+  // 切换选择模板
+  toggleSelect(e) {
+    const id = e.currentTarget.dataset.id;
+    const selectedIds = { ...this.data.selectedIds };
+    
+    if (selectedIds[id]) {
+      delete selectedIds[id];
+    } else {
+      selectedIds[id] = true;
+    }
+    
+    this.updateSelectedTemplates(selectedIds);
+  },
+  
+  // 全选/取消全选
+  toggleSelectAll() {
+    if (this.data.selectAll) {
+      // 当前是全选状态，改为取消全选
+      this.updateSelectedTemplates({});
+    } else {
+      // 当前非全选状态，改为全选
+      const selectedIds = {};
+      this.data.filteredTemplates.forEach(template => {
+        selectedIds[template.id] = true;
+      });
+      this.updateSelectedTemplates(selectedIds);
+    }
+  },
+  
+  // 更新已选择的模板
+  updateSelectedTemplates(selectedIds) {
+    const selectedTemplates = this.data.filteredTemplates.filter(
+      template => selectedIds[template.id]
+    );
+    
+    const selectAll = selectedTemplates.length > 0 && 
+      selectedTemplates.length === this.data.filteredTemplates.length;
+    
+    this.setData({
+      selectedIds,
+      selectedTemplates,
+      selectAll
     });
   },
+  
+  // 显示批量删除确认
+  showBatchDeleteConfirm() {
+    if (this.data.selectedTemplates.length === 0) {
+      wx.showToast({
+        title: '请先选择要删除的模板',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    this.setData({
+      showBatchDelete: true
+    });
+  },
+  
+  // 隐藏批量删除确认
+  hideBatchDeleteModal() {
+    this.setData({
+      showBatchDelete: false
+    });
+  },
+  
+  // 执行批量删除
+ // 执行批量删除 - 优化错误处理
+async executeBatchDelete() {
+  if (this.data.isDeleting) return;
+  
+  const selectedIds = Object.keys(this.data.selectedIds);
+  if (selectedIds.length === 0) {
+    this.hideBatchDeleteModal();
+    return;
+  }
+  
+  this.setData({ isDeleting: true });
+  wx.showLoading({ title: '批量删除中...' });
+  
+  try {
+    // 创建一个批量删除的Promise数组
+    const deletePromises = selectedIds.map(id => 
+      del(`/api/v1/admin/templates/${id}`)
+        .catch(err => {
+          // 提取更有意义的错误信息
+          let errorMessage = err.message || '未知错误';
+          
+          // 检查是否包含外键约束错误
+          if (errorMessage.includes("IntegrityError") || 
+              errorMessage.includes("cannot be null") ||
+              errorMessage.includes("foreign key constraint")) {
+            errorMessage = "该模板可能有关联的审批记录或提交文件，无法删除";
+          }
+          
+          console.error(`删除ID为${id}的模板失败:`, err);
+          return { error: true, id, message: errorMessage };
+        })
+    );
+    
+    // 等待所有删除操作完成
+    const results = await Promise.all(deletePromises);
+    
+    // 统计成功和失败的数量
+    const failedResults = results.filter(r => r && r.error);
+    const successCount = selectedIds.length - failedResults.length;
+    
+    // 清空选择
+    this.updateSelectedTemplates({});
+    
+    // 重新加载模板列表，即使部分删除失败也刷新列表
+    await this.loadTemplates();
+    
+    // 显示结果
+    if (failedResults.length === 0) {
+      wx.showToast({
+        title: `成功删除${successCount}个模板`,
+        icon: 'success',
+        duration: 2000
+      });
+    } else {
+      // 提供更详细的错误信息
+      const errorMessages = [...new Set(failedResults.map(r => r.message))];
+      
+      wx.showModal({
+        title: '删除结果',
+        content: `成功: ${successCount}个, 失败: ${failedResults.length}个\n\n${errorMessages[0]}`,
+        showCancel: false
+      });
+    }
+  } catch (err) {
+    console.error('批量删除失败:', err);
+    
+    // 提供更友好的错误提示
+    let errorMessage = '批量删除失败';
+    if (err.message && err.message.includes("IntegrityError")) {
+      errorMessage = '删除失败：部分模板有关联数据无法删除';
+    }
+    
+    wx.showToast({
+      title: errorMessage,
+      icon: 'none',
+      duration: 2000
+    });
+  } finally {
+    this.setData({ isDeleting: false });
+    this.hideBatchDeleteModal();
+    wx.hideLoading();
+  }
+},
 
   // 下载模板
   async downloadTemplate(e) {

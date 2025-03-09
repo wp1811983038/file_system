@@ -178,7 +178,7 @@ Page({
         console.error('未找到token')
         throw new Error('未登录')
       }
-
+  
       const res = await new Promise((resolve, reject) => {
         wx.request({
           url: `${app.globalData.baseUrl}/api/v1/files/user/templates`,
@@ -190,12 +190,24 @@ Page({
           fail: reject
         })
       })
-
+  
       console.log('模板列表响应:', res)
-
+  
       if (res.statusCode === 200 && res.data && res.data.templates) {
+        // 处理每个模板的审批状态
+        const processedTemplates = res.data.templates.map(template => {
+          // 为了处理可能的情况，确保submission_status字段存在
+          if (template.status && template.submission_id) {
+            // 如果没有传递submission_status，向后端请求获取
+            if (!template.submission_status) {
+              this.fetchSubmissionStatus(template.submission_id, template.id);
+            }
+          }
+          return template;
+        });
+  
         this.setData({
-          templates: res.data.templates
+          templates: processedTemplates
         }, () => {
           console.log('更新后的模板数据:', this.data.templates)
         })
@@ -210,6 +222,38 @@ Page({
       })
     }
   },
+  // 获取单个提交的审批状态
+async fetchSubmissionStatus(submissionId, templateId) {
+  try {
+    if (!submissionId) return;
+    
+    const token = wx.getStorageSync('token');
+    const res = await new Promise((resolve, reject) => {
+      wx.request({
+        url: `${app.globalData.baseUrl}/api/v1/files/submissions/approval/${submissionId}`,
+        method: 'GET',
+        header: {
+          'Authorization': `Bearer ${token}`
+        },
+        success: resolve,
+        fail: reject
+      })
+    });
+
+    if (res.statusCode === 200) {
+      // 找到对应的模板并更新状态
+      const templates = [...this.data.templates];
+      const index = templates.findIndex(t => t.id === templateId);
+      
+      if (index !== -1) {
+        templates[index].submission_status = res.data.status || 'pending';
+        this.setData({ templates });
+      }
+    }
+  } catch (err) {
+    console.error('获取提交审批状态失败:', err);
+  }
+},
 
   // 搜索功能
   onSearch(e) {
@@ -402,20 +446,30 @@ async submitFile() {
   }
 },
 
-  // 打开操作菜单
-  openActionSheet(e) {
-    const { templateId } = e.currentTarget.dataset
-    wx.showActionSheet({
-      itemList: ['查看', '下载', '重新提交'],
-      success: (res) => {
-        switch (res.tapIndex) {
-          case 0: // 查看
-            this.viewSubmission({ currentTarget: { dataset: { templateId } } })
-            break
-          case 1: // 下载
-            this.downloadSubmission({ currentTarget: { dataset: { templateId } } })
-            break
-          case 2: // 重新提交
+  // 修改操作菜单，根据不同审批状态显示不同的操作选项
+openActionSheet(e) {
+  const { templateId } = e.currentTarget.dataset;
+  const template = this.data.templates.find(t => t.id === templateId);
+  
+  let itemList = ['查看', '下载'];
+  
+  // 只有待审批或已拒绝的文件才能重新提交
+  if (!template.submission_status || template.submission_status === 'pending' || template.submission_status === 'rejected') {
+    itemList.push('重新提交');
+  }
+  
+  wx.showActionSheet({
+    itemList: itemList,
+    success: (res) => {
+      switch (res.tapIndex) {
+        case 0: // 查看
+          this.viewSubmission({ currentTarget: { dataset: { templateId } } });
+          break;
+        case 1: // 下载
+          this.downloadSubmission({ currentTarget: { dataset: { templateId } } });
+          break;
+        case 2: // 重新提交 (如果有这个选项)
+          if (itemList.length > 2) {
             this.openUploadModal({
               currentTarget: {
                 dataset: {
@@ -423,12 +477,13 @@ async submitFile() {
                   isResubmit: true
                 }
               }
-            })
-            break
-        }
+            });
+          }
+          break;
       }
-    })
-  },
+    }
+  });
+},
 
   // 下载模板 - 优化版本
   async downloadTemplate(e) {

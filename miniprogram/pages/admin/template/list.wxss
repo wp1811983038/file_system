@@ -49,8 +49,25 @@
   justify-content: center;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
 .btn-upload {
   background-color: #10b981;
+  color: white;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  padding: 0 32rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-batch-delete {
+  background-color: #ef4444;
   color: white;
   border-radius: 8rpx;
   font-size: 28rpx;
@@ -99,7 +116,7 @@
 }
 
 .td {
-  padding: 24rpx 16rpx;
+  padding: 20rpx 12rpx;
   font-size: 28rpx;
   color: #4b5563;
   text-align: left;
@@ -109,14 +126,26 @@
 }
 
 /* 表格列宽度设置 */
+.th-checkbox, .td-checkbox {
+  flex: 0.5;
+  min-width: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .th-name, .td-name {
   flex: 2;
-  min-width: 200rpx;
+  min-width: 180rpx;
 }
 
 .th-desc, .td-desc {
-  flex: 3;
-  min-width: 250rpx;
+  flex: 1.5;
+  min-width: 180rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220rpx;
 }
 
 .th-date, .td-date {
@@ -201,7 +230,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  transition: all 0.3s;
 }
 
 .modal-content {
@@ -209,17 +240,28 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 600rpx;
+  width: 85%;
+  max-width: 650rpx;
   background: white;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .modal-header {
-  padding: 24rpx;
+  padding: 28rpx 32rpx;
   background: #f9fafb;
   display: flex;
   justify-content: space-between;
@@ -227,76 +269,231 @@
   border-bottom: 1rpx solid #e5e7eb;
 }
 
-.modal-header text:first-child {
-  font-size: 32rpx;
+.modal-title {
+  font-size: 34rpx;
   font-weight: 600;
   color: #111827;
 }
 
 .close {
-  font-size: 40rpx;
+  font-size: 44rpx;
   color: #9ca3af;
-  padding: 10rpx;
+  height: 60rpx;
+  width: 60rpx;
+  line-height: 54rpx;
+  text-align: center;
+  border-radius: 30rpx;
+  transition: all 0.2s;
+}
+
+.close:active {
+  background-color: #f3f4f6;
+}
+
+/* 批量删除确认模态框样式 */
+.modal-body {
+  padding: 24rpx;
+}
+
+.warning-message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 16rpx;
+  background-color: #fff5f5;
+  border-radius: 8rpx;
+  border-left: 4rpx solid #ef4444;
+}
+
+.warning-icon {
+  margin-right: 12rpx;
+  font-size: 36rpx;
+}
+
+.template-list {
+  max-height: 300rpx;
+  overflow-y: auto;
+  padding: 16rpx;
+  margin: 16rpx 0;
+  background-color: #f9fafb;
+  border-radius: 8rpx;
+}
+
+.template-item {
+  margin-bottom: 8rpx;
+  font-size: 28rpx;
+  color: #4b5563;
+}
+
+.warning-text {
+  color: #ef4444;
+  font-size: 26rpx;
+  margin-top: 16rpx;
+  text-align: center;
+}
+
+/* 上传模态框优化样式 */
+.form-body {
+  padding: 32rpx;
 }
 
 .form-item {
-  padding: 24rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  margin-bottom: 28rpx;
+  padding: 0;
+  border-bottom: none;
 }
 
 .form-item:last-of-type {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .label {
   display: block;
   margin-bottom: 12rpx;
   font-size: 28rpx;
-  color: #4b5563;
+  color: #374151;
+  font-weight: 500;
 }
 
-input, textarea {
+.label.required::after {
+  content: "*";
+  color: #ef4444;
+  margin-left: 6rpx;
+}
+
+.input, .textarea {
   width: 100%;
-  padding: 16rpx;
+  padding: 20rpx;
   font-size: 28rpx;
-  border: 1rpx solid #e5e7eb;
-  border-radius: 6rpx;
+  border: 1rpx solid #d1d5db;
+  border-radius: 8rpx;
   box-sizing: border-box;
+  background: #fff;
+  transition: all 0.2s;
 }
 
-textarea {
-  height: 160rpx;
+.input:focus, .textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2rpx rgba(59, 130, 246, 0.2);
 }
 
-.btn-choose {
-  background: #f3f4f6;
-  color: #4b5563;
-  border-radius: 6rpx;
-  font-size: 28rpx;
-  padding: 16rpx 32rpx;
+.textarea {
+  height: 180rpx;
+  line-height: 1.5;
+}
+
+.file-upload-area {
+  margin-top: 8rpx;
+}
+
+.file-box {
+  border: 2rpx dashed #d1d5db;
+  border-radius: 8rpx;
+  padding: 20rpx;
   margin-bottom: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140rpx;
+  background: #f9fafb;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.file-box.has-file {
+  border-style: solid;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.upload-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6b7280;
+}
+
+.icon-plus {
+  font-size: 48rpx;
+  line-height: 1;
+  margin-bottom: 8rpx;
+}
+
+.upload-text {
+  font-size: 26rpx;
+}
+
+.file-info {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.file-icon {
+  font-size: 48rpx;
+  margin-right: 16rpx;
+}
+
+.file-details {
+  flex: 1;
+  overflow: hidden;
 }
 
 .file-name {
   display: block;
+  font-size: 28rpx;
+  color: #111827;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-action {
+  margin-left: 16rpx;
+}
+
+.file-change {
+  color: #3b82f6;
+  font-size: 24rpx;
+  padding: 8rpx 12rpx;
+}
+
+.btn-choose {
+  height: 72rpx;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 28rpx;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-progress-container {
+  margin-top: 24rpx;
+  padding: 16rpx;
+  background: #f3f4f6;
+  border-radius: 8rpx;
+}
+
+.progress-text {
+  display: block;
   font-size: 24rpx;
   color: #4b5563;
-  word-break: break-all;
-  padding: 12rpx;
-  background: #f9fafb;
-  border-radius: 6rpx;
-  border-left: 4rpx solid #3b82f6;
+  margin-bottom: 8rpx;
 }
 
 .upload-progress {
-  padding: 0 24rpx 24rpx;
+  width: 100%;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 16rpx;
-  padding: 24rpx;
+  padding: 24rpx 32rpx;
   background: #f9fafb;
   border-top: 1rpx solid #e5e7eb;
 }
@@ -305,19 +502,42 @@ textarea {
   background: #f3f4f6;
   color: #4b5563;
   font-size: 28rpx;
-  padding: 12rpx 32rpx;
-  border-radius: 6rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+  transition: all 0.2s;
+}
+
+.btn-cancel:active {
+  background: #e5e7eb;
 }
 
 .btn-submit {
   background: #10b981;
   color: white;
   font-size: 28rpx;
-  padding: 12rpx 32rpx;
-  border-radius: 6rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+  transition: all 0.2s;
+}
+
+.btn-submit:active {
+  background: #059669;
 }
 
 .btn-submit[disabled] {
   background: #d1d5db;
   color: #9ca3af;
+}
+
+.btn-delete-confirm {
+  background: #ef4444;
+  color: white;
+  font-size: 28rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 6rpx;
+}
+
+.btn-delete-confirm[disabled] {
+  background: #fca5a5;
+  color: white;
 }

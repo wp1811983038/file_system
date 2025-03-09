@@ -30,9 +30,14 @@
           {{item.description || '无'}}
         </view>
         <view class="td">
-          <text class="status-badge {{item.status ? 'status-submitted' : 'status-pending'}}">
-            {{item.status ? '已提交' : '未提交'}}
-          </text>
+          <block wx:if="{{!item.status}}">
+            <text class="status-badge status-pending">未提交</text>
+          </block>
+          <block wx:else>
+            <text class="status-badge {{item.submission_status === 'approved' ? 'status-approved' : (item.submission_status === 'rejected' ? 'status-rejected' : 'status-submitted')}}">
+              {{item.submission_status === 'approved' ? '已批准' : (item.submission_status === 'rejected' ? '已拒绝' : '待审批')}}
+            </text>
+          </block>
         </view>
         <view class="td actions">
           <button class="btn download-btn" bindtap="downloadTemplate" 

@@ -6,13 +6,19 @@
       <input type="text" class="search-input" placeholder="搜索模板名称..." bindinput="onSearchInput"/>
       <button class="search-btn" bindtap="handleSearch">搜索</button>
     </view>
-    <button class="btn-upload" bindtap="showUploadModal">上传新模板</button>
+    <view class="action-buttons">
+      <button class="btn-batch-delete" bindtap="showBatchDeleteConfirm" wx:if="{{selectedTemplates.length > 0}}">批量删除({{selectedTemplates.length}})</button>
+      <button class="btn-upload" bindtap="showUploadModal">上传新模板</button>
+    </view>
   </view>
 
   <!-- 模板列表表格 -->
   <view class="table-container">
     <!-- 表头 -->
     <view class="table-header">
+      <view class="th th-checkbox">
+        <checkbox checked="{{selectAll}}" bindtap="toggleSelectAll" />
+      </view>
       <view class="th th-name">模板名称</view>
       <view class="th th-desc">描述</view>
       <view class="th th-date">上传日期</view>
@@ -27,7 +33,10 @@
 
     <!-- 表格内容 -->
     <block wx:else>
-      <view class="table-row" wx:for="{{templates}}" wx:key="id" bindtap="viewSubmissionDetails" data-id="{{item.id}}" data-name="{{item.name}}">
+      <view class="table-row" wx:for="{{filteredTemplates}}" wx:key="id" bindtap="viewSubmissionDetails" data-id="{{item.id}}" data-name="{{item.name}}">
+        <view class="td td-checkbox" catchtap="stopPropagation">
+          <checkbox checked="{{selectedIds[item.id]}}" catchtap="toggleSelect" data-id="{{item.id}}" />
+        </view>
         <view class="td td-name">{{item.name}}</view>
         <view class="td td-desc">{{item.description || '无描述'}}</view>
         <view class="td td-date">{{item.upload_date}}</view>
@@ -37,7 +46,7 @@
         </view>
         <view class="td td-actions" catchtap="stopPropagation">
           <button class="btn btn-download" catchtap="downloadTemplate" data-id="{{item.id}}" data-name="{{item.name}}">下载</button>
-          <button class="btn btn-delete" catchtap="deleteTemplate" data-id="{{item.id}}">删除</button>
+          <button class="btn btn-delete" catchtap="deleteTemplate" data-id="{{item.id}}" data-name="{{item.name}}">删除</button>
         </view>
       </view>
     </block>
@@ -49,36 +58,90 @@
     <text wx:else bindtap="loadMoreData">加载更多</text>
   </view>
 
-  <!-- 上传模板模态框 -->
+  <!-- 上传模板模态框 - 优化版 -->
   <view class="modal" wx:if="{{showUpload}}" catchtouchmove="preventTouchMove">
     <view class="modal-mask" bindtap="hideUploadModal"></view>
     <view class="modal-content">
       <view class="modal-header">
-        <text>上传模板</text>
+        <text class="modal-title">上传新模板</text>
         <text class="close" bindtap="hideUploadModal">×</text>
       </view>
       <form bindsubmit="handleUpload">
-        <view class="form-item">
-          <text class="label">模板名称</text>
-          <input name="name" placeholder="请输入模板名称" />
+        <view class="form-body">
+          <view class="form-item">
+            <text class="label required">模板名称</text>
+            <input class="input" name="name" placeholder="请输入模板名称" />
+          </view>
+          
+          <view class="form-item">
+            <text class="label">模板描述</text>
+            <textarea class="textarea" name="description" placeholder="请简要描述此模板的用途或注意事项" />
+          </view>
+          
+          <view class="form-item">
+            <text class="label required">选择文件</text>
+            <view class="file-upload-area">
+              <view class="file-box {{chosenFile ? 'has-file' : ''}}">
+                <view class="upload-icon" wx:if="{{!chosenFile}}">
+                  <view class="icon-plus">+</view>
+                  <view class="upload-text">点击选择文件</view>
+                </view>
+                <view class="file-info" wx:if="{{chosenFile}}">
+                  <view class="file-icon">📄</view>
+                  <view class="file-details">
+                    <text class="file-name">{{chosenFile.name}}</text>
+                  </view>
+                  <view class="file-action">
+                    <text class="file-change" catchtap="chooseFile">更改</text>
+                  </view>
+                </view>
+              </view>
+              <button class="btn-choose" bindtap="chooseFile" wx:if="{{!chosenFile}}">选择文件</button>
+            </view>
+          </view>
+          
+          <view class="upload-progress-container" wx:if="{{uploadProgress > 0}}">
+            <text class="progress-text">上传中 {{uploadProgress}}%</text>
+            <progress class="upload-progress" percent="{{uploadProgress}}" stroke-width="4" activeColor="#10b981" backgroundColor="#e5e7eb" active active-mode="forwards" />
+          </view>
         </view>
-        <view class="form-item">
-          <text class="label">模板描述</text>
-          <textarea name="description" placeholder="请输入模板描述" />
-        </view>
-        <view class="form-item">
-          <text class="label">选择文件</text>
-          <button class="btn-choose" bindtap="chooseFile">选择文件</button>
-          <text wx:if="{{chosenFile}}" class="file-name">{{chosenFile.name}}</text>
-        </view>
-        <view class="upload-progress" wx:if="{{uploadProgress > 0}}">
-          <progress percent="{{uploadProgress}}" show-info stroke-width="3" />
-        </view>
+
         <view class="form-actions">
           <button class="btn-cancel" bindtap="hideUploadModal">取消</button>
-          <button class="btn-submit" form-type="submit" disabled="{{!chosenFile}}">确定</button>
+          <button class="btn-submit" form-type="submit" disabled="{{!chosenFile}}">
+            {{uploadProgress > 0 ? '上传中...' : '上传模板'}}
+          </button>
         </view>
       </form>
+    </view>
+  </view>
+
+  <!-- 批量删除确认模态框 -->
+  <view class="modal" wx:if="{{showBatchDelete}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="hideBatchDeleteModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">确认批量删除</text>
+        <text class="close" bindtap="hideBatchDeleteModal">×</text>
+      </view>
+      <view class="modal-body">
+        <view class="warning-message">
+          <view class="warning-icon">⚠️</view>
+          <text>您即将删除 {{selectedTemplates.length}} 个模板，此操作不可恢复！</text>
+        </view>
+        <view class="template-list">
+          <view class="template-item" wx:for="{{selectedTemplates}}" wx:key="id">
+            <text>• {{item.name}}</text>
+          </view>
+        </view>
+        <view class="warning-text">所有关联的提交数据也将被删除。</view>
+      </view>
+      <view class="form-actions">
+        <button class="btn-cancel" bindtap="hideBatchDeleteModal">取消</button>
+        <button class="btn-delete-confirm" bindtap="executeBatchDelete" disabled="{{isDeleting}}">
+          {{isDeleting ? '删除中...' : '确认删除'}}
+        </button>
+      </view>
     </view>
   </view>
 </view>

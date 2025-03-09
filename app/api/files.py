@@ -15,6 +15,8 @@ from flask import url_for
 import urllib.parse  # 添加这行
 import traceback    # 添加这行
 
+# 修改 get_user_templates 函数，包含提交状态信息
+
 @bp.route('/user/templates', methods=['GET'])
 @token_required
 def get_user_templates(current_user):
@@ -34,7 +36,8 @@ def get_user_templates(current_user):
                 'description': template.description,
                 'filename': template.filename,
                 'status': bool(submission),
-                'submission_id': submission.id if submission else None,  # 添加这行
+                'submission_id': submission.id if submission else None,
+                'submission_status': submission.status if submission else None,  # 添加审批状态
                 'upload_date': template.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
             response_templates.append(template_data)
@@ -163,13 +166,37 @@ def batch_templates(current_user):
             return jsonify({'error': '未指定模板'}), 400
             
         if operation == 'delete':
+            from app.models.file_approval import FileApproval
+            
             for template_id in template_ids:
                 template = FileTemplate.query.get(template_id)
                 if template:
-                    # 删除物理文件
+                    # 先查找关联的用户文件
+                    user_files = UserFile.query.filter_by(template_id=template_id).all()
+                    
+                    # 处理每个关联的用户文件
+                    for user_file in user_files:
+                        # 查找用户文件相关的审批记录并删除
+                        file_approvals = FileApproval.query.filter_by(file_id=user_file.id).all()
+                        for approval in file_approvals:
+                            db.session.delete(approval)
+                        
+                        # 然后删除用户文件
+                        if os.path.exists(user_file.file_path):
+                            try:
+                                os.remove(user_file.file_path)
+                            except Exception as e:
+                                current_app.logger.warning(f"删除文件失败: {user_file.file_path}, 错误: {str(e)}")
+                        
+                        db.session.delete(user_file)
+                    
+                    # 最后删除模板文件和数据库记录
                     if template.file_path and os.path.exists(template.file_path):
-                        os.remove(template.file_path)
-                    # 删除数据库记录
+                        try:
+                            os.remove(template.file_path)
+                        except Exception as e:
+                            current_app.logger.warning(f"删除模板文件失败: {template.file_path}, 错误: {str(e)}")
+                    
                     db.session.delete(template)
             
             db.session.commit()
@@ -179,6 +206,7 @@ def batch_templates(current_user):
             
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"批量操作模板失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 

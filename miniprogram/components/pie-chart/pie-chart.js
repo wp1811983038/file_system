@@ -1,29 +1,24 @@
-// components/pie-chart/pie-chart.js
+// 更新后的饼图组件代码
 Component({
   properties: {
     percentage: {
       type: Number,
       value: 0,
-      observer: 'drawPieChart'
+      observer: function(newVal) {
+        this.drawPieChart();
+      }
     },
     size: {
       type: Number,
-      value: 300,
-      observer: 'drawPieChart'
+      value: 200
     },
     primaryColor: {
       type: String,
-      value: '#10b981', // 绿色 - 已提交
-      observer: 'drawPieChart'
+      value: '#10b981'
     },
     secondaryColor: {
       type: String,
-      value: '#f59e0b', // 橙色 - 未提交
-      observer: 'drawPieChart'
-    },
-    fontSize: {
-      type: Number,
-      value: 36
+      value: '#f59e0b'
     },
     submittedCount: {
       type: Number,
@@ -35,25 +30,51 @@ Component({
     }
   },
   
+  data: {
+    pixelRatio: 1,
+    canvasWidth: 0,
+    canvasHeight: 0
+  },
+  
   lifetimes: {
-    ready() {
-      // 组件加载完成后绘制饼图
-      this.drawPieChart();
+    attached: function() {
+      this.initCanvas();
     }
   },
   
   methods: {
-    async drawPieChart() {
-      // 等待属性就绪
-      if (!this.data.size) return;
-      
-      // 获取画布上下文
+    initCanvas: async function() {
+      try {
+        // 使用新的API替代已弃用的wx.getSystemInfoSync
+        const windowInfo = wx.getWindowInfo();
+        const appBaseInfo = wx.getAppBaseInfo();
+        
+        // 获取设备像素比
+        const pixelRatio = appBaseInfo.pixelRatio || 1;
+        
+        const size = this.properties.size;
+        const canvasWidth = size;
+        const canvasHeight = size;
+        
+        this.setData({
+          pixelRatio,
+          canvasWidth,
+          canvasHeight
+        }, () => {
+          this.drawPieChart();
+        });
+      } catch (error) {
+        console.error('初始化饼图失败:', error);
+      }
+    },
+    
+    drawPieChart: function() {
       const query = this.createSelectorQuery();
       query.select('#pieCanvas')
         .fields({ node: true, size: true })
-        .exec(async (res) => {
+        .exec((res) => {
           if (!res[0] || !res[0].node) {
-            console.error('Canvas节点获取失败');
+            console.error('无法获取canvas节点');
             return;
           }
           
@@ -61,53 +82,76 @@ Component({
           const ctx = canvas.getContext('2d');
           
           // 设置canvas尺寸
-          const dpr = wx.getSystemInfoSync().pixelRatio;
-          canvas.width = this.data.size * dpr;
-          canvas.height = this.data.size * dpr;
+          const width = this.data.canvasWidth;
+          const height = this.data.canvasHeight;
+          const dpr = this.data.pixelRatio;
+          
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
           ctx.scale(dpr, dpr);
           
           // 清空画布
-          ctx.clearRect(0, 0, this.data.size, this.data.size);
+          ctx.clearRect(0, 0, width, height);
           
-          // 绘制背景圆环（未提交部分）
-          const centerX = this.data.size / 2;
-          const centerY = this.data.size / 2;
-          const radius = this.data.size / 2 - 10; // 留一些边距
-          const innerRadius = radius / 2; // 内圆半径
+          const centerX = width / 2;
+          const centerY = height / 2;
+          const radius = Math.min(centerX, centerY) * 0.9;
           
-          // 绘制未提交部分（整个圆环）
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          ctx.fillStyle = this.data.secondaryColor;
-          ctx.fill();
-          
-          // 绘制已提交部分（扇形）
-          if (this.data.percentage > 0 && this.data.percentage <= 100) {
-            const percentage = this.data.percentage / 100;
-            const startAngle = -0.5 * Math.PI; // 从12点钟方向开始
-            const endAngle = startAngle + (percentage * 2 * Math.PI);
-            
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-            ctx.closePath();
-            ctx.fillStyle = this.data.primaryColor;
-            ctx.fill();
+          // 确保percentage是有效值
+          let percentage = this.properties.percentage;
+          if (isNaN(percentage) || percentage < 0) {
+            percentage = 0;
+          } else if (percentage > 100) {
+            percentage = 100;
           }
           
-          // 绘制内圆（形成环状）
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fill();
+          // 绘制饼图
+          this.drawPie(ctx, centerX, centerY, radius, percentage);
           
-          // 绘制百分比文字
-          ctx.font = `bold ${this.data.fontSize}px sans-serif`;
-          ctx.fillStyle = '#000000';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(`${this.data.percentage}%`, centerX, centerY);
+          // 绘制中心文本
+          this.drawCenterText(ctx, centerX, centerY, radius, percentage);
         });
+    },
+    
+    drawPie: function(ctx, centerX, centerY, radius, percentage) {
+      const primaryColor = this.properties.primaryColor;
+      const secondaryColor = this.properties.secondaryColor;
+      
+      // 计算角度
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + (Math.PI * 2 * percentage / 100);
+      
+      // 绘制完成部分
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
+      ctx.closePath();
+      ctx.fillStyle = primaryColor;
+      ctx.fill();
+      
+      // 绘制未完成部分
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, endAngle, startAngle + Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fillStyle = secondaryColor;
+      ctx.fill();
+      
+      // 绘制白色圆心
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 0.5, 0, Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    },
+    
+    drawCenterText: function(ctx, centerX, centerY, radius, percentage) {
+      const fontSize = radius * 0.3;
+      ctx.fillStyle = '#333333';
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${percentage}%`, centerX, centerY);
     }
   }
-})
+});
