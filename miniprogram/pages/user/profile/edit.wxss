@@ -131,3 +131,32 @@
     box-shadow: 0 0 0 4rpx rgba(24, 144, 255, 0.15);
   }
 }
+/* 添加以下样式到现有文件 */
+
+/* 全局错误消息样式 */
+.global-error {
+  margin: 30rpx auto;
+  padding: 20rpx;
+  background-color: #fff2f0;
+  border: 1rpx solid #ffccc7;
+  color: #f5222d;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* 表单错误提示样式 - 确保足够显眼 */
+.error-message {
+  color: #f5222d;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+  padding-left: 12rpx;
+  font-weight: 500;
+}
+
+/* 输入框错误状态 */
+.form-group.has-error .input {
+  border-color: #f5222d;
+  background-color: #fff0f0;
+}

@@ -77,9 +77,10 @@ Page({
     
     // 检查baseUrl是否存在
     if (!app.globalData || !app.globalData.baseUrl) {
-      wx.showToast({
-        title: '系统配置错误，请联系管理员',
-        icon: 'none'
+      wx.showModal({
+        title: '配置错误',
+        content: '系统配置错误，请联系管理员',
+        showCancel: false
       })
       this.setData({ isLoading: false })
       console.error('baseUrl未定义，请在app.js中设置globalData.baseUrl')
@@ -113,40 +114,62 @@ Page({
           // 获取用户信息
           this.getUserInfo(res.data.token, res.data.is_admin)
         } else {
+          // 处理登录失败的情况
           let errorMsg = '登录失败'
+          let fieldErrors = {}
+          
           if (res.data && res.data.error) {
             errorMsg = res.data.error
+            
+            // 根据错误消息类型设置字段级错误
+            if (errorMsg.includes('用户名或密码错误')) {
+              fieldErrors = {
+                usernameError: '',
+                passwordError: '用户名或密码错误'
+              }
+            }
           } else if (res.statusCode === 401) {
             errorMsg = '用户名或密码错误'
+            fieldErrors = {
+              usernameError: '',
+              passwordError: '用户名或密码错误'
+            }
           } else if (res.statusCode === 403) {
-            errorMsg = '账号已被禁用'
+            errorMsg = '账号已被禁用，请联系管理员'
           } else if (res.statusCode >= 500) {
             errorMsg = '服务器错误，请稍后重试'
           }
           
-          wx.showToast({
-            title: errorMsg,
-            icon: 'none',
-            duration: 2000
+          // 更新字段错误（如果有）
+          if (Object.keys(fieldErrors).length > 0) {
+            this.setData(fieldErrors)
+          }
+          
+          // 显示错误提示对话框，而不是简单的Toast
+          wx.showModal({
+            title: '登录失败',
+            content: errorMsg,
+            showCancel: false
           })
           
           this.setData({ isLoading: false })
         }
       },
       fail: (err) => {
-        console.error('登录失败:', err)
-        let errorMsg = '网络错误，请重试'
+        console.error('登录请求失败:', err)
+        let errorMsg = '网络错误，请检查网络连接后重试'
         
         // 处理特定错误类型
         if (err.errMsg && err.errMsg.includes('invalid url')) {
-          errorMsg = '服务器地址配置错误'
+          errorMsg = '服务器地址配置错误，请联系管理员'
           console.error('请确保在app.js中正确设置了globalData.baseUrl')
         }
         
-        wx.showToast({
-          title: errorMsg,
-          icon: 'none',
-          duration: 2000
+        // 使用弹窗提示具体错误，而不是简单的Toast
+        wx.showModal({
+          title: '连接错误',
+          content: errorMsg,
+          showCancel: false
         })
         
         this.setData({ isLoading: false })
@@ -167,6 +190,9 @@ Page({
       success: (res) => {
         console.log('用户信息响应:', res)
         if (res.statusCode === 200) {
+          // 添加振动反馈
+          wx.vibrateShort({ type: 'light' })
+
           // 保存用户信息
           app.globalData.userInfo = res.data
           
@@ -188,23 +214,30 @@ Page({
             }
           })
         } else {
-          wx.showToast({
+          // 处理获取用户信息失败的情况
+          wx.showModal({
             title: '获取用户信息失败',
-            icon: 'none'
+            content: '请重新登录或联系管理员',
+            showCancel: false,
+            success: () => {
+              wx.removeStorageSync('token')
+            }
           })
           this.setData({ isLoading: false })
         }
       },
       fail: (err) => {
         console.error('获取用户信息失败:', err)
-        wx.showToast({
+        wx.showModal({
           title: '获取用户信息失败',
-          icon: 'none'
+          content: '网络错误，请重试',
+          showCancel: false,
+          success: () => {
+            wx.removeStorageSync('token')
+          }
         })
         this.setData({ isLoading: false })
       }
     })
-  },
-  
-  // 无需注册和找回密码功能
+  }
 })
