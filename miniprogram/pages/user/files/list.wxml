@@ -34,7 +34,10 @@
             <text class="status-badge status-pending">未提交</text>
           </block>
           <block wx:else>
-            <text class="status-badge {{item.submission_status === 'approved' ? 'status-approved' : (item.submission_status === 'rejected' ? 'status-rejected' : 'status-submitted')}}">
+            <text class="status-badge {{item.submission_status === 'approved' ? 'status-approved' : (item.submission_status === 'rejected' ? 'status-rejected' : 'status-submitted')}}"
+                  bindtap="showApprovalDetail" 
+                  data-id="{{item.submission_id}}"
+                  data-status="{{item.submission_status}}">
               {{item.submission_status === 'approved' ? '已批准' : (item.submission_status === 'rejected' ? '已拒绝' : '待审批')}}
             </text>
           </block>
@@ -93,6 +96,30 @@
     <view class="description-content">{{currentDescription}}</view>
     <view class="modal-btns">
       <button class="btn primary-btn" bindtap="closeDescriptionModal">关闭</button>
+    </view>
+  </view>
+</view>
+
+<!-- 审批详情模态框 -->
+<view class="modal approval-modal" wx:if="{{showApprovalModal}}" catchtouchmove="preventTouchMove" bindtap="hideApprovalModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-title">审批详情</view>
+    <view class="approval-status">
+      <view class="status-label">状态：</view>
+      <view class="status-value {{approvalDetail.status === 'approved' ? 'text-approved' : (approvalDetail.status === 'rejected' ? 'text-rejected' : 'text-pending')}}">
+        {{approvalDetail.status === 'approved' ? '已批准' : (approvalDetail.status === 'rejected' ? '已拒绝' : '待审批')}}
+      </view>
+    </view>
+    <view class="approval-date" wx:if="{{approvalDetail.approval_date}}">
+      <view class="date-label">审批时间：</view>
+      <view class="date-value">{{approvalDetail.approval_date}}</view>
+    </view>
+    <view class="approval-comments">
+      <view class="comments-label">审批意见：</view>
+      <view class="comments-value">{{approvalDetail.comments || '无审批意见'}}</view>
+    </view>
+    <view class="modal-btns">
+      <button class="btn primary-btn" bindtap="hideApprovalModal">关闭</button>
     </view>
   </view>
 </view>

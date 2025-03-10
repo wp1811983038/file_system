@@ -479,149 +479,158 @@ Page({
     this._submitApproval('rejected');
   },
 
+
+  onCommentsInput(e) {
+    this.setData({
+      'currentApproval.comments': e.detail.value
+    });
+    console.log('审批意见已更新:', e.detail.value); // 添加日志便于调试
+  },
   // 提交审批
   // 修改 _submitApproval 函数，确保状态更新
   // 修改后的审批提交函数
   // 修改后的审批提交函数 - 立即更新按钮状态
-async _submitApproval(status) {
-  const { fileId, comments } = this.data.currentApproval;
-  
-  if (!fileId) {
-    console.error('提交审批失败：缺少文件ID');
-    wx.showToast({
-      title: '文件ID无效',
-      icon: 'none'
-    });
-    return;
-  }
-  
-  console.log('提交审批:', { fileId, status, comments });
-  
-  wx.showLoading({ title: '提交审批...' });
-  
-  try {
-    // 构建审批URL
-    const approveUrl = `${app.globalData.baseUrl}/api/v1/files/submissions/approve/${fileId}`;
-    console.log('审批URL:', approveUrl);
-    
-    const result = await post(`/api/v1/files/submissions/approve/${fileId}`, {
-      status: status,
-      comments: comments
-    });
-    
-    console.log('审批结果:', result);
-    
-    wx.hideLoading();
-    
-    // 审批成功后更新当前状态显示
-    this.setData({
-      'currentApproval.status': status
-    });
-    
-    // 立即更新按钮状态 - 重要！
-    const { submittedUsers, filteredSubmittedUsers } = this.data;
-    const updatedSubmittedUsers = submittedUsers.map(user => {
-      if (user.submission && user.submission.id === fileId) {
-        // 创建一个新对象，避免直接修改原对象
-        return {
-          ...user,
-          submission: {
-            ...user.submission,
-            status: status
-          }
-        };
-      }
-      return user;
-    });
-    
-    // 同样更新过滤后的列表
-    const updatedFilteredUsers = filteredSubmittedUsers.map(user => {
-      if (user.submission && user.submission.id === fileId) {
-        return {
-          ...user,
-          submission: {
-            ...user.submission,
-            status: status
-          }
-        };
-      }
-      return user;
-    });
-    
-    // 更新审批统计
-    let { approvedCount, rejectedCount, pendingApprovalCount } = this.data;
-    
-    // 如果之前是待审批状态，则减少待审批计数
-    if (this.data.currentApproval.status === 'pending') {
-      pendingApprovalCount = Math.max(0, pendingApprovalCount - 1);
+  async _submitApproval(status) {
+    const { fileId, comments } = this.data.currentApproval;
+
+    console.log('提交审批:', { fileId, status, comments }); // 打印日志检查数据
+
+    if (!fileId) {
+      console.error('提交审批失败：缺少文件ID');
+      wx.showToast({
+        title: '文件ID无效',
+        icon: 'none'
+      });
+      return;
     }
-    // 如果之前是已批准状态，现在是拒绝，则减少已批准计数
-    else if (this.data.currentApproval.status === 'approved' && status === 'rejected') {
-      approvedCount = Math.max(0, approvedCount - 1);
-    }
-    // 如果之前是已拒绝状态，现在是批准，则减少已拒绝计数
-    else if (this.data.currentApproval.status === 'rejected' && status === 'approved') {
-      rejectedCount = Math.max(0, rejectedCount - 1);
-    }
-    
-    // 增加对应状态的计数
-    if (status === 'approved') {
-      approvedCount++;
-    } else if (status === 'rejected') {
-      rejectedCount++;
-    }
-    
-    // 立即更新页面数据，这样按钮状态会立即改变
-    this.setData({
-      submittedUsers: updatedSubmittedUsers,
-      filteredSubmittedUsers: updatedFilteredUsers,
-      approvedCount,
-      rejectedCount,
-      pendingApprovalCount,
-      _justApproved: true  // 设置标记，避免onShow中重复刷新
-    });
-    
-    // 隐藏模态框前为当前操作创建一个新的审批历史记录
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}:${String(currentDate.getSeconds()).padStart(2, '0')}`;
-    
-    const adminInfo = wx.getStorageSync('adminInfo') || { username: 'admin' };
-    
-    // 设置新的审批历史
-    this.setData({
-      approvalHistory: {
-        approval_date: formattedDate,
-        approver_name: adminInfo.username,
+
+    console.log('提交审批:', { fileId, status, comments });
+
+    wx.showLoading({ title: '提交审批...' });
+
+    try {
+      // 构建审批URL
+      const approveUrl = `${app.globalData.baseUrl}/api/v1/files/submissions/approve/${fileId}`;
+      console.log('审批URL:', approveUrl);
+
+      const result = await post(`/api/v1/files/submissions/approve/${fileId}`, {
         status: status,
-        comments: comments || '无审批意见'
+        comments: comments
+      });
+
+      console.log('审批结果:', result);
+
+      wx.hideLoading();
+
+      // 审批成功后更新当前状态显示
+      this.setData({
+        'currentApproval.status': status
+      });
+
+      // 立即更新按钮状态 - 重要！
+      const { submittedUsers, filteredSubmittedUsers } = this.data;
+      const updatedSubmittedUsers = submittedUsers.map(user => {
+        if (user.submission && user.submission.id === fileId) {
+          // 创建一个新对象，避免直接修改原对象
+          return {
+            ...user,
+            submission: {
+              ...user.submission,
+              status: status
+            }
+          };
+        }
+        return user;
+      });
+
+      // 同样更新过滤后的列表
+      const updatedFilteredUsers = filteredSubmittedUsers.map(user => {
+        if (user.submission && user.submission.id === fileId) {
+          return {
+            ...user,
+            submission: {
+              ...user.submission,
+              status: status
+            }
+          };
+        }
+        return user;
+      });
+
+      // 更新审批统计
+      let { approvedCount, rejectedCount, pendingApprovalCount } = this.data;
+
+      // 如果之前是待审批状态，则减少待审批计数
+      if (this.data.currentApproval.status === 'pending') {
+        pendingApprovalCount = Math.max(0, pendingApprovalCount - 1);
       }
-    });
-    
-    wx.showToast({
-      title: '审批成功',
-      icon: 'success',
-      duration: 1500
-    });
-    
-    // 延时隐藏模态框
-    setTimeout(() => {
-      this.hideApprovalModal();
-      
-      // 在后台重新从服务器获取最新状态，确保与服务器同步
+      // 如果之前是已批准状态，现在是拒绝，则减少已批准计数
+      else if (this.data.currentApproval.status === 'approved' && status === 'rejected') {
+        approvedCount = Math.max(0, approvedCount - 1);
+      }
+      // 如果之前是已拒绝状态，现在是批准，则减少已拒绝计数
+      else if (this.data.currentApproval.status === 'rejected' && status === 'approved') {
+        rejectedCount = Math.max(0, rejectedCount - 1);
+      }
+
+      // 增加对应状态的计数
+      if (status === 'approved') {
+        approvedCount++;
+      } else if (status === 'rejected') {
+        rejectedCount++;
+      }
+
+      // 立即更新页面数据，这样按钮状态会立即改变
+      this.setData({
+        submittedUsers: updatedSubmittedUsers,
+        filteredSubmittedUsers: updatedFilteredUsers,
+        approvedCount,
+        rejectedCount,
+        pendingApprovalCount,
+        _justApproved: true  // 设置标记，避免onShow中重复刷新
+      });
+
+      // 隐藏模态框前为当前操作创建一个新的审批历史记录
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}:${String(currentDate.getSeconds()).padStart(2, '0')}`;
+
+      const adminInfo = wx.getStorageSync('adminInfo') || { username: 'admin' };
+
+      // 设置新的审批历史
+      this.setData({
+        approvalHistory: {
+          approval_date: formattedDate,
+          approver_name: adminInfo.username,
+          status: status,
+          comments: comments || '无审批意见'
+        }
+      });
+
+      wx.showToast({
+        title: '审批成功',
+        icon: 'success',
+        duration: 1500
+      });
+
+      // 延时隐藏模态框
       setTimeout(() => {
-        this.loadTemplateData(this.data.templateId);
-      }, 1000);
-    }, 1500);
-    
-  } catch (err) {
-    console.error('审批失败:', err);
-    wx.showToast({
-      title: err.message || '审批失败',
-      icon: 'none'
-    });
-    wx.hideLoading();
-  }
-},
+        this.hideApprovalModal();
+
+        // 在后台重新从服务器获取最新状态，确保与服务器同步
+        setTimeout(() => {
+          this.loadTemplateData(this.data.templateId);
+        }, 1000);
+      }, 1500);
+
+    } catch (err) {
+      console.error('审批失败:', err);
+      wx.showToast({
+        title: err.message || '审批失败',
+        icon: 'none'
+      });
+      wx.hideLoading();
+    }
+  },
 
   // 处理批量审批模态框显示
   showBatchApprovalModal() {

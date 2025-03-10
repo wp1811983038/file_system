@@ -270,3 +270,50 @@
   border-left: 4rpx solid #1890ff;
   min-height: 100rpx;
 }
+
+/* 审批详情模态框样式 */
+.approval-modal .modal-content {
+  width: 80%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.approval-status, .approval-date, .approval-comments {
+  margin-bottom: 20rpx;
+  padding: 10rpx 0;
+}
+
+.status-label, .date-label, .comments-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+
+.status-value, .date-value, .comments-value {
+  font-size: 28rpx;
+  color: #333;
+  padding: 10rpx;
+  background: #f9f9f9;
+  border-radius: 6rpx;
+}
+
+.text-approved {
+  color: #52c41a;
+}
+
+.text-rejected {
+  color: #f5222d;
+}
+
+.text-pending {
+  color: #fa8c16;
+}
+
+.approval-comments .comments-value {
+  min-height: 80rpx;
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
