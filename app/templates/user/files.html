@@ -7,7 +7,7 @@
     <title class="system-name">文件管理 - 文件管理系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* 基础变量定义 - 与base.html保持一致 */
+        /* 基础变量定义 */
         :root {
             --primary-color: #1890ff;
             --primary-hover: #40a9ff;
@@ -40,7 +40,7 @@
             line-height: 1.5;
         }
 
-        /* 顶部导航栏 - 继承自base.html */
+        /* 顶部导航栏 */
         .header {
             height: 60px;
             background-color: #fff;
@@ -373,6 +373,7 @@
             border-radius: 10px;
             font-size: 12px;
             gap: 5px;
+            cursor: pointer;
         }
 
         .status-submitted {
@@ -385,6 +386,18 @@
             background-color: #fff7e6;
             border: 1px solid #ffd591;
             color: #fa8c16;
+        }
+
+        .status-approved {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        .status-rejected {
+            background-color: #fff2f0;
+            border: 1px solid #ffa39e;
+            color: #ff4d4f;
         }
 
         /* 下拉菜单样式 */
@@ -614,6 +627,59 @@
             font-size: 16px;
         }
 
+        /* 无数据样式 */
+        .no-data {
+            text-align: center;
+            padding: 40px 0;
+            color: #999;
+        }
+
+        .no-data i {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        /* 审批详情样式 */
+        .approval-details {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            padding: 8px 12px;
+            background-color: #fff;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .comments-item {
+            margin-bottom: 0;
+        }
+
+        .comments-box {
+            min-height: 80px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .no-comments {
+            color: #999;
+            font-style: italic;
+        }
+
         /* 响应式样式 */
         @media (max-width: 768px) {
             .menu-toggle {
@@ -728,9 +794,10 @@
                         <tr>
                             <th width="5%">序号</th>
                             <th width="20%">文件名</th>
-                            <th width="30%">描述</th>
+                            <th width="20%">描述</th>
                             <th width="15%">提交状态</th>
-                            <th width="30%">操作</th>
+                            <th width="15%">审批状态</th>
+                            <th width="25%">操作</th>
                         </tr>
                     </thead>
                     <tbody id="fileTableBody">
@@ -774,6 +841,43 @@
         </div>
     </div>
 
+    <!-- 审批详情模态框 -->
+    <div id="approvalDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-clipboard-check"></i> 审批详情
+                </h2>
+                <button type="button" class="modal-close" onclick="closeModal('approvalDetailsModal')">&times;</button>
+            </div>
+            <div class="approval-details">
+                <div class="detail-item">
+                    <div class="detail-label">文件名称</div>
+                    <div class="detail-value" id="approvalFileName"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">提交时间</div>
+                    <div class="detail-value" id="approvalSubmitTime"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">审批状态</div>
+                    <div class="detail-value" id="approvalStatusValue"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">审批时间</div>
+                    <div class="detail-value" id="approvalTime"></div>
+                </div>
+                <div class="detail-item comments-item">
+                    <div class="detail-label">审批意见</div>
+                    <div class="detail-value comments-box" id="approvalCommentsValue"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn btn-primary" onclick="closeModal('approvalDetailsModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 消息提示容器 -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -781,6 +885,7 @@
         // 全局状态
         let systemSettings = {};
         let currentUserId = null;
+        let allTemplates = [];
 
         // DOM 加载完成后执行初始化
         document.addEventListener('DOMContentLoaded', function () {
@@ -808,6 +913,12 @@
 
             // 加载模板列表
             loadTemplates();
+
+            // 绑定表单提交事件
+            document.getElementById('uploadForm').addEventListener('submit', submitFile);
+
+            // 搜索框事件
+            document.getElementById('searchInput').addEventListener('input', onSearch);
         }
 
         // 初始化菜单切换
@@ -872,7 +983,6 @@
             loadSystemSettings();
         }
 
-        // 5. 修改 loadSystemSettings 函数，使其可以单独运行
         async function loadSystemSettings() {
             const token = checkAuth();
             if (!token) return;
@@ -936,31 +1046,6 @@
                 console.error('加载用户信息失败:', error);
                 showToast('获取用户信息失败', 'error');
                 return null;
-            }
-        }
-
-        // 加载系统设置
-        async function loadSystemSettings() {
-            const token = checkAuth();
-            try {
-                const response = await fetch('/api/v1/admin/settings', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    systemSettings = data;
-
-                    // 更新系统名称
-                    updateSystemName(data.system_name);
-
-                    // 更新公告
-                    updateAnnouncement(data.system_description);
-                }
-            } catch (error) {
-                console.error('加载系统设置失败:', error);
             }
         }
 
@@ -1090,7 +1175,19 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('成功获取模板列表:', data);
-                    renderTemplates(data.templates);
+                    
+                    // 处理模板数据，确保有审批状态
+                    const templates = data.templates;
+                    allTemplates = templates; // 保存到全局变量
+                    
+                    // 对于已提交的模板，获取审批详情
+                    for (const template of templates) {
+                        if (template.status && template.submission_id && !template.submission_status) {
+                            await fetchSubmissionStatus(template);
+                        }
+                    }
+                    
+                    renderTemplates(templates);
                 } else {
                     const errorData = await response.json();
                     console.error('加载模板列表响应错误:', errorData);
@@ -1102,88 +1199,173 @@
             }
         }
 
+        // 获取提交状态
+        async function fetchSubmissionStatus(template) {
+            if (!template.submission_id) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/v1/files/submissions/approval/${template.submission_id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    template.submission_status = data.status || 'pending';
+                    
+                    if (data.has_approval && data.approval) {
+                        template.approval = data.approval;
+                    }
+                }
+            } catch (error) {
+                console.error('获取提交状态失败:', error);
+            }
+        }
+
         // 渲染模板列表
         function renderTemplates(templates) {
+            const tbody = document.getElementById('fileTableBody');
+
             if (!templates || templates.length === 0) {
-                const tbody = document.getElementById('fileTableBody');
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-info-circle" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 10px;"></i>
-                            <p>暂无可用的文件模板</p>
+                        <td colspan="6" class="no-data">
+                            <i class="fas fa-info-circle"></i>
+                            <p>暂无模板</p>
                         </td>
                     </tr>
                 `;
                 return;
             }
 
-            const tbody = document.getElementById('fileTableBody');
             tbody.innerHTML = templates.map((template, index) => {
-                const statusClass = template.status ? 'status-submitted' : 'status-pending';
-                const statusText = template.status ? '已提交' : '未提交';
-                const statusIcon = template.status ? 'check-circle' : 'clock';
-
+                // 提交状态
+                const submissionStatus = template.status ? 
+                    '<span class="status-badge status-submitted"><i class="fas fa-check"></i> 已提交</span>' : 
+                    '<span class="status-badge status-pending"><i class="fas fa-clock"></i> 未提交</span>';
+                
+                // 审批状态
+                let approvalBadge = '';
+                if (template.status) {
+                    let statusClass = 'status-pending';
+                    let statusText = '待审批';
+                    let statusIcon = 'clock';
+                    
+                    if (template.submission_status === 'approved') {
+                        statusClass = 'status-approved';
+                        statusText = '已批准';
+                        statusIcon = 'check-circle';
+                    } else if (template.submission_status === 'rejected') {
+                        statusClass = 'status-rejected';
+                        statusText = '已拒绝';
+                        statusIcon = 'times-circle';
+                    }
+                    
+                    approvalBadge = `
+                        <span class="status-badge ${statusClass}" onclick="viewApprovalDetails(${template.submission_id})">
+                            <i class="fas fa-${statusIcon}"></i> ${statusText}
+                        </span>
+                    `;
+                } else {
+                    approvalBadge = '<span>-</span>';
+                }
+                
+                // 操作按钮
+                const actionButtons = template.status ? `
+                    <div class="dropdown">
+                        <button class="dropdown-toggle">
+                            <i class="fas fa-tasks"></i> 提交操作
+                            <i class="fas fa-chevron-down dropdown-icon"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" class="dropdown-item" onclick="viewSubmission(${currentUserId}, ${template.id})">
+                                <i class="fas fa-eye"></i> 查看提交
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="downloadSubmission(${currentUserId}, ${template.id})">
+                                <i class="fas fa-file-download"></i> 下载提交
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="viewApprovalDetails(${template.submission_id})">
+                                <i class="fas fa-clipboard-check"></i> 查看审批
+                            </a>
+                            <a href="#" class="dropdown-item" onclick="openUploadModal(${template.id}, true)">
+                                <i class="fas fa-sync-alt"></i> 重新提交
+                            </a>
+                        </div>
+                    </div>
+                ` : `
+                    <button class="action-btn btn-primary" onclick="openUploadModal(${template.id}, false)">
+                        <i class="fas fa-upload"></i> 提交文件
+                    </button>
+                `;
+                
                 return `
                     <tr>
                         <td>${index + 1}</td>
                         <td>${escapeHtml(template.name)}</td>
                         <td>${escapeHtml(template.description || '无')}</td>
+                        <td>${submissionStatus}</td>
+                        <td>${approvalBadge}</td>
                         <td>
-                            <span class="status-badge ${statusClass}">
-                                <i class="fas fa-${statusIcon}"></i>
-                                ${statusText}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-group">
-                                <button class="action-btn btn-default" onclick="downloadTemplate(${template.id}, '${escapeHtml(template.name)}')">
-                                    <i class="fas fa-download"></i> 下载模板
-                                </button>
-
-                                ${template.status ? `
-                                    <div class="dropdown">
-                                        <button class="dropdown-toggle">
-                                            <i class="fas fa-tasks"></i> 提交操作
-                                            <i class="fas fa-chevron-down dropdown-icon"></i>
-                                        </button>
-                                        <div class="dropdown-content">
-                                            <a href="#" class="dropdown-item" onclick="viewSubmission(${currentUserId}, ${template.id})">
-                                                <i class="fas fa-eye"></i> 查看提交
-                                            </a>
-                                            <a href="#" class="dropdown-item" onclick="downloadSubmission(${currentUserId}, ${template.id})">
-                                                <i class="fas fa-file-download"></i> 下载提交
-                                            </a>
-                                            <a href="#" class="dropdown-item" onclick="openUploadModal(${template.id}, true)">
-                                                <i class="fas fa-sync-alt"></i> 重新提交
-                                            </a>
-                                        </div>
-                                    </div>
-                                ` : `
-                                    <button class="action-btn btn-primary" onclick="openUploadModal(${template.id}, false)">
-                                        <i class="fas fa-upload"></i> 提交文件
-                                    </button>
-                                `}
-                            </div>
+                            <button class="action-btn btn-default" onclick="downloadTemplate(${template.id}, '${escapeHtml(template.name)}')">
+                                <i class="fas fa-download"></i> 下载模板
+                            </button>
+                            ${actionButtons}
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
+        // 搜索功能
+        function onSearch(e) {
+            const searchText = e.target.value.toLowerCase();
+            console.log('搜索关键词:', searchText);
+
+            if (!allTemplates) return;
+
+            // 如果搜索框为空，显示所有模板
+            if (!searchText.trim()) {
+                renderTemplates(allTemplates);
+                return;
+            }
+
+            const filteredTemplates = allTemplates.filter(template =>
+                (template.name || '').toLowerCase().includes(searchText) ||
+                (template.description || '').toLowerCase().includes(searchText)
+            );
+
+            console.log('筛选后的模板数量:', filteredTemplates.length);
+            renderTemplates(filteredTemplates);
+        }
+
         // 打开上传模态框
         function openUploadModal(templateId, isResubmit) {
-            document.getElementById('modalTitle').innerHTML = isResubmit
-                ? '<i class="fas fa-sync-alt"></i> 重新提交文件'
-                : '<i class="fas fa-upload"></i> 提交文件';
+            const modal = document.getElementById('uploadModal');
+            const modalTitle = document.getElementById('modalTitle');
+
+            modalTitle.innerHTML = isResubmit ?
+                '<i class="fas fa-sync-alt"></i> 重新提交文件' :
+                '<i class="fas fa-upload"></i> 提交文件';
 
             document.getElementById('templateId').value = templateId;
             document.getElementById('userFile').value = '';
-            document.getElementById('uploadModal').style.display = 'block';
+            modal.style.display = 'block';
+
+            // 添加轻微振动反馈
+            if (typeof wx !== 'undefined' && wx.vibrateShort) {
+                wx.vibrateShort({ type: 'light' });
+            }
         }
 
         // 关闭模态框
-        function closeModal() {
-            document.getElementById('uploadModal').style.display = 'none';
+        function closeModal(modalId) {
+            if (modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            } else {
+                document.getElementById('uploadModal').style.display = 'none';
+            }
         }
 
         // 下载模板文件
@@ -1257,30 +1439,6 @@
                 // 从原始文件名和内容类型确定适当的文件扩展名
                 let fileExtension = originalFileName.split('.').pop();
 
-                // 如果没有扩展名或扩展名与内容类型不匹配，则根据内容类型设置扩展名
-                if (!fileExtension || fileExtension === originalFileName) {
-                    // 根据 content-type 选择合适的扩展名
-                    const mimeToExt = {
-                        'application/pdf': 'pdf',
-                        'application/msword': 'doc',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-                        'application/vnd.ms-excel': 'xls',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-                        'application/vnd.ms-powerpoint': 'ppt',
-                        'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-                        'application/zip': 'zip',
-                        'application/x-rar-compressed': 'rar',
-                        'text/plain': 'txt',
-                        'text/html': 'html',
-                        'text/csv': 'csv',
-                        'image/jpeg': 'jpg',
-                        'image/png': 'png'
-                    };
-
-                    fileExtension = mimeToExt[contentType] || 'file';
-                    console.log('从内容类型推断文件扩展名:', fileExtension);
-                }
-
                 // 确保文件名不包含非法字符
                 const sanitizedTemplateName = templateName
                     .replace(/[/\\?%*:|"<>]/g, '-') // 替换Windows和URL中的非法字符
@@ -1312,41 +1470,39 @@
         }
 
         // 处理文件上传表单提交
-        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+        async function submitFile(e) {
             e.preventDefault();
-            const token = checkAuth();
-            if (!token) return;
 
-            const formData = new FormData(this);
             const templateId = document.getElementById('templateId').value;
-            const file = formData.get('file');
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
+            const fileInput = document.getElementById('userFile');
 
-            // 文件大小检查
-            const maxSize = 50 * 1024 * 1024; // 50MB
-            if (file.size > maxSize) {
-                showToast('文件大小不能超过50MB', 'error');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast('请选择要上传的文件', 'error');
                 return;
             }
 
-            console.log('开始上传文件:', {
-                templateId,
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-            });
-
-            // 禁用提交按钮
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
-
             try {
+                const token = localStorage.getItem('token');
+                const file = fileInput.files[0];
+                console.log('开始上传文件:', {
+                    templateId,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileType: file.type
+                });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('original_filename', file.name);
+
+                showToast('正在上传文件...', 'info');
                 const timestamp = Date.now();
-                const response = await fetch(`/api/v1/files/upload/${templateId}?t=${timestamp}`, {
+
+                const response = await fetch(`/api/v1/files/upload/${templateId}?t=${timestamp}&originalName=${encodeURIComponent(file.name)}`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Original-Filename': file.name
                     },
                     body: formData
                 });
@@ -1355,395 +1511,134 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('上传成功响应:', data);
-
-                    // 清除缓存
-                    if ('caches' in window) {
-                        try {
-                            const cacheNames = await caches.keys();
-                            console.log('当前缓存列表:', cacheNames);
-                            for (const cacheName of cacheNames) {
-                                await caches.delete(cacheName);
-                                console.log(`已删除缓存: ${cacheName}`);
-                            }
-                        } catch (e) {
-                            console.warn('清除缓存失败:', e);
-                        }
-                    }
-
-                    showToast(data.message || '文件上传成功');
+                    showToast(data.message || '文件上传成功', 'success');
                     closeModal();
-
-                    // 强制重新加载模板列表
-                    console.log('重新加载模板列表...');
                     await loadTemplates();
                 } else {
                     const errorData = await response.json();
-                    console.error('上传失败响应:', errorData);
-                    throw new Error(errorData.error || '文件提交失败');
+                    throw new Error(errorData.error || '文件上传失败');
                 }
             } catch (error) {
-                console.error('上传过程中出错:', error);
-                console.error('错误堆栈:', error.stack);
-                showToast(error.message || '文件提交失败，请重试', 'error');
-            } finally {
-                // 恢复提交按钮
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
+                console.error('上传失败:', error);
+                showToast(error.message || '上传失败，请重试', 'error');
             }
-        });
+        }
 
-        // 搜索功能
-        document.getElementById('searchInput').addEventListener('input', function (e) {
-            const searchText = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#fileTable tbody tr');
-
-            // 检查是否为空结果信息行
-            if (rows.length === 1 && rows[0].querySelector('td[colspan="5"]')) {
-                return;
-            }
-
-            let hasVisibleRows = false;
-
-            rows.forEach(row => {
-                const fileName = row.cells[1].textContent.toLowerCase();
-                const description = row.cells[2].textContent.toLowerCase();
-
-                if (fileName.includes(searchText) || description.includes(searchText)) {
-                    row.style.display = '';
-                    hasVisibleRows = true;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            // 显示无搜索结果提示
-            const tbody = document.getElementById('fileTableBody');
-            const noResultRow = document.getElementById('noSearchResult');
-
-            if (!hasVisibleRows) {
-                if (!noResultRow) {
-                    const tr = document.createElement('tr');
-                    tr.id = 'noSearchResult';
-                    tr.innerHTML = `
-                        <td colspan="5" style="text-align: center; padding: 20px;">
-                            <i class="fas fa-search" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 10px;"></i>
-                            <p>没有找到匹配 "${escapeHtml(searchText)}" 的结果</p>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                } else {
-                    noResultRow.querySelector('p').textContent = `没有找到匹配 "${searchText}" 的结果`;
-                }
-            } else if (noResultRow) {
-                noResultRow.remove();
-            }
-        });
-
-        // 查看提交的文件
+        // 查看提交文件
         async function viewSubmission(userId, templateId) {
             if (!userId || !templateId) {
-                console.error('无效的用户ID或模板ID');
                 showToast('无效的请求参数', 'error');
                 return;
             }
 
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
             try {
-                showToast('正在加载文件...', 'success');
+                const token = localStorage.getItem('token');
                 const timestamp = Date.now();
-                console.log(`开始预览文件，userId: ${userId}, templateId: ${templateId}`);
+                showToast('正在加载文件...', 'info');
 
                 const response = await fetch(`/api/v1/files/preview/submission/${userId}/${templateId}?t=${timestamp}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Cache-Control': 'no-cache'
                     }
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error('响应错误:', errorData);
                     throw new Error(errorData.error || '预览失败');
                 }
 
-                // 获取 Content-Type
+                // 获取内容类型
                 const contentType = response.headers.get('content-type');
-                console.log('Content-Type:', contentType);
+                const blob = await response.blob();
 
-                // 获取原始文件名
-                const contentDisposition = response.headers.get('content-disposition');
-                let filename;
-
-                if (contentDisposition) {
-                    // 优先尝试获取 filename*=UTF-8'' 格式的文件名
-                    const filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]*)/);
-                    if (filenameMatch) {
-                        filename = decodeURIComponent(filenameMatch[1]);
-                        console.log('使用 UTF-8 编码的文件名:', filename);
-                    } else {
-                        // 回退到普通 filename= 格式
-                        const regularMatch = contentDisposition.match(/filename=["']?([^"']+)["']?/);
-                        if (regularMatch) {
-                            filename = decodeURIComponent(regularMatch[1]);
-                            console.log('使用普通格式的文件名:', filename);
-                        }
-                    }
-                }
-
-                if (!filename) {
-                    filename = `文件-${templateId}`;
-                    console.log('使用默认文件名:', filename);
-                }
-
-                // 扩展可预览的文件类型
+                // 定义可预览的类型
                 const previewableTypes = {
-                    // PDF 文件
                     'application/pdf': true,
-
-                    // 文本文件
-                    'text/plain': true,
-                    'text/html': true,
-                    'text/css': true,
-                    'text/javascript': true,
-                    'text/xml': true,
-                    'text/csv': true,
-                    'text/markdown': true,
-
-                    // 图片文件
                     'image/jpeg': true,
                     'image/png': true,
                     'image/gif': true,
-                    'image/svg+xml': true,
-                    'image/webp': true,
-                    'image/bmp': true,
-                    'image/tiff': true,
-
-                    // 视频文件
-                    'video/mp4': true,
-                    'video/webm': true,
-                    'video/ogg': true,
-
-                    // 音频文件
-                    'audio/mpeg': true,
-                    'audio/ogg': true,
-                    'audio/wav': true,
-                    'audio/webm': true,
-
-                    // 其他常见格式
-                    'application/json': true,
-                    'application/xml': true
+                    'text/plain': true,
+                    'text/html': true,
+                    'text/css': true,
+                    'text/javascript': true
                 };
 
-                const blob = await response.blob();
-                console.log('文件大小:', blob.size, 'bytes');
-                console.log('Blob 类型:', blob.type);
+                // 创建预览URL
+                const url = window.URL.createObjectURL(blob);
 
-                // 获取文件扩展名
-                const fileExtension = filename.split('.').pop().toLowerCase();
-                console.log('文件扩展名:', fileExtension);
-
-                // 特殊处理：即使 MIME 类型不在列表中，某些扩展名的文件也可以尝试预览
-                const previewableExtensions = {
-                    'pdf': true,
-                    'txt': true,
-                    'jpg': true,
-                    'jpeg': true,
-                    'png': true,
-                    'gif': true,
-                    'svg': true,
-                    'html': true,
-                    'htm': true,
-                    'css': true,
-                    'js': true,
-                    'json': true,
-                    'xml': true,
-                    'md': true,
-                };
-
-                if (previewableTypes[contentType] || previewableExtensions[fileExtension]) {
-                    console.log('文件可以预览');
-                    const url = window.URL.createObjectURL(blob);
-
-                    if (contentType.includes('officedocument') ||
-                        contentType.includes('msword') ||
-                        contentType.includes('ms-excel') ||
-                        contentType.includes('ms-powerpoint')) {
-                        console.log('使用 Office Online Viewer 预览');
+                if (previewableTypes[contentType]) {
+                    // 可预览的类型在新标签页打开
+                    window.open(url, '_blank');
+                } else {
+                    // 处理Office文档预览
+                    if (contentType.includes('office') || contentType.includes('word') || contentType.includes('excel') || contentType.includes('powerpoint')) {
+                        // 尝试使用Office Online或其他在线服务预览
                         const encodedUrl = encodeURIComponent(window.location.origin + `/api/v1/files/preview/submission/${userId}/${templateId}`);
                         window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodedUrl}`, '_blank');
                     } else {
-                        // 对于其他可预览的文件类型
-                        console.log('使用浏览器直接预览');
-                        // 创建一个新的 Blob，添加文件名属性
-                        const blobWithName = new Blob([blob], { type: contentType });
-                        const url = window.URL.createObjectURL(blobWithName);
-
-                        // 创建一个临时的 URL，包含文件名信息
+                        // 其他不可预览的类型直接下载
                         const a = document.createElement('a');
                         a.href = url;
-                        a.target = '_blank';
-                        a.download = filename; // 设置文件名
-
-                        // 在新标签页中打开
-                        window.open(url, '_blank');
+                        a.download = 'document.' + contentType.split('/')[1] || 'file';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
                     }
-
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(url);
-                        console.log('URL 对象已释放');
-                    }, 1000);
-
-                    showToast('文件已在新标签页打开', 'success');
-                } else {
-                    console.log('文件不支持预览，执行下载');
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                    showToast('此文件类型不支持在线预览，已自动下载', 'success');
                 }
+
+                // 清理URL对象
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
+                showToast('文件加载成功', 'success');
             } catch (error) {
-                console.error('预览错误:', error);
-                console.error('错误堆栈:', error.stack);
-                showToast(error.message || '文件预览失败，请重试', 'error');
+                console.error('预览文件失败:', error);
+                showToast(error.message || '预览失败，请重试', 'error');
             }
         }
 
         // 下载提交的文件
         async function downloadSubmission(userId, templateId) {
             if (!userId || !templateId) {
-                console.error('无效的用户ID或模板ID');
                 showToast('无效的请求参数', 'error');
                 return;
             }
 
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
             try {
-                showToast('正在准备下载...', 'success');
+                const token = localStorage.getItem('token');
                 const timestamp = Date.now();
-                const random = Math.random();
-                console.log(`开始下载文件，userId: ${userId}, templateId: ${templateId}`);
+                showToast('正在准备下载...', 'info');
 
-                const response = await fetch(`/api/v1/files/download/submission/${userId}/${templateId}?t=${timestamp}&r=${random}`, {
+                const response = await fetch(`/api/v1/files/download/submission/${userId}/${templateId}?t=${timestamp}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Cache-Control': 'no-cache'
                     }
-                });
-                console.log('响应状态:', response.status, response.statusText);
-                console.log('响应头:', {
-                    'content-type': response.headers.get('content-type'),
-                    'content-disposition': response.headers.get('content-disposition'),
-                    'cache-control': response.headers.get('cache-control')
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error('响应错误:', errorData);
                     throw new Error(errorData.error || '下载失败');
                 }
 
-                // 获取文件类型
+                // 获取内容类型和文件名
                 const contentType = response.headers.get('content-type');
-                console.log('文件类型:', contentType);
-
-                // 处理文件名
                 const contentDisposition = response.headers.get('content-disposition');
-                console.log('Content-Disposition:', contentDisposition);
-                let filename;
+                let filename = 'download';
 
                 if (contentDisposition) {
-                    // 尝试不同的文件名提取方式
-                    const patterns = [
-                        /filename\*=UTF-8''([^;]*)/,  // RFC 5987
-                        /filename=["']?([^"';]+)["']?/,  // 带/不带引号格式
-                        /filename=([^;]*)/           // 基本格式
-                    ];
-
-                    for (const pattern of patterns) {
-                        const match = contentDisposition.match(pattern);
-                        if (match && match.length >= 2) {
-                            try {
-                                filename = decodeURIComponent(match[1]);
-                                console.log(`文件名提取成功 (${pattern}):`, filename);
-                                break;
-                            } catch (e) {
-                                console.warn(`文件名解码失败 (${pattern}):`, e);
-                            }
-                        }
+                    const matchResult = contentDisposition.match(/filename[^;=\n]*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/);
+                    if (matchResult && matchResult[2]) {
+                        filename = matchResult[2];
+                    } else if (matchResult && matchResult[3]) {
+                        filename = matchResult[3];
                     }
                 }
 
-                // 获取文件内容
+                // 创建blob并下载
                 const blob = await response.blob();
-                console.log('下载的文件大小:', blob.size, 'bytes');
-                console.log('文件类型:', blob.type || contentType);
-
-                // 如果没有提取到文件名，则根据内容类型生成一个默认文件名
-                if (!filename) {
-                    const mimeToExt = {
-                        'application/pdf': 'pdf',
-                        'application/msword': 'doc',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-                        'application/vnd.ms-excel': 'xls',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-                        'application/vnd.ms-powerpoint': 'ppt',
-                        'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-                        'application/zip': 'zip',
-                        'application/x-rar-compressed': 'rar',
-                        'text/plain': 'txt',
-                        'text/html': 'html',
-                        'text/csv': 'csv',
-                        'image/jpeg': 'jpg',
-                        'image/png': 'png'
-                    };
-
-                    const ext = mimeToExt[contentType] || 'file';
-                    filename = `提交文件-${templateId}.${ext}`;
-                    console.warn('未能提取文件名，使用生成的文件名:', filename);
-                }
-
-                // 确保文件名有正确的扩展名
-                if (!filename.includes('.')) {
-                    // 根据 content-type 添加适当的扩展名
-                    const mimeToExt = {
-                        'application/pdf': '.pdf',
-                        'application/msword': '.doc',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-                        'application/vnd.ms-excel': '.xls',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-                        'application/vnd.ms-powerpoint': '.ppt',
-                        'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
-                        'application/zip': '.zip',
-                        'application/x-rar-compressed': '.rar',
-                        'text/plain': '.txt',
-                        'text/html': '.html',
-                        'text/csv': '.csv',
-                        'image/jpeg': '.jpg',
-                        'image/png': '.png'
-                    };
-
-                    const ext = mimeToExt[contentType] || '.file';
-                    filename += ext;
-                    console.log('添加了扩展名:', filename);
-                }
-
-                console.log('最终使用的文件名:', filename);
-
-                // 创建下载链接并触发下载
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1759,20 +1654,120 @@
 
                 showToast('文件下载成功', 'success');
             } catch (error) {
-                console.error('下载过程中出错:', error);
-                console.error('错误堆栈:', error.stack);
-                showToast(error.message || '文件下载失败，请重试', 'error');
+                console.error('下载文件失败:', error);
+                showToast(error.message || '下载失败，请重试', 'error');
             }
         }
 
-        // 7. 添加 storage 事件监听
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'systemName' && e.newValue) {
-                updateSystemName(e.newValue);
-            } else if (e.key === 'settingsUpdated') {
-                loadSystemName();
+        // 查看审批详情
+        async function viewApprovalDetails(submissionId) {
+            if (!submissionId) {
+                showToast('无效的提交ID', 'error');
+                return;
             }
-        });
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 显示加载状态
+                showToast('正在加载审批详情...', 'info');
+                
+                // 获取审批信息
+                const response = await fetch(`/api/v1/files/submissions/approval/${submissionId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '获取审批详情失败');
+                }
+                
+                const data = await response.json();
+                console.log('审批详情:', data);
+                
+                // 获取文件信息（从现有模板列表中查找）
+                const templates = [...allTemplates];
+                const template = templates.find(t => t.submission_id === submissionId);
+                
+                if (!template) {
+                    throw new Error('找不到对应的文件信息');
+                }
+                
+                // 填充模态框数据
+                document.getElementById('approvalFileName').textContent = template.filename || template.name || '未知文件';
+                document.getElementById('approvalSubmitTime').textContent = formatDate(template.upload_date) || '未知';
+                
+                // 状态显示
+                let statusHTML = '';
+                if (data.status === 'approved') {
+                    statusHTML = '<span class="status-badge status-approved"><i class="fas fa-check-circle"></i> 已批准</span>';
+                } else if (data.status === 'rejected') {
+                    statusHTML = '<span class="status-badge status-rejected"><i class="fas fa-times-circle"></i> 已拒绝</span>';
+                } else {
+                    statusHTML = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> 待审批</span>';
+                }
+                document.getElementById('approvalStatusValue').innerHTML = statusHTML;
+                
+                // 审批时间和意见
+                if (data.has_approval && data.approval) {
+                    document.getElementById('approvalTime').textContent = formatDate(data.approval.approval_date) || '未知';
+                    
+                    if (data.approval.comments && data.approval.comments.trim()) {
+                        document.getElementById('approvalCommentsValue').textContent = data.approval.comments;
+                    } else {
+                        document.getElementById('approvalCommentsValue').innerHTML = '<span class="no-comments">无审批意见</span>';
+                    }
+                } else {
+                    document.getElementById('approvalTime').textContent = '暂无';
+                    document.getElementById('approvalCommentsValue').innerHTML = '<span class="no-comments">暂无审批意见</span>';
+                }
+                
+                // 显示模态框
+                document.getElementById('approvalDetailsModal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('获取审批详情失败:', error);
+                showToast(error.message || '获取审批详情失败', 'error');
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '未知';
+
+            try {
+                // 确保是UTC格式的日期
+                const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+                
+                if (isNaN(date.getTime())) return dateString;
+                
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+            } catch (e) {
+                console.error('日期格式化错误:', e);
+                return dateString;
+            }
+        }
+
+        // 设置点击模态框外部关闭
+        window.onclick = function (event) {
+            const modals = document.getElementsByClassName('modal');
+            
+            for (let i = 0; i < modals.length; i++) {
+                if (event.target === modals[i]) {
+                    modals[i].style.display = 'none';
+                }
+            }
+        };
     </script>
 </body>
 
