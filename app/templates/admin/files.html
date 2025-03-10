@@ -335,6 +335,15 @@
             background-color: #e6e6e6;
         }
 
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+
         /* 模态框样式优化 */
         .modal {
             display: none;
@@ -606,6 +615,12 @@
             color: #ff4d4f;
         }
 
+        .alert-info {
+            background-color: #e6f7ff;
+            border-left: 4px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
         .close {
             background: none;
             border: none;
@@ -754,6 +769,156 @@
         .dropzone-subtext {
             color: #999;
             font-size: 14px;
+        }
+
+        /* 审批状态标签样式 */
+        .status-approved {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        .status-rejected {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+
+        .status-pending {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+
+        /* 统计卡片样式 */
+        .stats-container {
+            margin-bottom: 20px;
+        }
+
+        .stats-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 图表样式 */
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pie-chart {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 20px 0;
+            background-color: #faad14;
+        }
+
+        .pie-slice {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .pie-slice.submitted {
+            background-color: #52c41a;
+            clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%);
+        }
+
+        .pie-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .pie-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.submitted {
+            background-color: #52c41a;
+        }
+
+        .legend-color.pending {
+            background-color: #faad14;
+        }
+
+        .legend-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-control-static {
+            padding: 8px 12px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -1000,6 +1165,9 @@
                             <button class="tab-btn" onclick="switchTab(this, 'pending-users')">
                                 未提交用户 (<span id="pendingCount">0</span>)
                             </button>
+                            <button class="tab-btn" onclick="switchTab(this, 'submission-stats')">
+                                提交率分析
+                            </button>
                         </div>
                         <div id="submitted-users" class="tab-content active">
                             <div id="submittedUsersContent" class="responsive-table">
@@ -1011,11 +1179,104 @@
                                 <!-- 动态加载内容 -->
                             </div>
                         </div>
+                        <div id="submission-stats" class="tab-content">
+                            <div class="stats-container">
+                                <!-- 提交概况卡片 -->
+                                <div class="stats-card">
+                                    <h3>提交概况</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="submissionRateValue">0%</div>
+                                            <div class="stat-label">提交率</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="approvedCountValue">0</div>
+                                            <div class="stat-label">已批准</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="rejectedCountValue">0</div>
+                                            <div class="stat-label">已拒绝</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="pendingApprovalCountValue">0</div>
+                                            <div class="stat-label">待审批</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 提交率图表 -->
+                                <div class="stats-card">
+                                    <h3>提交率可视化</h3>
+                                    <div class="chart-container">
+                                        <div class="pie-chart">
+                                            <div class="pie-slice submitted" id="submittedSlice"></div>
+                                            <div class="pie-center">
+                                                <span id="pieChartRate">0%</span>
+                                            </div>
+                                        </div>
+                                        <div class="pie-legend">
+                                            <div class="legend-item">
+                                                <span class="legend-color submitted"></span>
+                                                <span class="legend-label">已提交</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color pending"></span>
+                                                <span class="legend-label">未提交</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="action-btn btn-secondary"
                             onclick="closeModal('submissionDetailsModal')">关闭</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 审批模态框 -->
+            <div id="approvalModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">
+                            <i class="fas fa-clipboard-check"></i> 审批文件
+                        </h2>
+                        <button type="button" class="modal-close" onclick="closeModal('approvalModal')">&times;</button>
+                    </div>
+                    <form id="approvalForm">
+                        <input type="hidden" id="fileId" name="fileId">
+                        <input type="hidden" id="approvalStatus" name="status">
+
+                        <div class="form-group">
+                            <label>提交用户</label>
+                            <div class="form-control-static" id="approvalUsername"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>当前状态</label>
+                            <div class="form-control-static" id="currentStatus"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvalComments">审批意见</label>
+                            <textarea id="approvalComments" name="comments" class="form-control" rows="4"></textarea>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="action-btn btn-danger" onclick="submitApproval('rejected')">
+                                <i class="fas fa-times"></i> 拒绝
+                            </button>
+                            <button type="button" class="action-btn btn-success" onclick="submitApproval('approved')">
+                                <i class="fas fa-check"></i> 批准
+                            </button>
+                            <button type="button" class="action-btn btn-secondary"
+                                onclick="closeModal('approvalModal')">
+                                取消
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>
@@ -1401,10 +1662,17 @@
 
         // ============= 模板提交详情 =============
 
-        // 查看提交详情
+        // 查看提交详情 - 修改后的版本
         async function viewSubmissionDetails(templateId) {
             const token = checkAuth();
             showLoading();
+
+            // 保存当前模板ID，用于审批后刷新数据
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.id = 'currentTemplateId';
+            hiddenInput.value = templateId;
+            document.body.appendChild(hiddenInput);
 
             try {
                 const response = await fetch(`/api/v1/files/templates/${templateId}/status`, {
@@ -1436,16 +1704,31 @@
                                     <th>公司名称</th>
                                     <th>提交时间</th>
                                     <th>文件名</th>
+                                    <th>审批状态</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${data.submissions.map(sub => `
+                                ${data.submissions.map(sub => {
+                        // 根据审批状态设置样式和文本
+                        let statusClass = 'status-pending';
+                        let statusText = '待审批';
+
+                        if (sub.submission.status === 'approved') {
+                            statusClass = 'status-approved';
+                            statusText = '已批准';
+                        } else if (sub.submission.status === 'rejected') {
+                            statusClass = 'status-rejected';
+                            statusText = '已拒绝';
+                        }
+
+                        return `
                                     <tr>
                                         <td>${escapeHtml(sub.username)}</td>
                                         <td>${escapeHtml(sub.company_name || '未设置')}</td>
                                         <td>${formatDate(sub.submission.upload_date)}</td>
                                         <td>${escapeHtml(sub.submission.filename)}</td>
+                                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                                         <td>
                                             <button class="action-btn btn-secondary" onclick="downloadSubmission('${sub.user_id}', '${sub.template_id}')">
                                                 <i class="fas fa-download"></i> 下载
@@ -1453,9 +1736,14 @@
                                             <button class="action-btn btn-primary" onclick="viewSubmission('${sub.user_id}', '${sub.template_id}')">
                                                 <i class="fas fa-eye"></i> 查看
                                             </button>
+                                            <button class="action-btn ${statusClass === 'status-approved' ? 'btn-success' : (statusClass === 'status-rejected' ? 'btn-danger' : 'btn-primary')}" onclick="openApprovalModal('${sub.submission.id}', '${sub.username}', '${sub.submission.status || 'pending'}')">
+                                                <i class="fas fa-${statusClass === 'status-approved' ? 'check' : (statusClass === 'status-rejected' ? 'times' : 'clipboard-check')}"></i> 
+                                                ${statusClass === 'status-approved' ? '已批准' : (statusClass === 'status-rejected' ? '已拒绝' : '审批')}
+                                            </button>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                    }).join('')}
                             </tbody>
                         </table>
                     `;
@@ -1499,6 +1787,9 @@
                         </div>
                     `;
                 }
+
+                // 更新提交率统计信息
+                updateSubmissionStats(data);
 
                 // 显示模态框
                 document.getElementById('submissionDetailsModal').style.display = 'block';
@@ -2158,6 +2449,184 @@
                     fileInput.dispatchEvent(event);
                 }
             });
+        }
+
+        // ============= 审批功能 =============
+
+        // 打开审批模态框
+        // 打开审批模态框
+        function openApprovalModal(fileId, username, status, comments = '') {
+            document.getElementById('fileId').value = fileId;
+            document.getElementById('approvalUsername').textContent = username;
+
+            // 设置当前状态
+            const statusElement = document.getElementById('currentStatus');
+            if (status === 'approved') {
+                statusElement.innerHTML = '<span class="status-badge status-approved">已批准</span>';
+            } else if (status === 'rejected') {
+                statusElement.innerHTML = '<span class="status-badge status-rejected">已拒绝</span>';
+            } else {
+                statusElement.innerHTML = '<span class="status-badge status-pending">待审批</span>';
+            }
+
+            // 设置审批意见（如果有）
+            document.getElementById('approvalComments').value = comments;
+
+            // 获取审批详情（以获取更多信息）
+            if (fileId) {
+                getApprovalDetails(fileId);
+            }
+
+            // 显示模态框
+            document.getElementById('approvalModal').style.display = 'block';
+        }
+
+        // 获取审批详情
+        async function getApprovalDetails(fileId) {
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`/api/v1/files/submissions/approval/${fileId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.has_approval && data.approval && data.approval.comments) {
+                        // 使用后端返回的评论填充文本框
+                        document.getElementById('approvalComments').value = data.approval.comments;
+                    }
+                }
+            } catch (error) {
+                console.error('获取审批详情失败:', error);
+            }
+        }
+
+
+        // 提交审批
+        async function submitApproval(status) {
+            const fileId = document.getElementById('fileId').value;
+            const comments = document.getElementById('approvalComments').value;
+
+            if (!fileId) {
+                showToast('文件ID无效', 'error');
+                return;
+            }
+
+            document.getElementById('approvalStatus').value = status;
+
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                showToast('正在提交审批...', 'info');
+
+                const response = await fetch(`/api/v1/files/submissions/approve/${fileId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: status,
+                        comments: comments
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('审批成功', 'success');
+                    closeModal('approvalModal');
+
+                    // 重新加载当前模板的提交详情
+                    const templateId = document.getElementById('currentTemplateId').value;
+                    if (templateId) {
+                        viewSubmissionDetails(templateId);
+                    }
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || '审批失败');
+                }
+            } catch (error) {
+                console.error('审批失败:', error);
+                showToast(error.message || '审批失败，请重试', 'error');
+            }
+        }
+
+        // 更新提交率统计数据
+        // 更新提交率统计数据 - 修复后的版本
+        function updateSubmissionStats(data) {
+            // 计算提交率
+            const totalUsers = data.total_users || 0;
+            const submittedCount = data.submitted_count || 0;
+            const submissionRate = totalUsers > 0 ? Math.round((submittedCount / totalUsers) * 100) : 0;
+
+            // 计算审批状态统计
+            let approvedCount = 0;
+            let rejectedCount = 0;
+            let pendingApprovalCount = 0;
+
+            if (data.submissions && data.submissions.length > 0) {
+                data.submissions.forEach(sub => {
+                    if (sub.submission && sub.submission.status) {
+                        if (sub.submission.status === 'approved') {
+                            approvedCount++;
+                        } else if (sub.submission.status === 'rejected') {
+                            rejectedCount++;
+                        } else {
+                            pendingApprovalCount++;
+                        }
+                    } else {
+                        pendingApprovalCount++;
+                    }
+                });
+            }
+
+            // 更新统计卡片数据
+            document.getElementById('submissionRateValue').textContent = `${submissionRate}%`;
+            document.getElementById('approvedCountValue').textContent = approvedCount;
+            document.getElementById('rejectedCountValue').textContent = rejectedCount;
+            document.getElementById('pendingApprovalCountValue').textContent = pendingApprovalCount;
+
+            // 更新饼图
+            document.getElementById('pieChartRate').textContent = `${submissionRate}%`;
+
+            // 修复饼图显示 - 完全重构绘制逻辑
+            const pieContainer = document.querySelector('.pie-chart');
+            if (pieContainer) {
+                // 移除当前的饼图切片
+                const oldSlice = document.getElementById('submittedSlice');
+                if (oldSlice) {
+                    oldSlice.remove();
+                }
+
+                // 创建新的饼图元素
+                const submittedSlice = document.createElement('div');
+                submittedSlice.id = 'submittedSlice';
+                submittedSlice.className = 'pie-slice submitted';
+                pieContainer.appendChild(submittedSlice);
+
+                // 设置扇形区域 - 更精确的计算方法
+                if (submissionRate > 0) {
+                    const angle = (submissionRate / 100) * 360;
+
+                    // 使用conic-gradient而不是clip-path以获得更精确的扇形
+                    pieContainer.style.background = `conic-gradient(
+                #52c41a 0deg ${angle}deg, 
+                #faad14 ${angle}deg 360deg
+            )`;
+
+                    // 隐藏提交切片，因为现在用背景渲染
+                    submittedSlice.style.display = 'none';
+                } else {
+                    // 如果提交率为0，则显示全橙色
+                    pieContainer.style.background = '#faad14';
+                    submittedSlice.style.display = 'none';
+                }
+            }
         }
 
         // ============= 页面初始化 =============
