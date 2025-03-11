@@ -83,6 +83,10 @@ def upload_file(current_user, template_id):
         if file.filename == '':
             current_app.logger.error('未选择文件')
             return jsonify({'error': '未选择文件'}), 400
+        
+        original_name_param = request.args.get('originalName')
+        if original_name_param:
+            original_name_param = urllib.parse.unquote(original_name_param)
 
         # 获取原始文件名 - 修改这里，尝试从多个来源获取真实的文件名
         # 优先顺序：URL参数 > 表单字段 > HTTP头 > 文件名
@@ -126,6 +130,10 @@ def upload_file(current_user, template_id):
             old_file.file_path = file_path
             old_file.filename = original_filename  # 使用真实原始文件名
             old_file.update_time = datetime.utcnow()
+            # 添加这一行：重置为待审批状态
+            old_file.status = 'pending'
+            # 记录状态变更
+            current_app.logger.info(f'文件重新提交，状态已重置为待审批: file_id={old_file.id}')
         else:
             current_app.logger.info('创建新的文件记录')
             user_file = UserFile(

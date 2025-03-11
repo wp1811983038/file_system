@@ -450,7 +450,7 @@ Page({
             'Authorization': `Bearer ${token}`,
             'Cache-Control': 'no-cache',
             // 同时在HTTP头中添加
-            'X-Original-Filename': file.name
+            // 'X-Original-Filename': file.name
           },
           success: (res) => {
             console.log('上传成功响应:', res)

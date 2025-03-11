@@ -15,6 +15,9 @@ def get_profile(current_user):
         'username': current_user.username,
         'company_name': current_user.company_name,
         'contact_info': current_user.contact_info,
+        'company_address': current_user.company_address,
+        'industry': current_user.industry,
+        'recruitment_unit': current_user.recruitment_unit,
         'is_admin': current_user.is_admin
     })
 
@@ -34,6 +37,7 @@ def update_profile(current_user):
     current_app.logger.info(f'开始处理更新用户信息请求: user_id={current_user.id}')
     data = request.get_json()
     try:
+        # 处理用户名
         if 'username' in data:
             # 检查新用户名是否已存在
             existing_user = User.query.filter(
@@ -47,10 +51,12 @@ def update_profile(current_user):
             current_app.logger.info(f'更新用户名: {current_user.username} -> {data["username"]}')
             current_user.username = data['username']
             
+        # 处理公司名称
         if 'company_name' in data:
             current_app.logger.info(f'更新公司名称: {current_user.company_name} -> {data["company_name"]}')
             current_user.company_name = data['company_name']
             
+        # 处理联系方式（包含验证）
         if 'contact_info' in data:
             # 添加手机号验证
             if data['contact_info'] and not validate_phone_number(data['contact_info']):
@@ -59,7 +65,23 @@ def update_profile(current_user):
                 
             current_app.logger.info(f'更新联系方式: {current_user.contact_info} -> {data["contact_info"]}')
             current_user.contact_info = data['contact_info']
+        
+        # 处理新增字段 - 企业地址
+        if 'company_address' in data:
+            current_app.logger.info(f'更新企业地址: {current_user.company_address} -> {data["company_address"]}')
+            current_user.company_address = data['company_address']
+        
+        # 处理新增字段 - 所属行业
+        if 'industry' in data:
+            current_app.logger.info(f'更新所属行业: {current_user.industry} -> {data["industry"]}')
+            current_user.industry = data['industry']
+        
+        # 处理新增字段 - 招商单位
+        if 'recruitment_unit' in data:
+            current_app.logger.info(f'更新招商单位: {current_user.recruitment_unit} -> {data["recruitment_unit"]}')
+            current_user.recruitment_unit = data['recruitment_unit']
             
+        # 提交数据库更改
         db.session.commit()
         current_app.logger.info('用户信息更新成功')
         
@@ -71,6 +93,9 @@ def update_profile(current_user):
                 'username': current_user.username,
                 'company_name': current_user.company_name,
                 'contact_info': current_user.contact_info,
+                'company_address': current_user.company_address,
+                'industry': current_user.industry,
+                'recruitment_unit': current_user.recruitment_unit,
                 'is_admin': current_user.is_admin
             }
         })

@@ -1,9 +1,9 @@
 <view class="container">
   <!-- 搜索区域 -->
   <view class="search-box">
-    <picker mode="selector" range="{{['用户名', '公司名称', '联系方式']}}" bindchange="onSearchTypeChange" value="{{searchTypeIndex}}">
+    <picker mode="selector" range="{{['用户名', '公司名称', '联系方式', '所属行业', '招商单位']}}" bindchange="onSearchTypeChange" value="{{searchTypeIndex}}">
       <view class="search-type">
-        {{['用户名', '公司名称', '联系方式'][searchTypeIndex]}}
+        {{['用户名', '公司名称', '联系方式', '所属行业', '招商单位'][searchTypeIndex]}}
       </view>
     </picker>
     <input type="text" class="search-input" placeholder="输入搜索内容..." bindinput="onSearchInput"/>
@@ -37,50 +37,78 @@
       </view>
     </block>
 
-    <!-- 编辑/添加用户模态框 -->
-    <view class="modal" wx:if="{{showEditModal}}">
-      <view class="modal-content">
-        <view class="modal-title">{{modalTitle}}</view>
-        <form bindsubmit="submitEdit">
-          <input type="text" hidden name="id" value="{{editUser.id}}" />
-          
-          <view class="form-item">
-            <view class="form-label">用户名</view>
-            <input class="form-input" name="username" value="{{editUser.username}}" placeholder="请输入用户名"/>
-          </view>
+    <!-- 编辑/添加用户模态框 - 修改为可滚动 -->
+    <view class="modal" wx:if="{{showEditModal}}" catchtouchmove="preventTouchMove">
+      <view class="modal-mask" bindtap="closeEditModal"></view>
+      <view class="modal-content scrollable">
+        <view class="modal-header">
+          <text>{{modalTitle}}</text>
+          <text class="close" bindtap="closeEditModal">×</text>
+        </view>
+        <scroll-view scroll-y="true" class="modal-body">
+          <form bindsubmit="submitEdit">
+            <input type="text" hidden name="id" value="{{editUser.id}}" />
+            
+            <view class="form-item">
+              <view class="form-label">用户名</view>
+              <input class="form-input" name="username" value="{{editUser.username}}" placeholder="请输入用户名"/>
+            </view>
 
-          <view class="form-item">
-            <view class="form-label">密码</view>
-            <view class="password-input-group">
-              <input class="form-input" name="password" password="{{!showPassword}}" 
-                    placeholder="{{editUser.id ? '不修改请留空' : '请输入密码'}}"
-                    required="{{!editUser.id}}"/>
-              <view class="password-toggle" catchtap="togglePassword">
-                <image class="eye-icon" src="/images/{{showPassword ? 'eye-off' : 'eye'}}.png"></image>
+            <view class="form-item">
+              <view class="form-label">密码</view>
+              <view class="password-input-group">
+                <input class="form-input" name="password" password="{{!showPassword}}" 
+                      placeholder="{{editUser.id ? '不修改请留空' : '请输入密码'}}"
+                      required="{{!editUser.id}}"/>
+                <view class="password-toggle" catchtap="togglePassword">
+                  <image class="eye-icon" src="/images/{{showPassword ? 'eye-off' : 'eye'}}.png"></image>
+                </view>
               </view>
             </view>
-          </view>
 
-          <view class="form-item">
-            <view class="form-label">公司名称</view>
-            <input class="form-input" name="company_name" value="{{editUser.company_name}}" placeholder="请输入公司名称"/>
-          </view>
+            <view class="form-item">
+              <view class="form-label">公司名称</view>
+              <input class="form-input" name="company_name" value="{{editUser.company_name}}" placeholder="请输入公司名称"/>
+            </view>
 
-          <view class="form-item">
-            <view class="form-label">联系方式</view>
-            <input class="form-input" name="contact_info" value="{{editUser.contact_info}}" placeholder="请输入联系方式"/>
-          </view>
+            <view class="form-item">
+              <view class="form-label">联系方式</view>
+              <input class="form-input" name="contact_info" value="{{editUser.contact_info}}" placeholder="请输入联系方式"/>
+            </view>
+            
+            <!-- 新增字段 -->
+            <view class="form-item">
+              <view class="form-label">企业地址</view>
+              <input class="form-input" name="company_address" value="{{editUser.company_address}}" placeholder="请输入企业地址"/>
+            </view>
+            
+            <view class="form-item">
+              <view class="form-label">所属行业</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="industry" value="{{editUser.industry}}" placeholder="请输入所属行业"/>
+              </view>
+            </view>
+            
+            <view class="form-item">
+              <view class="form-label">招商单位</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="recruitment_unit" value="{{editUser.recruitment_unit}}" placeholder="请输入招商单位"/>
+              </view>
+            </view>
 
-          <view class="form-item">
-            <view class="form-label">管理员权限</view>
-            <switch name="is_admin" checked="{{editUser.is_admin}}" />
-          </view>
+            <view class="form-item">
+              <view class="form-label">管理员权限</view>
+              <view class="input-wrapper">
+                <switch name="is_admin" checked="{{editUser.is_admin}}" />
+              </view>
+            </view>
 
-          <view class="modal-btns">
-            <button class="btn cancel" bindtap="closeEditModal">取消</button>
-            <button class="btn confirm" form-type="submit">保存</button>
-          </view>
-        </form>
+            <view class="form-actions">
+              <button class="btn-small cancel" bindtap="closeEditModal">取消</button>
+              <button class="btn-small confirm" form-type="submit">保存</button>
+            </view>
+          </form>
+        </scroll-view>
       </view>
     </view>
   </view>

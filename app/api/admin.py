@@ -1,3 +1,4 @@
+import traceback
 from flask import Blueprint, jsonify, request, current_app, url_for
 from app.models.user import User
 from app.models.file_template import FileTemplate
@@ -76,20 +77,59 @@ def get_activities(current_user):
 def get_users(current_user):
     """获取用户列表"""
     try:
-        # 修改这里：移除 is_admin 的过滤，显示所有用户
-        users = User.query.all()
-        return jsonify({
-            'users': [{
+        # 获取查询参数
+        search_term = request.args.get('search', '')
+        search_type = request.args.get('type', 'username')  # 搜索类型：username, company_name, contact_info 等
+        
+        # 构建查询
+        query = User.query
+        
+        # 应用搜索过滤
+        if search_term:
+            if search_type == 'username':
+                query = query.filter(User.username.ilike(f'%{search_term}%'))
+            elif search_type == 'company_name':
+                query = query.filter(User.company_name.ilike(f'%{search_term}%'))
+            elif search_type == 'contact_info':
+                query = query.filter(User.contact_info.ilike(f'%{search_term}%'))
+            elif search_type == 'industry':
+                query = query.filter(User.industry.ilike(f'%{search_term}%'))
+            elif search_type == 'recruitment_unit':
+                query = query.filter(User.recruitment_unit.ilike(f'%{search_term}%'))
+            elif search_type == 'company_address':
+                query = query.filter(User.company_address.ilike(f'%{search_term}%'))
+        
+        # 执行查询
+        users = query.all()
+        
+        # 准备响应数据
+        users_data = []
+        for user in users:
+            # 获取该用户的文件提交数量
+            file_count = UserFile.query.filter_by(user_id=user.id).count()
+            
+            # 添加用户及其扩展信息
+            users_data.append({
                 'id': user.id,
                 'username': user.username,
                 'company_name': user.company_name,
                 'contact_info': user.contact_info,
+                'company_address': user.company_address, 
+                'industry': user.industry,
+                'recruitment_unit': user.recruitment_unit,
                 'is_admin': user.is_admin,
-                'file_count': UserFile.query.filter_by(user_id=user.id).count()
-            } for user in users]
+                'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else None,
+                'file_count': file_count
+            })
+        
+        return jsonify({
+            'users': users_data,
+            'total': len(users_data)
         })
+        
     except Exception as e:
         current_app.logger.error(f"Error getting users: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/users/<int:user_id>', methods=['PUT'])
