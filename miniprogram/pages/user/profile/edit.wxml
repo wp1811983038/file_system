@@ -35,6 +35,44 @@
                data-field="contact_info"/>
         <view class="error-message" wx:if="{{errors.contact_info}}">{{errors.contact_info}}</view>
       </view>
+      
+      <!-- 新增字段 -->
+      <view class="form-group">
+        <text class="label">企业地址</text>
+        <input type="text" 
+               name="company_address" 
+               value="{{userInfo.company_address}}" 
+               class="input" 
+               placeholder="请输入企业地址"
+               bindinput="onInputChange"
+               data-field="company_address"/>
+        <view class="error-message" wx:if="{{errors.company_address}}">{{errors.company_address}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">所属行业</text>
+        <input type="text" 
+               name="industry" 
+               value="{{userInfo.industry}}" 
+               class="input" 
+               placeholder="请输入所属行业"
+               bindinput="onInputChange"
+               data-field="industry"/>
+        <view class="error-message" wx:if="{{errors.industry}}">{{errors.industry}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">招商单位</text>
+        <input type="text" 
+               name="recruitment_unit" 
+               value="{{userInfo.recruitment_unit}}" 
+               class="input" 
+               placeholder="请输入招商单位"
+               bindinput="onInputChange"
+               data-field="recruitment_unit"/>
+        <view class="error-message" wx:if="{{errors.recruitment_unit}}">{{errors.recruitment_unit}}</view>
+      </view>
+      
       <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
         {{submitting ? '保存中...' : '保存修改'}}
       </button>

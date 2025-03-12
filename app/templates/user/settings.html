@@ -329,6 +329,16 @@
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
         }
 
+        .form-control.error {
+            border-color: var(--danger-color);
+            background-color: rgba(255, 77, 79, 0.05);
+        }
+
+        .form-group textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+
         .help-text {
             font-size: 12px;
             color: var(--text-secondary);
@@ -629,7 +639,25 @@
                             <div class="form-group">
                                 <label for="contactInfo">联系方式</label>
                                 <input type="text" id="contactInfo" name="contact_info" class="form-control" required>
-                                <div class="help-text">请填写您的联系方式，以便我们能够联系到您</div>
+                                <div class="help-text">请填写您的手机号码，格式为：13812345678</div>
+                            </div>
+                            <!-- 新增字段：企业地址 -->
+                            <div class="form-group">
+                                <label for="companyAddress">企业地址</label>
+                                <textarea id="companyAddress" name="company_address" class="form-control" 
+                                    placeholder="请填写详细的企业地址，包括省市区和详细街道信息"></textarea>
+                            </div>
+                            <!-- 新增字段：所属行业 -->
+                            <div class="form-group">
+                                <label for="industry">所属行业</label>
+                                <input type="text" id="industry" name="industry" class="form-control" 
+                                    placeholder="如：制造业、IT服务、教育、医疗等">
+                            </div>
+                            <!-- 新增字段：招商单位 -->
+                            <div class="form-group">
+                                <label for="recruitmentUnit">招商单位</label>
+                                <input type="text" id="recruitmentUnit" name="recruitment_unit" class="form-control" 
+                                    placeholder="请填写您的招商单位名称">
                             </div>
                             <div class="form-footer">
                                 <button type="submit" class="btn btn-primary" id="saveProfileBtn">
@@ -739,6 +767,9 @@
 
             // 初始化密码匹配检测
             initPasswordMatchCheck();
+            
+            // 初始化手机号码验证
+            initContactValidation();
         }
 
         // 初始化菜单切换
@@ -802,7 +833,7 @@
             loadSystemSettings();
         }
 
-        // 5. 优化 updateSystemName 函数
+        // 更新系统名称
         function updateSystemName(name) {
             if (!name) return;
 
@@ -816,7 +847,7 @@
             });
         }
 
-        // 6. 添加 storage 事件监听
+        // 添加 storage 事件监听
         window.addEventListener('storage', function (e) {
             if (e.key === 'systemName' && e.newValue) {
                 updateSystemName(e.newValue);
@@ -844,6 +875,11 @@
                     document.getElementById('usernameInput').value = data.username || '';
                     document.getElementById('companyName').value = data.company_name || '';
                     document.getElementById('contactInfo').value = data.contact_info || '';
+                    
+                    // 设置新增字段值
+                    document.getElementById('companyAddress').value = data.company_address || '';
+                    document.getElementById('industry').value = data.industry || '';
+                    document.getElementById('recruitmentUnit').value = data.recruitment_unit || '';
 
                     return data;
                 } else {
@@ -894,17 +930,6 @@
             } catch (error) {
                 console.error('加载系统设置失败:', error);
             }
-        }
-
-        // 更新系统名称
-        function updateSystemName(name) {
-            if (!name) return;
-
-            document.title = name + ' - 个人设置';
-            const systemNameElements = document.querySelectorAll('.system-name');
-            systemNameElements.forEach(element => {
-                element.textContent = name;
-            });
         }
 
         // 更新公告
@@ -1096,6 +1121,21 @@
             confirmPassword.addEventListener('input', checkPasswordMatch);
         }
 
+        // 初始化手机号验证
+        function initContactValidation() {
+            const contactInput = document.getElementById('contactInfo');
+            
+            contactInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !/^1[3-9]\d{9}$/.test(value)) {
+                    showToast('请输入有效的手机号码', 'error');
+                    this.classList.add('error');
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+        }
+
         // 个人信息表单提交
         document.getElementById('profileForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -1112,11 +1152,20 @@
                 const formData = {
                     username: document.getElementById('usernameInput').value.trim(),
                     company_name: document.getElementById('companyName').value.trim(),
-                    contact_info: document.getElementById('contactInfo').value.trim()
+                    contact_info: document.getElementById('contactInfo').value.trim(),
+                    // 添加新增字段
+                    company_address: document.getElementById('companyAddress').value.trim(),
+                    industry: document.getElementById('industry').value.trim(),
+                    recruitment_unit: document.getElementById('recruitmentUnit').value.trim()
                 };
 
                 if (!formData.username) {
                     throw new Error('用户名不能为空');
+                }
+
+                // 手机号验证
+                if (formData.contact_info && !/^1[3-9]\d{9}$/.test(formData.contact_info)) {
+                    throw new Error('请输入有效的手机号码');
                 }
 
                 console.log('提交个人信息:', formData);

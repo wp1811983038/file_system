@@ -144,7 +144,11 @@ Page({
           data: {
             username: data.username.trim(),
             company_name: data.company_name.trim(),
-            contact_info: data.contact_info.trim()
+            contact_info: data.contact_info.trim(),
+            // 添加新字段
+            company_address: data.company_address.trim(),
+            industry: data.industry.trim(),
+            recruitment_unit: data.recruitment_unit.trim()
           },
           success: resolve,
           fail: reject

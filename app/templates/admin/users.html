@@ -799,8 +799,11 @@
                         <div class="search-box">
                             <select id="searchType" class="search-select">
                                 <option value="username">用户名</option>
-                                <option value="company">公司名称</option>
-                                <option value="contact">联系方式</option>
+                                <option value="company_name">公司名称</option>
+                                <option value="contact_info">联系方式</option>
+                                <option value="industry">所属行业</option>
+                                <option value="recruitment_unit">招商单位</option>
+                                <option value="company_address">企业地址</option>
                             </select>
                             <input type="text" id="searchInput" class="search-input" placeholder="输入搜索内容...">
                             <button class="search-button" onclick="handleSearch()">
@@ -825,11 +828,14 @@
                         <thead>
                             <tr>
                                 <th width="5%">ID</th>
-                                <th width="20%">用户名</th>
-                                <th width="25%">公司名称</th>
-                                <th width="20%">联系方式</th>
-                                <th width="10%">角色</th>
-                                <th width="20%">操作</th>
+                                <th width="12%">用户名</th>
+                                <th width="15%">公司名称</th>
+                                <th width="12%">联系方式</th>
+                                <th width="12%">所属行业</th>
+                                <th width="12%">招商单位</th>
+                                <th width="17%">企业地址</th>
+                                <th width="7%">角色</th>
+                                <th width="8%">操作</th>
                             </tr>
                         </thead>
                         <tbody id="userTableBody">
@@ -885,6 +891,19 @@
                     <label for="contactInfo">联系方式 (手机号)</label>
                     <input type="text" id="contactInfo" class="form-control" placeholder="请输入11位手机号码">
                     <div class="form-message" id="contactInfoMessage">请输入有效的手机号码</div>
+                </div>
+                <!-- 新增字段 -->
+                <div class="form-group">
+                    <label for="industry">所属行业</label>
+                    <input type="text" id="industry" class="form-control" placeholder="请输入所属行业">
+                </div>
+                <div class="form-group">
+                    <label for="recruitmentUnit">招商单位</label>
+                    <input type="text" id="recruitmentUnit" class="form-control" placeholder="请输入招商单位">
+                </div>
+                <div class="form-group">
+                    <label for="companyAddress">企业地址</label>
+                    <input type="text" id="companyAddress" class="form-control" placeholder="请输入企业地址">
                 </div>
                 <div class="form-group">
                     <label for="isAdmin">用户角色</label>
@@ -1173,7 +1192,249 @@
                 closeModal();
             }
         };
+
+        // 获取用户列表
+        async function loadUsers() {
+            const token = checkAuth();
+
+            // 显示加载中状态
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('userTable').style.display = 'none';
+            document.getElementById('emptyData').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/v1/admin/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    userData = data.users || [];
+
+                    // 隐藏加载中状态
+                    document.getElementById('loading').style.display = 'none';
+
+                    // 渲染用户列表
+                    if (userData.length > 0) {
+                        renderUsers(userData);
+                        document.getElementById('userTable').style.display = 'table';
+                    } else {
+                        document.getElementById('emptyData').style.display = 'flex';
+                    }
+                } else {
+                    // 处理错误
+                    const error = await response.json();
+                    showToast(error.error || '加载用户列表失败', 'error');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('emptyData').style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                showToast('加载用户列表失败', 'error');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('emptyData').style.display = 'flex';
+            }
+        }
+
+        // 渲染用户列表
+        function renderUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+
+            tbody.innerHTML = users.map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                            <div>${escapeHtml(user.username)}</div>
+                        </div>
+                    </td>
+                    <td>${escapeHtml(user.company_name || '暂未设置')}</td>
+                    <td>${escapeHtml(user.contact_info || '暂未设置')}</td>
+                    <td>${escapeHtml(user.industry || '暂未设置')}</td>
+                    <td>${escapeHtml(user.recruitment_unit || '暂未设置')}</td>
+                    <td>${escapeHtml(user.company_address || '暂未设置')}</td>
+                    <td>
+                        <span class="${user.is_admin ? 'admin-badge' : 'user-badge'}">
+                            <i class="fas fa-${user.is_admin ? 'user-shield' : 'user'}"></i>
+                            ${user.is_admin ? '管理员' : '普通用户'}
+                        </span>
+                    </td>
+                    <td class="action-cell">
+                        <button class="icon-btn edit-btn" data-tooltip="编辑用户" onclick="openEditModal(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${!user.is_admin ? `
+                            <button class="icon-btn delete-btn" data-tooltip="删除用户" onclick="confirmDeleteUser(${user.id}, '${escapeHtml(user.username)}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 处理搜索
+        function handleSearch() {
+            const searchType = document.getElementById('searchType').value;
+            const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            if (!userData || userData.length === 0) return;
+
+            // 如果搜索值为空，显示所有用户
+            if (searchValue === '') {
+                renderUsers(userData);
+                return;
+            }
+
+            // 根据搜索类型筛选用户
+            const filteredUsers = userData.filter(user => {
+                switch (searchType) {
+                    case 'username':
+                        return user.username.toLowerCase().includes(searchValue);
+                    case 'company_name':
+                        return (user.company_name || '').toLowerCase().includes(searchValue);
+                    case 'contact_info':
+                        return (user.contact_info || '').toLowerCase().includes(searchValue);
+                    case 'industry':
+                        return (user.industry || '').toLowerCase().includes(searchValue);
+                    case 'recruitment_unit':
+                        return (user.recruitment_unit || '').toLowerCase().includes(searchValue);
+                    case 'company_address':
+                        return (user.company_address || '').toLowerCase().includes(searchValue);
+                    default:
+                        return true;
+                }
+            });
+
+            // 渲染筛选后的用户列表
+            renderUsers(filteredUsers);
+
+            // 如果没有搜索结果，显示空数据提示
+            if (filteredUsers.length === 0) {
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-data" style="padding: 30px 0;">
+                            <div style="text-align: center;">
+                                <i class="fas fa-search" style="font-size: 24px; color: #ddd; margin-bottom: 10px;"></i>
+                                <p>没有找到匹配的用户</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 打开添加用户模态框
+        function openAddModal() {
+            // 设置为添加模式
+            isEditMode = false;
+
+            // 更新模态框标题
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus"></i> 添加新用户';
+
+            // 重置表单
+            resetForm();
+
+            // 显示模态框
+            document.getElementById('userModal').style.display = 'block';
+
+            // 设置密码为必填
+            document.getElementById('password').required = true;
+            document.getElementById('password').placeholder = '请输入密码';
+        }
+
+        // 打开编辑用户模态框
+        function openEditModal(userId) {
+            // 设置为编辑模式
+            isEditMode = true;
+
+            // 查找用户数据
+            const user = userData.find(u => u.id === userId);
+            if (!user) {
+                showToast('未找到用户数据', 'error');
+                return;
+            }
+
+            // 更新模态框标题
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-edit"></i> 编辑用户信息';
+
+            // 填充表单数据
+            document.getElementById('userId').value = user.id;
+            document.getElementById('username').value = user.username;
+            document.getElementById('companyName').value = user.company_name || '';
+            document.getElementById('contactInfo').value = user.contact_info || '';
+            // 填充新增字段
+            document.getElementById('industry').value = user.industry || '';
+            document.getElementById('recruitmentUnit').value = user.recruitment_unit || '';
+            document.getElementById('companyAddress').value = user.company_address || '';
+            document.getElementById('isAdmin').checked = user.is_admin;
+
+            // 密码不是必填的（编辑模式）
+            document.getElementById('password').required = false;
+            document.getElementById('password').value = '';
+            document.getElementById('password').placeholder = '不修改请留空';
+
+            // 清除可能的验证错误
+            document.getElementById('username').classList.remove('invalid');
+            document.getElementById('usernameMessage').style.display = 'none';
+            document.getElementById('contactInfo').classList.remove('invalid');
+            document.getElementById('contactInfoMessage').style.display = 'none';
+
+            // 显示模态框
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('userModal').style.display = 'none';
+            resetForm();
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            
+            // 清除所有验证错误
+            const invalidInputs = document.querySelectorAll('.invalid');
+            const errorMessages = document.querySelectorAll('.form-message');
+            
+            invalidInputs.forEach(input => {
+                input.classList.remove('invalid');
+            });
+            
+            errorMessages.forEach(message => {
+                message.style.display = 'none';
+            });
+        }
+
+        // 切换密码显示/隐藏
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.password-toggle i');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
         
+        // 验证手机号
+        function validatePhoneNumber(phoneNumber) {
+            // 中国大陆手机号正则表达式验证
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            return phoneRegex.test(phoneNumber);
+        }
+
         // 确认删除用户
         function confirmDeleteUser(userId, username) {
             if (confirm(`确定要删除用户 "${username}" 吗？此操作不可恢复。`)) {
@@ -1222,6 +1483,10 @@
                 password: document.getElementById('password').value,
                 company_name: document.getElementById('companyName').value.trim(),
                 contact_info: document.getElementById('contactInfo').value.trim(),
+                // 添加新字段
+                industry: document.getElementById('industry').value.trim(),
+                recruitment_unit: document.getElementById('recruitmentUnit').value.trim(),
+                company_address: document.getElementById('companyAddress').value.trim(),
                 is_admin: document.getElementById('isAdmin').checked
             };
 
@@ -1322,235 +1587,6 @@
             } catch (error) {
                 console.error('提交用户表单失败:', error);
                 showToast('操作失败，请重试', 'error');
-            }
-        }
-        
-        // 打开添加用户模态框
-        function openAddModal() {
-            // 设置为添加模式
-            isEditMode = false;
-
-            // 更新模态框标题
-            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus"></i> 添加新用户';
-
-            // 重置表单
-            resetForm();
-
-            // 显示模态框
-            document.getElementById('userModal').style.display = 'block';
-
-            // 设置密码为必填
-            document.getElementById('password').required = true;
-            document.getElementById('password').placeholder = '请输入密码';
-        }
-
-        // 打开编辑用户模态框
-        function openEditModal(userId) {
-            // 设置为编辑模式
-            isEditMode = true;
-
-            // 查找用户数据
-            const user = userData.find(u => u.id === userId);
-            if (!user) {
-                showToast('未找到用户数据', 'error');
-                return;
-            }
-
-            // 更新模态框标题
-            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-edit"></i> 编辑用户信息';
-
-            // 填充表单数据
-            document.getElementById('userId').value = user.id;
-            document.getElementById('username').value = user.username;
-            document.getElementById('companyName').value = user.company_name || '';
-            document.getElementById('contactInfo').value = user.contact_info || '';
-            document.getElementById('isAdmin').checked = user.is_admin;
-
-            // 密码不是必填的（编辑模式）
-            document.getElementById('password').required = false;
-            document.getElementById('password').value = '';
-            document.getElementById('password').placeholder = '不修改请留空';
-
-            // 清除可能的验证错误
-            document.getElementById('username').classList.remove('invalid');
-            document.getElementById('usernameMessage').style.display = 'none';
-            document.getElementById('contactInfo').classList.remove('invalid');
-            document.getElementById('contactInfoMessage').style.display = 'none';
-
-            // 显示模态框
-            document.getElementById('userModal').style.display = 'block';
-        }
-
-        // 关闭模态框
-        function closeModal() {
-            document.getElementById('userModal').style.display = 'none';
-            resetForm();
-        }
-
-        // 重置表单
-        function resetForm() {
-            document.getElementById('userForm').reset();
-            document.getElementById('userId').value = '';
-            
-            // 清除所有验证错误
-            const invalidInputs = document.querySelectorAll('.invalid');
-            const errorMessages = document.querySelectorAll('.form-message');
-            
-            invalidInputs.forEach(input => {
-                input.classList.remove('invalid');
-            });
-            
-            errorMessages.forEach(message => {
-                message.style.display = 'none';
-            });
-        }
-
-        // 切换密码显示/隐藏
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.querySelector('.password-toggle i');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        }
-        
-        // 验证手机号
-        function validatePhoneNumber(phoneNumber) {
-            // 中国大陆手机号正则表达式验证
-            const phoneRegex = /^1[3-9]\d{9}$/;
-            return phoneRegex.test(phoneNumber);
-        }
-
-        // 加载用户列表
-        async function loadUsers() {
-            const token = checkAuth();
-
-            // 显示加载中状态
-            document.getElementById('loading').style.display = 'flex';
-            document.getElementById('userTable').style.display = 'none';
-            document.getElementById('emptyData').style.display = 'none';
-
-            try {
-                const response = await fetch('/api/v1/admin/users', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    userData = data.users || [];
-
-                    // 隐藏加载中状态
-                    document.getElementById('loading').style.display = 'none';
-
-                    // 渲染用户列表
-                    if (userData.length > 0) {
-                        renderUsers(userData);
-                        document.getElementById('userTable').style.display = 'table';
-                    } else {
-                        document.getElementById('emptyData').style.display = 'flex';
-                    }
-                } else {
-                    // 处理错误
-                    const error = await response.json();
-                    showToast(error.error || '加载用户列表失败', 'error');
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('emptyData').style.display = 'flex';
-                }
-            } catch (error) {
-                console.error('加载用户列表失败:', error);
-                showToast('加载用户列表失败', 'error');
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('emptyData').style.display = 'flex';
-            }
-        }
-
-        // 渲染用户列表
-        function renderUsers(users) {
-            const tbody = document.getElementById('userTableBody');
-
-            tbody.innerHTML = users.map((user, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
-                            <div>${escapeHtml(user.username)}</div>
-                        </div>
-                    </td>
-                    <td>${escapeHtml(user.company_name || '暂未设置')}</td>
-                    <td>${escapeHtml(user.contact_info || '暂未设置')}</td>
-                    <td>
-                        <span class="${user.is_admin ? 'admin-badge' : 'user-badge'}">
-                            <i class="fas fa-${user.is_admin ? 'user-shield' : 'user'}"></i>
-                            ${user.is_admin ? '管理员' : '普通用户'}
-                        </span>
-                    </td>
-                    <td class="action-cell">
-                        <button class="icon-btn edit-btn" data-tooltip="编辑用户" onclick="openEditModal(${user.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ${!user.is_admin ? `
-                            <button class="icon-btn delete-btn" data-tooltip="删除用户" onclick="confirmDeleteUser(${user.id}, '${escapeHtml(user.username)}')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // 处理搜索
-        function handleSearch() {
-            const searchType = document.getElementById('searchType').value;
-            const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
-
-            if (!userData || userData.length === 0) return;
-
-            // 如果搜索值为空，显示所有用户
-            if (searchValue === '') {
-                renderUsers(userData);
-                return;
-            }
-
-            // 根据搜索类型筛选用户
-            const filteredUsers = userData.filter(user => {
-                switch (searchType) {
-                    case 'username':
-                        return user.username.toLowerCase().includes(searchValue);
-                    case 'company':
-                        return (user.company_name || '').toLowerCase().includes(searchValue);
-                    case 'contact':
-                        return (user.contact_info || '').toLowerCase().includes(searchValue);
-                    default:
-                        return true;
-                }
-            });
-
-            // 渲染筛选后的用户列表
-            renderUsers(filteredUsers);
-
-            // 如果没有搜索结果，显示空数据提示
-            if (filteredUsers.length === 0) {
-                const tbody = document.getElementById('userTableBody');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="empty-data" style="padding: 30px 0;">
-                            <div style="text-align: center;">
-                                <i class="fas fa-search" style="font-size: 24px; color: #ddd; margin-bottom: 10px;"></i>
-                                <p>没有找到匹配的用户</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
             }
         }
     </script>

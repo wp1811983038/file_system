@@ -21,6 +21,9 @@ Page({
         selected: 1  // 个人中心的索引
       })
     }
+    
+    // 重新加载用户信息，确保数据最新
+    this.loadUserInfo()
   },
 
   onPullDownRefresh() {
