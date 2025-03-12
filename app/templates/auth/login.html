@@ -413,11 +413,11 @@
                 <!-- 登录表单 -->
                 <form id="login-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label for="username">用户名</label>
+                        <label for="login_id">账号</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名"
-                                required>
+                            <input type="text" id="login_id" name="login_id" class="form-control"
+                                placeholder="请输入用户名或手机号" required>
                         </div>
                     </div>
 
@@ -541,12 +541,12 @@
         // 记住登录状态
         function initRememberMe() {
             const rememberCheckbox = document.getElementById('remember-me');
-            const usernameInput = document.getElementById('username');
+            const loginIdInput = document.getElementById('login_id');
 
-            // 从本地存储获取记住的用户名
+            // 从本地存储获取记住的账号
             const rememberedUser = localStorage.getItem('rememberedUser');
             if (rememberedUser) {
-                usernameInput.value = rememberedUser;
+                loginIdInput.value = rememberedUser;
                 rememberCheckbox.checked = true;
             }
 
@@ -562,18 +562,18 @@
         async function handleLogin(event) {
             event.preventDefault();
 
-            const usernameInput = document.getElementById('username');
+            const loginIdInput = document.getElementById('login_id');
             const passwordInput = document.getElementById('password');
             const submitBtn = document.getElementById('submit-btn');
             const rememberCheckbox = document.getElementById('remember-me');
 
-            const username = usernameInput.value.trim();
+            const login_id = loginIdInput.value.trim();
             const password = passwordInput.value;
 
             // 基础表单验证
-            if (!username) {
-                showError('请输入用户名');
-                usernameInput.focus();
+            if (!login_id) {
+                showError('请输入用户名或手机号');
+                loginIdInput.focus();
                 return;
             }
 
@@ -595,7 +595,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username: username,
+                        login_id: login_id,
                         password: password
                     })
                 });
@@ -603,9 +603,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 如果选择了"记住我"，保存用户名
+                    // 如果选择了"记住我"，保存登录账号
                     if (rememberCheckbox.checked) {
-                        localStorage.setItem('rememberedUser', username);
+                        localStorage.setItem('rememberedUser', login_id);
                     } else {
                         localStorage.removeItem('rememberedUser');
                     }
@@ -631,7 +631,7 @@
                     }, 1000);
                 } else {
                     // 显示错误信息
-                    showError(data.error || '登录失败，请检查用户名和密码');
+                    showError(data.error || '登录失败，请检查账号和密码');
                     // 恢复提交按钮状态
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;

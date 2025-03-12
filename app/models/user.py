@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
     company_name = db.Column(db.String(100))
-    contact_info = db.Column(db.String(100))
+    contact_info = db.Column(db.String(100), unique=True)  # 修改为唯一
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

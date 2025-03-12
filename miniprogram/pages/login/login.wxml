@@ -8,17 +8,17 @@
     
     <view class="form">
       <view class="input-group {{usernameError ? 'input-error' : ''}}">
-        <text class="label">用户名</text>
-        <view class="input-wrapper">
-          <input type="text" 
-                placeholder="请输入用户名" 
-                bindinput="onUsernameInput"
-                value="{{username}}"
-          />
-          <icon wx:if="{{username}}" type="clear" size="18" bindtap="onUsernameInput" data-value="" class="clear-icon" />
-        </view>
-        <text wx:if="{{usernameError}}" class="error-text">{{usernameError}}</text>
-      </view>
+  <text class="label">账号</text>
+  <view class="input-wrapper">
+    <input type="text" 
+          placeholder="请输入用户名或手机号" 
+          bindinput="onUsernameInput"
+          value="{{username}}"
+    />
+    <icon wx:if="{{username}}" type="clear" size="18" bindtap="onUsernameInput" data-value="" class="clear-icon" />
+  </view>
+  <text wx:if="{{usernameError}}" class="error-text">{{usernameError}}</text>
+</view>
       
       <view class="input-group {{passwordError ? 'input-error' : ''}}">
         <text class="label">密码</text>

@@ -745,7 +745,8 @@
         <div class="header-right">
             <div class="user-info">
                 <i class="fas fa-user-circle"></i>
-                <span class="user-name" id="username">管理员</span>
+                <!-- 修改这里：将username改为navUsername -->
+                <span class="user-name" id="navUsername">管理员</span>
                 <span class="user-role">管理员</span>
             </div>
             <button class="logout-btn" onclick="handleLogout()">
@@ -879,7 +880,7 @@
                     <div class="password-group">
                         <input type="password" id="password" class="form-control" placeholder="不修改请留空">
                         <button type="button" class="password-toggle" onclick="togglePassword()">
-                            <i class="fas fa-eye"></i>
+                            <i class="fas fa-eye" id="passwordToggleIcon"></i>
                         </button>
                     </div>
                 </div>
@@ -1122,7 +1123,8 @@
 
                 if (response.ok) {
                     const userData = await response.json();
-                    document.getElementById('username').textContent = userData.username;
+                    // 修改这里：使用navUsername ID
+                    document.getElementById('navUsername').textContent = userData.username;
                 }
             } catch (error) {
                 console.error('获取用户信息失败:', error);
@@ -1211,7 +1213,14 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    userData = data.users || [];
+                    // 添加管理员排序逻辑 - 管理员排在前面
+                    userData = (data.users || []).sort((a, b) => {
+                        // 管理员优先
+                        if (a.is_admin && !b.is_admin) return -1;
+                        if (!a.is_admin && b.is_admin) return 1;
+                        // 然后按用户名排序
+                        return a.username.localeCompare(b.username);
+                    });
 
                     // 隐藏加载中状态
                     document.getElementById('loading').style.display = 'none';
@@ -1410,12 +1419,22 @@
             errorMessages.forEach(message => {
                 message.style.display = 'none';
             });
+            
+            // 重置密码可见状态
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type !== 'password') {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
         }
 
         // 切换密码显示/隐藏
         function togglePassword() {
             const passwordInput = document.getElementById('password');
-            const toggleIcon = document.querySelector('.password-toggle i');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
 
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -1490,6 +1509,9 @@
                 is_admin: document.getElementById('isAdmin').checked
             };
 
+            // 添加调试输出
+            console.log("提交表单数据:", formData);
+
             // 表单验证
             let isValid = true;
 
@@ -1558,7 +1580,11 @@
                     });
                 }
 
+                // 添加响应状态和详细错误日志
+                console.log('响应状态码:', response.status);
+                
                 const data = await response.json();
+                console.log('响应数据:', data);
 
                 if (response.ok) {
                     showToast(data.message || (isEditMode ? '用户更新成功' : '用户创建成功'), 'success');

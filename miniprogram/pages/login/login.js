@@ -67,118 +67,118 @@ Page({
   handleLogin() {
     // 表单验证
     if (!this.validateForm()) {
-      return
+        return;
     }
 
-    const { username, password, rememberPassword } = this.data
+    const { username, password, rememberPassword } = this.data;
     
     // 设置加载状态
-    this.setData({ isLoading: true })
+    this.setData({ isLoading: true });
     
     // 检查baseUrl是否存在
     if (!app.globalData || !app.globalData.baseUrl) {
-      wx.showModal({
-        title: '配置错误',
-        content: '系统配置错误，请联系管理员',
-        showCancel: false
-      })
-      this.setData({ isLoading: false })
-      console.error('baseUrl未定义，请在app.js中设置globalData.baseUrl')
-      return
+        wx.showModal({
+            title: '配置错误',
+            content: '系统配置错误，请联系管理员',
+            showCancel: false
+        });
+        this.setData({ isLoading: false });
+        console.error('baseUrl未定义，请在app.js中设置globalData.baseUrl');
+        return;
     }
 
     // 发送登录请求
     wx.request({
-      url: `${app.globalData.baseUrl}/api/v1/auth/login`,
-      method: 'POST',
-      data: {
-        username,
-        password
-      },
-      success: (res) => {
-        console.log('登录响应:', res)
-        if (res.statusCode === 200 && res.data.token) {
-          // 保存token和用户角色
-          wx.setStorageSync('token', res.data.token)
-          wx.setStorageSync('isAdmin', res.data.is_admin)
-          
-          // 保存用户名密码（如果选择了记住密码）
-          if (rememberPassword) {
-            wx.setStorageSync('savedUsername', username)
-            wx.setStorageSync('savedPassword', password)
-          } else {
-            wx.removeStorageSync('savedUsername')
-            wx.removeStorageSync('savedPassword')
-          }
-          
-          // 获取用户信息
-          this.getUserInfo(res.data.token, res.data.is_admin)
-        } else {
-          // 处理登录失败的情况
-          let errorMsg = '登录失败'
-          let fieldErrors = {}
-          
-          if (res.data && res.data.error) {
-            errorMsg = res.data.error
+        url: `${app.globalData.baseUrl}/api/v1/auth/login`,
+        method: 'POST',
+        data: {
+            login_id: username,  // 使用login_id替代username
+            password
+        },
+        success: (res) => {
+            console.log('登录响应:', res);
+            if (res.statusCode === 200 && res.data.token) {
+                // 保存token和用户角色
+                wx.setStorageSync('token', res.data.token);
+                wx.setStorageSync('isAdmin', res.data.is_admin);
+                
+                // 保存用户名密码（如果选择了记住密码）
+                if (rememberPassword) {
+                    wx.setStorageSync('savedUsername', username);
+                    wx.setStorageSync('savedPassword', password);
+                } else {
+                    wx.removeStorageSync('savedUsername');
+                    wx.removeStorageSync('savedPassword');
+                }
+                
+                // 获取用户信息
+                this.getUserInfo(res.data.token, res.data.is_admin);
+            } else {
+                // 处理登录失败的情况
+                let errorMsg = '登录失败';
+                let fieldErrors = {};
+                
+                if (res.data && res.data.error) {
+                    errorMsg = res.data.error;
+                    
+                    // 根据错误消息类型设置字段级错误
+                    if (errorMsg.includes('账号或密码错误')) {
+                        fieldErrors = {
+                            usernameError: '',
+                            passwordError: '账号或密码错误'
+                        };
+                    }
+                } else if (res.statusCode === 401) {
+                    errorMsg = '账号或密码错误';
+                    fieldErrors = {
+                        usernameError: '',
+                        passwordError: '账号或密码错误'
+                    };
+                } else if (res.statusCode === 403) {
+                    errorMsg = '账号已被禁用，请联系管理员';
+                } else if (res.statusCode >= 500) {
+                    errorMsg = '服务器错误，请稍后重试';
+                }
+                
+                // 更新字段错误（如果有）
+                if (Object.keys(fieldErrors).length > 0) {
+                    this.setData(fieldErrors);
+                }
+                
+                // 显示错误提示对话框，而不是简单的Toast
+                wx.showModal({
+                    title: '登录失败',
+                    content: errorMsg,
+                    showCancel: false
+                });
+                
+                this.setData({ isLoading: false });
+            }
+        },
+        fail: (err) => {
+            console.error('登录请求失败:', err);
+            let errorMsg = '网络错误，请检查网络连接后重试';
             
-            // 根据错误消息类型设置字段级错误
-            if (errorMsg.includes('用户名或密码错误')) {
-              fieldErrors = {
-                usernameError: '',
-                passwordError: '用户名或密码错误'
-              }
+            // 处理特定错误类型
+            if (err.errMsg && err.errMsg.includes('invalid url')) {
+                errorMsg = '服务器地址配置错误，请联系管理员';
+                console.error('请确保在app.js中正确设置了globalData.baseUrl');
             }
-          } else if (res.statusCode === 401) {
-            errorMsg = '用户名或密码错误'
-            fieldErrors = {
-              usernameError: '',
-              passwordError: '用户名或密码错误'
-            }
-          } else if (res.statusCode === 403) {
-            errorMsg = '账号已被禁用，请联系管理员'
-          } else if (res.statusCode >= 500) {
-            errorMsg = '服务器错误，请稍后重试'
-          }
-          
-          // 更新字段错误（如果有）
-          if (Object.keys(fieldErrors).length > 0) {
-            this.setData(fieldErrors)
-          }
-          
-          // 显示错误提示对话框，而不是简单的Toast
-          wx.showModal({
-            title: '登录失败',
-            content: errorMsg,
-            showCancel: false
-          })
-          
-          this.setData({ isLoading: false })
+            
+            // 使用弹窗提示具体错误，而不是简单的Toast
+            wx.showModal({
+                title: '连接错误',
+                content: errorMsg,
+                showCancel: false
+            });
+            
+            this.setData({ isLoading: false });
+        },
+        complete: () => {
+            wx.hideLoading();
         }
-      },
-      fail: (err) => {
-        console.error('登录请求失败:', err)
-        let errorMsg = '网络错误，请检查网络连接后重试'
-        
-        // 处理特定错误类型
-        if (err.errMsg && err.errMsg.includes('invalid url')) {
-          errorMsg = '服务器地址配置错误，请联系管理员'
-          console.error('请确保在app.js中正确设置了globalData.baseUrl')
-        }
-        
-        // 使用弹窗提示具体错误，而不是简单的Toast
-        wx.showModal({
-          title: '连接错误',
-          content: errorMsg,
-          showCancel: false
-        })
-        
-        this.setData({ isLoading: false })
-      },
-      complete: () => {
-        wx.hideLoading()
-      }
-    })
-  },
+    });
+},
 
   getUserInfo(token, isAdmin) {
     wx.request({
