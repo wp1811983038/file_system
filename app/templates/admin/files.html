@@ -920,6 +920,63 @@
             border-radius: 4px;
             margin-top: 5px;
         }
+
+        /* 详情模态框样式修改 - 固定大小可滚动 */
+        #submissionDetailsModal .modal-content {
+          max-width: 800px;
+          width: 90%;
+          max-height: 80vh; /* 固定高度为视口高度的80% */
+          display: flex;
+          flex-direction: column;
+        }
+
+        #submissionDetailsContent {
+          flex: 1;
+          overflow-y: auto; /* 启用垂直滚动 */
+          padding-right: 5px; /* 为滚动条预留空间 */
+        }
+
+        .tab-content {
+          max-height: 60vh; /* 限制标签内容高度 */
+          overflow-y: auto; /* 标签内容可滚动 */
+        }
+
+        /* 修改表格单元格间距 */
+        #submissionDetailsModal th, 
+        #submissionDetailsModal td {
+          padding: 8px 10px; /* 减小内边距 */
+        }
+
+        /* 调整列宽比例 */
+        #submissionDetailsModal .responsive-table table th:nth-child(1),
+        #submissionDetailsModal .responsive-table table td:nth-child(1) {
+          width: 20%; /* 用户名列宽 */
+        }
+
+        #submissionDetailsModal .responsive-table table th:nth-child(2),
+        #submissionDetailsModal .responsive-table table td:nth-child(2) {
+          width: 30%; /* 公司名称列宽 */
+        }
+
+        #submissionDetailsModal .responsive-table table th:nth-child(3),
+        #submissionDetailsModal .responsive-table table td:nth-child(3) {
+          width: 20%; /* 联系方式列宽 */
+        }
+
+        /* 详情搜索框样式 */
+        #submissionDetailsModal .search-box {
+          margin-bottom: 15px;
+          max-width: 100%;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background: white;
+          padding: 8px 0;
+        }
+
+        #submissionDetailsModal .search-input {
+          width: 100%;
+        }
     </style>
 </head>
 
@@ -1170,11 +1227,17 @@
                             </button>
                         </div>
                         <div id="submitted-users" class="tab-content active">
+                            <div class="search-box">
+                                <input type="text" id="searchSubmitted" class="search-input" placeholder="搜索用户名或公司名称...">
+                            </div>
                             <div id="submittedUsersContent" class="responsive-table">
                                 <!-- 动态加载内容 -->
                             </div>
                         </div>
                         <div id="pending-users" class="tab-content">
+                            <div class="search-box">
+                                <input type="text" id="searchPending" class="search-input" placeholder="搜索用户名或公司名称...">
+                            </div>
                             <div id="pendingUsersContent" class="responsive-table">
                                 <!-- 动态加载内容 -->
                             </div>
@@ -1804,12 +1867,57 @@
                 tabButtons[0].classList.add('active');
                 document.getElementById('submitted-users').classList.add('active');
 
+                // 设置搜索功能
+                setupDetailSearch();
+
             } catch (error) {
                 console.error('获取提交详情失败:', error);
                 showToast('获取提交详情失败', 'error');
             } finally {
                 hideLoading();
             }
+        }
+
+        // 为提交详情添加搜索功能
+        function setupDetailSearch() {
+            // 已提交用户搜索
+            document.getElementById('searchSubmitted').addEventListener('input', function() {
+                filterTable('submittedUsersContent', this.value);
+            });
+            
+            // 未提交用户搜索
+            document.getElementById('searchPending').addEventListener('input', function() {
+                filterTable('pendingUsersContent', this.value);
+            });
+            
+            // 清空搜索框初始值
+            document.getElementById('searchSubmitted').value = '';
+            document.getElementById('searchPending').value = '';
+        }
+
+        // 表格内容筛选函数
+        function filterTable(containerId, keyword) {
+            const container = document.getElementById(containerId);
+            const table = container.querySelector('table');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            const searchText = keyword.toLowerCase();
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                let found = false;
+                
+                // 在前两列（用户名和公司名称）中搜索
+                for (let i = 0; i < Math.min(2, cells.length); i++) {
+                    if (cells[i].textContent.toLowerCase().includes(searchText)) {
+                        found = true;
+                        break;
+                    }
+                }
+                
+                row.style.display = found || searchText === '' ? '' : 'none';
+            });
         }
 
         // 下载提交文件
