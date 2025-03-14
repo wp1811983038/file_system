@@ -2,7 +2,7 @@
 import os
 import re
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import create_app, db
 from app.models.user import User
 from app.models.settings import Settings
@@ -32,6 +32,14 @@ def create_system_settings():
     db.session.add(settings)
     print("创建系统初始设置")
 
+def create_wx_subscription_tables():
+    """在初始化数据库时，记录表信息"""
+    print("微信订阅消息相关表将通过模型自动创建")
+    print("- users表添加openid字段")
+    print("- wx_subscriptions表：存储用户订阅状态")
+    print("- wx_notification_logs表：记录通知发送历史")
+
+    
 def import_enterprises_from_excel(excel_file):
     """从Excel文件导入企业数据"""
     try:
@@ -337,6 +345,9 @@ def init_database():
         
         # 创建系统设置
         create_system_settings()
+        
+        # 创建微信订阅消息相关表
+        create_wx_subscription_tables()
         
         # 导入企业数据
         excel_file = "企业数据.xlsx"  # Excel文件名

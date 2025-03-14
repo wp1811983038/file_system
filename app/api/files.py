@@ -550,6 +550,24 @@ def approve_submission(current_user, file_id):
         user_file.status = approval_status
         db.session.commit()
         
+        # 发送审核通知 - 新增部分
+        try:
+            # 导入通知服务
+            from app.services.notification_service import NotificationService
+            
+            # 发送审核结果通知
+            notification_result = NotificationService.send_file_review_notification(user_file.user_id, file_id)
+            
+            if notification_result:
+                current_app.logger.info(f'发送审核通知成功: user_id={user_file.user_id}, file_id={file_id}')
+            else:
+                current_app.logger.warning(f'发送审核通知失败: user_id={user_file.user_id}, file_id={file_id}')
+                
+        except Exception as e:
+            # 通知发送失败不影响审批流程
+            current_app.logger.error(f'发送审核通知异常: {str(e)}')
+            current_app.logger.error(traceback.format_exc())
+        
         return jsonify({
             'message': '审批成功',
             'status': approval_status

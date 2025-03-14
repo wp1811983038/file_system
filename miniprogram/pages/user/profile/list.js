@@ -125,5 +125,86 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  // 跳转到通知设置页面
+  goToNotificationSettings() {
+    // 直接请求订阅消息
+    this.requestSubscription();
+  },
+
+  // 请求订阅消息权限
+  requestSubscription() {
+    wx.requestSubscribeMessage({
+      tmplIds: [
+        'NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM', // 收到文件通知模板ID
+        'FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM'  // 文件处理结果通知模板ID
+      ],
+      success: (res) => {
+        console.log('订阅消息授权结果:', res);
+        
+        // 获取订阅结果
+        const subscribeStatus = {
+          fileReceiveStatus: res['NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM'],
+          fileProcessStatus: res['FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM']
+        };
+        
+        // 将订阅状态提交到后端保存
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/users/subscribe`,
+          method: 'POST',
+          data: subscribeStatus,
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          },
+          success: (res) => {
+            if (res.statusCode === 200) {
+              this.showSuccess('通知设置已更新');
+              
+              // 查询当前状态并显示结果
+              this.getSubscriptionStatus();
+            }
+          },
+          fail: (err) => {
+            console.error('保存订阅状态失败:', err);
+            wx.showToast({
+              title: '设置保存失败',
+              icon: 'none'
+            });
+          }
+        });
+      },
+      fail: (err) => {
+        console.error('请求订阅消息失败:', err);
+        wx.showToast({
+          title: '请允许接收通知',
+          icon: 'none'
+        });
+      }
+    });
+  },
+  
+  // 获取当前订阅状态
+  getSubscriptionStatus() {
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/v1/users/subscribe`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          // 这里可以显示当前订阅状态
+          const status = res.data;
+          const tipMessage = `文件通知: ${status.fileReceiveStatus === 'accept' ? '已订阅' : '未订阅'}\n审核通知: ${status.fileProcessStatus === 'accept' ? '已订阅' : '未订阅'}`;
+          
+          wx.showModal({
+            title: '当前通知设置',
+            content: tipMessage,
+            showCancel: false
+          });
+        }
+      }
+    });
   }
 })

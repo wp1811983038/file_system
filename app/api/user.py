@@ -129,3 +129,57 @@ def change_password(current_user):
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
+    
+
+
+from app.models.wx_subscription import WxSubscription
+
+@bp.route('/subscribe', methods=['POST'])
+@token_required
+def update_subscription(current_user):
+    """更新用户订阅状态"""
+    data = request.get_json()
+    
+    if not current_user.openid:
+        return jsonify({'error': '用户未绑定微信openid'}), 400
+        
+    # 检查用户是否已有订阅记录
+    subscription = WxSubscription.query.filter_by(user_id=current_user.id).first()
+    
+    if not subscription:
+        # 创建新记录
+        subscription = WxSubscription(
+            user_id=current_user.id,
+            openid=current_user.openid,
+            file_receive_status=data.get('fileReceiveStatus', 'reject'),
+            file_process_status=data.get('fileProcessStatus', 'reject')
+        )
+        db.session.add(subscription)
+    else:
+        # 更新现有记录
+        if 'fileReceiveStatus' in data:
+            subscription.file_receive_status = data['fileReceiveStatus']
+        if 'fileProcessStatus' in data:
+            subscription.file_process_status = data['fileProcessStatus']
+    
+    db.session.commit()
+    return jsonify({'message': '订阅状态已更新'})
+
+@bp.route('/subscribe', methods=['GET'])
+@token_required
+def get_subscription_status(current_user):
+    """获取用户当前的订阅状态"""
+    subscription = WxSubscription.query.filter_by(user_id=current_user.id).first()
+    
+    if not subscription:
+        return jsonify({
+            'hasOpenid': bool(current_user.openid),
+            'fileReceiveStatus': 'reject',
+            'fileProcessStatus': 'reject'
+        })
+    
+    return jsonify({
+        'hasOpenid': bool(current_user.openid),
+        'fileReceiveStatus': subscription.file_receive_status,
+        'fileProcessStatus': subscription.file_process_status
+    })

@@ -57,6 +57,15 @@
       <view class="arrow-icon">＞</view>
     </view>
     
+    <!-- 消息通知设置 -->
+    <view class="menu-item" bindtap="goToNotificationSettings">
+      <view class="menu-icon-container">
+        <image class="menu-icon" src="/images/notification.png" mode="aspectFit"></image>
+      </view>
+      <text class="menu-text">消息通知设置</text>
+      <view class="arrow-icon">＞</view>
+    </view>
+    
     <!-- 安全退出 -->
     <view class="menu-item logout" bindtap="handleLogout">
       <view class="menu-icon-container">

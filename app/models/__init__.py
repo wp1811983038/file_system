@@ -1,0 +1,2 @@
+from app.models.wx_subscription import WxSubscription
+from app.models.wx_notification_log import WxNotificationLog

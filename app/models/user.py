@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
+    openid = db.Column(db.String(100))  # 微信用户的唯一标识
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
     company_name = db.Column(db.String(100))

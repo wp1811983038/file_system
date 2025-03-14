@@ -31,6 +31,17 @@ class Config:
     # JWT配置
     JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 以秒为单位（24小时）
 
+
+
+    # 微信小程序配置
+    WX_APP_ID = 'wx6e1d24122be5da2f'  # 替换为你的小程序AppID
+    WX_APP_SECRET = '8f376d8c3d21bf993cda665b7573529d'  # 替换为你的小程序AppSecret
+    
+    # 微信订阅消息模板ID
+    WX_TEMPLATE_FILE_RECEIVE = 'NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM'  # 收到文件通知
+    WX_TEMPLATE_FILE_PROCESS = 'FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM'  # 文件处理结果通知
+
+
 class DevelopmentConfig(Config):
     DEBUG = True
 

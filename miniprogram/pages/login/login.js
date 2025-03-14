@@ -67,7 +67,7 @@ Page({
   handleLogin() {
     // 表单验证
     if (!this.validateForm()) {
-        return;
+      return;
     }
 
     const { username, password, rememberPassword } = this.data;
@@ -75,110 +75,148 @@ Page({
     // 设置加载状态
     this.setData({ isLoading: true });
     
-    // 检查baseUrl是否存在
-    if (!app.globalData || !app.globalData.baseUrl) {
-        wx.showModal({
-            title: '配置错误',
-            content: '系统配置错误，请联系管理员',
-            showCancel: false
-        });
-        this.setData({ isLoading: false });
-        console.error('baseUrl未定义，请在app.js中设置globalData.baseUrl');
-        return;
-    }
-
-    // 发送登录请求
-    wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/auth/login`,
-        method: 'POST',
-        data: {
-            login_id: username,  // 使用login_id替代username
-            password
-        },
-        success: (res) => {
-            console.log('登录响应:', res);
-            if (res.statusCode === 200 && res.data.token) {
+    // 先获取微信登录code
+    wx.login({
+      success: (loginRes) => {
+        if (loginRes.code) {
+          // 调用后端接口，将code和登录信息一起发送
+          wx.request({
+            url: `${app.globalData.baseUrl}/api/v1/auth/code2session`,
+            method: 'POST',
+            data: {
+              code: loginRes.code,
+              username: username,
+              password: password
+            },
+            success: (res) => {
+              console.log('登录响应:', res);
+              if (res.statusCode === 200 && res.data.token) {
                 // 保存token和用户角色
                 wx.setStorageSync('token', res.data.token);
                 wx.setStorageSync('isAdmin', res.data.is_admin);
                 
                 // 保存用户名密码（如果选择了记住密码）
                 if (rememberPassword) {
-                    wx.setStorageSync('savedUsername', username);
-                    wx.setStorageSync('savedPassword', password);
+                  wx.setStorageSync('savedUsername', username);
+                  wx.setStorageSync('savedPassword', password);
                 } else {
-                    wx.removeStorageSync('savedUsername');
-                    wx.removeStorageSync('savedPassword');
+                  wx.removeStorageSync('savedUsername');
+                  wx.removeStorageSync('savedPassword');
                 }
                 
                 // 获取用户信息
                 this.getUserInfo(res.data.token, res.data.is_admin);
-            } else {
+                
+                // 登录成功后请求订阅消息授权
+                setTimeout(() => {
+                  this.requestSubscription();
+                }, 1000);
+              } else {
                 // 处理登录失败的情况
                 let errorMsg = '登录失败';
                 let fieldErrors = {};
                 
                 if (res.data && res.data.error) {
-                    errorMsg = res.data.error;
-                    
-                    // 根据错误消息类型设置字段级错误
-                    if (errorMsg.includes('账号或密码错误')) {
-                        fieldErrors = {
-                            usernameError: '',
-                            passwordError: '账号或密码错误'
-                        };
-                    }
-                } else if (res.statusCode === 401) {
-                    errorMsg = '账号或密码错误';
+                  errorMsg = res.data.error;
+                  
+                  // 根据错误消息类型设置字段级错误
+                  if (errorMsg.includes('账号或密码错误')) {
                     fieldErrors = {
-                        usernameError: '',
-                        passwordError: '账号或密码错误'
+                      usernameError: '',
+                      passwordError: '账号或密码错误'
                     };
-                } else if (res.statusCode === 403) {
-                    errorMsg = '账号已被禁用，请联系管理员';
+                  }
+                } else if (res.statusCode === 401) {
+                  errorMsg = '账号或密码错误';
+                  fieldErrors = {
+                    usernameError: '',
+                    passwordError: '账号或密码错误'
+                  };
                 } else if (res.statusCode >= 500) {
-                    errorMsg = '服务器错误，请稍后重试';
+                  errorMsg = '服务器错误，请稍后重试';
                 }
                 
-                // 更新字段错误（如果有）
+                // 更新字段错误
                 if (Object.keys(fieldErrors).length > 0) {
-                    this.setData(fieldErrors);
+                  this.setData(fieldErrors);
                 }
                 
-                // 显示错误提示对话框，而不是简单的Toast
                 wx.showModal({
-                    title: '登录失败',
-                    content: errorMsg,
-                    showCancel: false
+                  title: '登录失败',
+                  content: errorMsg,
+                  showCancel: false
                 });
                 
                 this.setData({ isLoading: false });
-            }
-        },
-        fail: (err) => {
-            console.error('登录请求失败:', err);
-            let errorMsg = '网络错误，请检查网络连接后重试';
-            
-            // 处理特定错误类型
-            if (err.errMsg && err.errMsg.includes('invalid url')) {
-                errorMsg = '服务器地址配置错误，请联系管理员';
-                console.error('请确保在app.js中正确设置了globalData.baseUrl');
-            }
-            
-            // 使用弹窗提示具体错误，而不是简单的Toast
-            wx.showModal({
+              }
+            },
+            fail: (err) => {
+              console.error('登录请求失败:', err);
+              let errorMsg = '网络错误，请检查网络连接后重试';
+              
+              wx.showModal({
                 title: '连接错误',
                 content: errorMsg,
                 showCancel: false
-            });
-            
-            this.setData({ isLoading: false });
-        },
-        complete: () => {
-            wx.hideLoading();
+              });
+              
+              this.setData({ isLoading: false });
+            }
+          });
+        } else {
+          wx.showToast({
+            title: '获取登录凭证失败',
+            icon: 'none'
+          });
+          this.setData({ isLoading: false });
         }
+      },
+      fail: (err) => {
+        console.error('wx.login失败:', err);
+        wx.showToast({
+          title: '微信登录失败',
+          icon: 'none'
+        });
+        this.setData({ isLoading: false });
+      }
     });
-},
+  },
+
+  // 添加订阅消息请求函数
+  requestSubscription() {
+    wx.requestSubscribeMessage({
+      tmplIds: [
+        'NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM', // 收到文件通知模板ID
+        'FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM'  // 文件处理结果通知模板ID
+      ],
+      success: (res) => {
+        // 获取订阅结果
+        const subscribeStatus = {
+          fileReceiveStatus: res['NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM'],
+          fileProcessStatus: res['FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM']
+        };
+        
+        // 将订阅状态提交到后端保存
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/users/subscribe`,
+          method: 'POST',
+          data: subscribeStatus,
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          },
+          success: (subRes) => {
+            console.log('订阅状态保存结果:', subRes);
+          },
+          fail: (subErr) => {
+            console.error('保存订阅状态失败:', subErr);
+          }
+        });
+      },
+      fail: (err) => {
+        console.error('请求订阅消息授权失败:', err);
+      }
+    });
+  },
 
   getUserInfo(token, isAdmin) {
     wx.request({
