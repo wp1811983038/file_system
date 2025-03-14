@@ -136,18 +136,7 @@ Page({
   // 请求订阅消息权限
   requestSubscription() {
     wx.requestSubscribeMessage({
-      tmplIds: [
-        'NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM', // 收到文件通知模板ID
-        'FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM'  // 文件处理结果通知模板ID
-      ],
-      success: (res) => {
-        console.log('订阅消息授权结果:', res);
-        
-        // 获取订阅结果
-        const subscribeStatus = {
-          fileReceiveStatus: res['NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM'],
-          fileProcessStatus: res['FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM']
-        };
+      
         
         // 将订阅状态提交到后端保存
         wx.request({

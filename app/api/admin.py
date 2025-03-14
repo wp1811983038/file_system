@@ -304,9 +304,45 @@ def create_template(current_user):
         db.session.add(template)
         db.session.commit()
         
+        # 新增: 发送模板通知给所有普通用户
+        try:
+            # 导入通知服务
+            from app.services.notification_service import NotificationService
+            
+            # 获取所有非管理员用户
+            users = User.query.filter_by(is_admin=False).all()
+            
+            # 记录通知发送结果
+            success_count = 0
+            fail_count = 0
+            
+            # 发送通知
+            for user in users:
+                try:
+                    result = NotificationService.send_file_reminder_notification(user.id, template.id)
+                    if result:
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                except Exception as e:
+                    current_app.logger.error(f"向用户发送模板通知失败: user_id={user.id}, error={str(e)}")
+                    fail_count += 1
+            
+            current_app.logger.info(f"模板通知发送统计: 成功={success_count}, 失败={fail_count}, 总用户数={len(users)}")
+            
+        except Exception as e:
+            current_app.logger.error(f"发送模板通知过程中出错: {str(e)}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            # 通知失败不影响模板创建流程，继续返回成功
+        
         return jsonify({
             'message': '模板创建成功',
-            'template': template.to_dict()
+            'template': template.to_dict(),
+            'notifications': {
+                'success': success_count,
+                'fail': fail_count
+            }
         }), 201
         
     except Exception as e:

@@ -5,6 +5,7 @@ from app import db
 from app.models.user import User
 from app.models.file_template import FileTemplate
 from app.models.user_file import UserFile
+from app.models.file_approval import FileApproval  # 添加导入
 from app.models.wx_subscription import WxSubscription
 from app.models.wx_notification_log import WxNotificationLog
 from app.services.wx_service import WxService
@@ -52,9 +53,19 @@ class NotificationService:
             file_name = user_file.filename or "用户提交文件"
             template_name = template.name or "系统模板"
             
-            # 准备通知内容
+            # 准备审核结果文本
             result_text = "审核不通过" if user_file.status == 'rejected' else "审核通过"
-            note_text = "请检查并重新提交" if user_file.status == 'rejected' else "感谢您的提交"
+            
+            # 获取审批记录中的评论
+            try:
+                # 查询关联的最新审批记录
+                approval = FileApproval.query.filter_by(file_id=file_id).order_by(FileApproval.approval_date.desc()).first()
+                # 使用审批记录中的评论，如果有的话
+                note_text = approval.comments if approval and approval.comments else ("请检查并重新提交" if user_file.status == 'rejected' else "感谢您的提交")
+            except Exception as e:
+                current_app.logger.warning(f"获取审批评论失败，使用默认文本: {str(e)}")
+                # 使用默认文本
+                note_text = "请检查并重新提交" if user_file.status == 'rejected' else "感谢您的提交"
             
             # 限制字段长度，按照模板要求裁剪
             file_name = file_name[:20]
