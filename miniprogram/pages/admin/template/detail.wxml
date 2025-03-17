@@ -13,7 +13,6 @@
     
     <view class="action-buttons">
       <button class="btn btn-back" bindtap="goBack">返回</button>
-      <button class="btn btn-export" bindtap="exportData">导出数据</button>
       <button class="btn btn-download" bindtap="downloadTemplate">下载模板</button>
     </view>
   </view>

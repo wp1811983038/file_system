@@ -1,0 +1,49 @@
+<view class="container">
+  <!-- 系统设置卡片 -->
+  <view class="settings-card">
+    <view class="card-title">系统设置</view>
+    
+    <form bindsubmit="handleSettingsSubmit">
+      <view class="form-group">
+        <text class="label">系统名称</text>
+        <input type="text" 
+               name="system_name" 
+               value="{{systemSettings.system_name}}" 
+               class="input" 
+               placeholder="请输入系统名称"/>
+        <view class="error-message" wx:if="{{errors.system_name}}">{{errors.system_name}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">系统公告</text>
+        <textarea name="system_description" 
+                  value="{{systemSettings.system_description}}" 
+                  class="textarea" 
+                  placeholder="请输入系统公告内容，将显示给所有用户"
+                  maxlength="500"/>
+        <view class="textarea-counter">{{systemAnnouncementLength || 0}}/500</view>
+        <view class="error-message" wx:if="{{errors.system_description}}">{{errors.system_description}}</view>
+      </view>
+      
+      <view class="form-preview">
+        <text class="preview-title">公告预览</text>
+        <view class="preview-content">{{systemSettings.system_description || '暂无公告内容'}}</view>
+      </view>
+      
+      <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
+        {{submitting ? '保存中...' : '保存设置'}}
+      </button>
+    </form>
+  </view>
+  
+  <!-- 退出按钮 -->
+  <view class="logout-section">
+    <button class="btn btn-logout" bindtap="handleLogout">安全退出</button>
+  </view>
+  
+  <!-- 全局错误消息 -->
+  <view class="global-error" wx:if="{{globalError}}">{{globalError}}</view>
+  
+  <!-- 成功提示 -->
+  <view class="success-tip {{showSuccessTip ? 'show' : ''}}">{{successMessage}}</view>
+</view>

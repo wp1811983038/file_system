@@ -3,6 +3,7 @@ Component({
     selected: 0,
     color: "#999",
     selectedColor: "#07c160",
+    // 在adminList数组中添加设置选项
     adminList: [{
       pagePath: "/pages/admin/index/index",
       text: "首页",
@@ -18,6 +19,11 @@ Component({
       text: "用户管理",
       iconPath: "/images/user.png",
       selectedIconPath: "/images/user-active.png"
+    }, {
+      pagePath: "/pages/admin/settings/index",
+      text: "设置",
+      iconPath: "/images/setting.png",
+      selectedIconPath: "/images/setting-active.png"
     }],
     userList: [{
       pagePath: "/pages/user/files/list",
@@ -47,9 +53,9 @@ Component({
     switchTab(e) {
       const data = e.currentTarget.dataset
       const url = data.path
-      
+
       console.log('切换Tab:', data.index, url)
-      
+
       this.setData({
         selected: data.index
       })

@@ -272,14 +272,6 @@ Page({
     wx.navigateBack();
   },
 
-  // 导出数据
-  exportData() {
-    console.log('点击导出数据');
-    wx.showToast({
-      title: '导出功能开发中',
-      icon: 'none'
-    });
-  },
 
   // 下载模板
   async downloadTemplate() {
@@ -487,8 +479,7 @@ Page({
     console.log('审批意见已更新:', e.detail.value); // 添加日志便于调试
   },
   // 提交审批
-  // 修改 _submitApproval 函数，确保状态更新
-  // 修改后的审批提交函数
+
   // 修改后的审批提交函数 - 立即更新按钮状态
   async _submitApproval(status) {
     const { fileId, comments } = this.data.currentApproval;
