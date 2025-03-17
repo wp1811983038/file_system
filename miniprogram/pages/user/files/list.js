@@ -83,13 +83,19 @@ Page({
       approval_date: '',
       comments: '',
       approver_name: ''
-    }
+    },
+    // 添加通知相关数据
+    showNotification: false,
+    notificationContent: ''
   },
 
   onLoad() {
     console.log('页面加载')
     this.loadUserInfo()
     this.loadTemplates()
+    
+    // 加载系统通知
+    this.loadNotification()
   },
 
   onShow() {
@@ -299,6 +305,7 @@ Page({
       })
     }
   },
+  
   // 获取单个提交的审批状态
   async fetchSubmissionStatus(submissionId, templateId) {
     try {
@@ -407,7 +414,6 @@ Page({
   },
 
   // 提交文件
-  // 通过URL参数传递文件名
   async submitFile() {
     if (!this.data.selectedFile) {
       wx.showToast({
@@ -449,8 +455,6 @@ Page({
           header: {
             'Authorization': `Bearer ${token}`,
             'Cache-Control': 'no-cache',
-            // 同时在HTTP头中添加
-            // 'X-Original-Filename': file.name
           },
           success: (res) => {
             console.log('上传成功响应:', res)
@@ -559,7 +563,7 @@ Page({
     });
   },
 
-  // 下载模板 - 优化版本
+  // 下载模板
   async downloadTemplate(e) {
     const { id: templateId, name: templateName } = e.currentTarget.dataset
     console.log('开始下载模板:', { templateId, templateName })
@@ -625,7 +629,7 @@ Page({
     }
   },
 
-  // 查看提交文件 - 优化版
+  // 查看提交文件
   async viewSubmission(e) {
     const { templateId } = e.currentTarget.dataset;
     const userId = this.data.currentUserId;
@@ -692,7 +696,7 @@ Page({
     }
   },
 
-  // 下载提交文件 - 优化版
+  // 下载提交文件
   async downloadSubmission(e) {
     const { templateId } = e.currentTarget.dataset;
     const userId = this.data.currentUserId;
@@ -762,5 +766,58 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  // 加载通知内容
+  async loadNotification() {
+    try {
+      const token = wx.getStorageSync('token')
+      if (!token) return
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/admin/settings`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        })
+      })
+      
+      if (res.statusCode === 200 && res.data) {
+        // 如果有系统公告，显示弹窗
+        const notificationContent = res.data.system_description
+        
+        if (notificationContent && notificationContent.trim() !== '') {
+          // 检查是否已经显示过（当天）
+          const today = new Date().toDateString()
+          const lastShown = wx.getStorageSync('notificationLastShown')
+          
+          if (lastShown !== today) {
+            this.setData({
+              notificationContent: notificationContent,
+              showNotification: true
+            })
+            
+            // 记录今天已显示
+            wx.setStorageSync('notificationLastShown', today)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('加载通知失败:', err)
+    }
+  },
+
+  // 关闭通知弹窗
+  closeNotification() {
+    this.setData({
+      showNotification: false
+    })
+    
+    // 添加触感反馈
+    wx.vibrateShort({ type: 'light' })
   }
-});
+})

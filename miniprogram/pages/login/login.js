@@ -185,6 +185,16 @@ Page({
   // 添加订阅消息请求函数
   requestSubscription() {
     wx.requestSubscribeMessage({
+      tmplIds: [
+        '.', // 收到文件通知模板ID
+        '.'  // 文件处理结果通知模板ID
+      ],
+      success: (res) => {
+        // 获取订阅结果
+        const subscribeStatus = {
+          fileReceiveStatus: res['.'],
+          fileProcessStatus: res['.']
+        };
       
         // 将订阅状态提交到后端保存
         wx.request({

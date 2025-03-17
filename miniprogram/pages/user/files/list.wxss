@@ -317,3 +317,101 @@
   white-space: pre-wrap;
   line-height: 1.5;
 }
+
+/* 通知弹窗样式 */
+.notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12rpx;
+  width: 80%;
+  max-width: 600rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1001;
+  animation: modalFadeIn 0.3s;
+  overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #e8e8e8;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.modal-icon {
+  margin-right: 12rpx;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  line-height: 0.8;
+}
+
+.modal-body {
+  padding: 30rpx;
+}
+
+.notification-content {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modal-footer {
+  border-top: 1rpx solid #e8e8e8;
+  padding: 20rpx 30rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: white;
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}

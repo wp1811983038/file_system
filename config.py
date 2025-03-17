@@ -29,7 +29,15 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
     # JWT配置
-    JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 以秒为单位（24小时）
+    JWT_ACCESS_TOKEN_EXPIRES = 168 * 60 * 60  # 以秒为单位（24小时）
+
+        # 微信小程序配置
+    WX_APP_ID = '.'  # 替换为你的小程序AppID
+    WX_APP_SECRET = '.'  # 替换为你的小程序AppSecret
+    
+    # 微信订阅消息模板ID
+    WX_TEMPLATE_FILE_RECEIVE = '.'  # 收到文件通知
+    WX_TEMPLATE_FILE_PROCESS = '.'  # 文件处理结果通知
 
 
 

@@ -1,5 +1,6 @@
 from flask import jsonify, request, send_file
 from app.models.file_template import FileTemplate
+from app.models.settings import Settings
 from app.models.user_file import UserFile
 from app.utils.auth import token_required
 from . import bp_files as bp
@@ -682,3 +683,4 @@ def batch_approve_submissions(current_user):
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+    

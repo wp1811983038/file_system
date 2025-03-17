@@ -123,3 +123,23 @@
     </view>
   </view>
 </view>
+
+<!-- 通知弹窗 -->
+<view class="notification-modal" wx:if="{{showNotification}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask" bindtap="closeNotification"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">
+        <text class="modal-icon">📢</text>
+        系统通知
+      </text>
+      <view class="modal-close" bindtap="closeNotification">×</view>
+    </view>
+    <view class="modal-body">
+      <view class="notification-content">{{notificationContent}}</view>
+    </view>
+    <view class="modal-footer">
+      <button class="btn btn-primary" bindtap="closeNotification">我知道了</button>
+    </view>
+  </view>
+</view>
