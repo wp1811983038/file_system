@@ -38,7 +38,7 @@
       {
         "pagePath": "pages/admin/settings/index",
         "text": "设置"
-      },
+      }, 
       {
         "pagePath": "pages/user/files/list",
         "text": "文件"

@@ -24,7 +24,13 @@ class Config:
     USER_FILES_FOLDER = os.path.join(UPLOAD_FOLDER, 'user_files')  # 用户上传的文件
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     ALLOWED_EXTENSIONS = {'*'}  # 允许所有文件类型
-    
+    # 在现有上传文件配置下添加
+    # config.py 添加以下配置
+    AVATAR_FOLDER = os.path.join(UPLOAD_FOLDER, 'avatars')  # 用户头像存储目录
+    MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 最大头像大小限制为2MB
+    ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}  # 允许的头像格式
+    DEFAULT_AVATAR = 'app\static\images\default-avatar.png'  # 默认头像路径
+        
     # Session配置
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
@@ -32,12 +38,12 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = 168 * 60 * 60  # 以秒为单位（24小时）
 
         # 微信小程序配置
-    WX_APP_ID = '.'  # 替换为你的小程序AppID
-    WX_APP_SECRET = '.'  # 替换为你的小程序AppSecret
+    WX_APP_ID = ''  # 替换为你的小程序AppID
+    WX_APP_SECRET = ''  # 替换为你的小程序AppSecret
     
     # 微信订阅消息模板ID
-    WX_TEMPLATE_FILE_RECEIVE = '.'  # 收到文件通知
-    WX_TEMPLATE_FILE_PROCESS = '.'  # 文件处理结果通知
+    WX_TEMPLATE_FILE_RECEIVE = ''  # 收到文件通知
+    WX_TEMPLATE_FILE_PROCESS = ''  # 文件处理结果通知
 
 
 

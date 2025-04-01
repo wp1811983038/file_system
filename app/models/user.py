@@ -59,6 +59,7 @@ class User(UserMixin, db.Model):
             'industry': self.industry,
             'recruitment_unit': self.recruitment_unit,
             'is_admin': self.is_admin,
+            'avatar_url': self.avatar_url,  # 添加头像URL
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
         

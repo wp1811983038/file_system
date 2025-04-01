@@ -9,6 +9,7 @@ from app.models.settings import Settings
 from app.models.file_template import FileTemplate
 from app.models.user_file import UserFile
 from app.models.file_approval import FileApproval
+from config import Config
 
 def create_admin_user():
     """创建系统管理员账户"""
@@ -17,7 +18,8 @@ def create_admin_user():
         company_name="系统管理员",
         contact_info="13000000000",  # 管理员手机号
         is_admin=True,
-        created_at=datetime.now()
+        created_at=datetime.now(),
+        # avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
     )
     admin.set_password("admin123")  # 设置管理员初始密码
     db.session.add(admin)
@@ -39,7 +41,41 @@ def create_wx_subscription_tables():
     print("- wx_subscriptions表：存储用户订阅状态")
     print("- wx_notification_logs表：记录通知发送历史")
 
+def create_avatar_directories():
+    """创建头像目录和默认头像"""
+    # 创建头像目录
+    os.makedirs(Config.AVATAR_FOLDER, exist_ok=True)
+    print(f"创建头像目录: {Config.AVATAR_FOLDER}")
     
+    # 创建默认头像目录
+    default_avatar_dir = os.path.join(Config.BASE_DIR, 'app', 'static', 'images')
+    os.makedirs(default_avatar_dir, exist_ok=True)
+    print(f"创建默认头像目录: {default_avatar_dir}")
+    
+    # 检查默认头像文件是否存在
+    default_avatar_path = os.path.join(default_avatar_dir, 'default-avatar.png')
+    if not os.path.exists(default_avatar_path):
+        print(f"注意: 默认头像文件不存在，请添加默认头像到: {default_avatar_path}")
+        
+        # 可以考虑添加一个创建简单默认头像的代码
+        try:
+            # 如果有PIL库，可以创建一个简单的默认头像
+            from PIL import Image, ImageDraw
+            
+            # 创建一个200x200的灰色头像
+            img = Image.new('RGB', (200, 200), color = (200, 200, 200))
+            d = ImageDraw.Draw(img)
+            
+            # 画一个简单的轮廓
+            d.ellipse((50, 50, 150, 150), fill=(150, 150, 150))
+            
+            # 保存为默认头像
+            img.save(default_avatar_path)
+            print(f"已创建简单的默认头像: {default_avatar_path}")
+        except ImportError:
+            print("未安装PIL库，无法自动创建默认头像")
+            print("请手动添加一张名为'default-avatar.png'的图片到指定位置")
+
 def import_enterprises_from_excel(excel_file):
     """从Excel文件导入企业数据"""
     try:
@@ -155,7 +191,8 @@ def import_enterprises_from_excel(excel_file):
                     industry=industry,
                     recruitment_unit=recruitment_unit,
                     is_admin=False,
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
+                    avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
                 )
                 
                 # 设置密码为原始手机号
@@ -348,6 +385,9 @@ def init_database():
         
         # 创建微信订阅消息相关表
         create_wx_subscription_tables()
+        
+        # 创建头像目录和默认头像
+        create_avatar_directories()
         
         # 导入企业数据
         excel_file = "企业数据.xlsx"  # Excel文件名

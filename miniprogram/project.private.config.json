@@ -4,7 +4,21 @@
   "setting": {
     "compileHotReLoad": true,
     "urlCheck": false,
-    "bigPackageSizeSupport": true
+    "bigPackageSizeSupport": true,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "skylineRenderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "showShadowRootInWxmlPanel": true,
+    "useStaticServer": false,
+    "useLanDebug": false,
+    "showES6CompileOption": false,
+    "checkInvalidKey": true,
+    "ignoreDevUnusedFiles": true
   },
-  "libVersion": "3.7.8"
+  "libVersion": "3.7.12",
+  "condition": {}
 }

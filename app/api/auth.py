@@ -61,10 +61,10 @@ def code2session():
     """获取微信openid并关联到用户账号"""
     data = request.get_json()
     code = data.get('code')
-    username = data.get('username')
+    login_id = data.get('username')  # 这里接收的参数名仍是username
     password = data.get('password')
     
-    if not all([code, username, password]):
+    if not all([code, login_id, password]):
         return jsonify({'error': '参数不完整'}), 400
     
     # 获取openid
@@ -74,8 +74,14 @@ def code2session():
     
     openid = wx_result['openid']
     
-    # 验证用户名密码
-    user = User.query.filter_by(username=username).first()
+    # 先尝试使用用户名查找用户
+    user = User.query.filter_by(username=login_id).first()
+    
+    # 如果找不到，再尝试使用手机号查找
+    if not user:
+        user = User.query.filter_by(contact_info=login_id).first()
+    
+    # 验证密码
     if not user or not user.check_password(password):
         return jsonify({'error': '账号或密码错误'}), 401
     
