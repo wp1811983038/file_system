@@ -19,7 +19,7 @@ def create_admin_user():
         contact_info="13000000000",  # 管理员手机号
         is_admin=True,
         created_at=datetime.now(),
-        # avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
+        avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
     )
     admin.set_password("admin123")  # 设置管理员初始密码
     db.session.add(admin)

@@ -1,9 +1,16 @@
+from datetime import datetime
+import os
 from flask import jsonify, request, current_app  # 添加 current_app 的导入
 from app.models.user import User
 from app import db
 from app.utils.auth import token_required
 from . import bp_user as bp
 import traceback
+
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from . import bp_user as bp
+from app.utils.file import validate_avatar
 
 # 用户相关的API路由 
 
@@ -183,3 +190,120 @@ def get_subscription_status(current_user):
         'fileReceiveStatus': subscription.file_receive_status,
         'fileProcessStatus': subscription.file_process_status
     })
+
+
+
+@bp.route('/avatar', methods=['POST'])
+@token_required
+def upload_avatar(current_user):
+    """上传用户头像"""
+    try:
+        current_app.logger.info(f'开始处理头像上传请求: user_id={current_user.id}')
+        
+        if 'avatar' not in request.files:
+            current_app.logger.error('未选择头像文件')
+            return jsonify({'error': '未选择头像文件'}), 400
+            
+        file = request.files['avatar']
+        
+        # 验证文件
+        is_valid, error_msg = validate_avatar(file)
+        if not is_valid:
+            current_app.logger.error(f'头像验证失败: {error_msg}')
+            return jsonify({'error': error_msg}), 400
+        
+        # 创建用户头像目录
+        avatar_dir = os.path.join(current_app.config['AVATAR_FOLDER'], str(current_user.id))
+        os.makedirs(avatar_dir, exist_ok=True)
+        
+        # 生成安全的文件名
+        original_filename = file.filename
+        filename = secure_filename(original_filename)
+        
+        # 添加时间戳确保唯一性
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        basename, extension = os.path.splitext(filename)
+        unique_filename = f"avatar_{timestamp}{extension}"
+        
+        file_path = os.path.join(avatar_dir, unique_filename)
+        
+        # 保存文件
+        file.save(file_path)
+        current_app.logger.info(f'头像保存成功: {file_path}')
+        
+        # 删除旧头像（如果存在且不是默认头像）
+        if current_user.avatar_url and 'default-avatar.png' not in current_user.avatar_url:
+            old_avatar_path = os.path.join(current_app.root_path, 'static', 
+                               current_user.avatar_url.replace('/static/', ''))
+            if os.path.exists(old_avatar_path):
+                try:
+                    os.remove(old_avatar_path)
+                    current_app.logger.info(f'删除旧头像: {old_avatar_path}')
+                except Exception as e:
+                    current_app.logger.warning(f'删除旧头像失败: {str(e)}')
+        
+        # 更新用户头像URL
+        relative_path = os.path.join('uploads', 'avatars', str(current_user.id), unique_filename)
+        avatar_url = f'/static/{relative_path.replace(os.sep, "/")}'
+        
+        # 更新数据库
+        current_user.avatar_url = avatar_url
+        db.session.commit()
+        
+        return jsonify({
+            'message': '头像上传成功',
+            'avatar_url': f"{avatar_url}?t={timestamp}"  # 添加时间戳防止缓存
+        })
+    except Exception as e:
+        current_app.logger.error(f'头像上传失败: {str(e)}')
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({'error': '头像上传失败'}), 500
+    
+@bp.route('/avatar', methods=['GET'])
+@token_required
+def get_avatar(current_user):
+    """获取用户当前头像URL"""
+    try:
+        # 添加时间戳防止缓存
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        avatar_url = f"{current_user.avatar_url}?t={timestamp}" if current_user.avatar_url else current_app.config['DEFAULT_AVATAR']
+        
+        return jsonify({
+            'avatar_url': avatar_url
+        })
+    except Exception as e:
+        current_app.logger.error(f'获取头像失败: {str(e)}')
+        return jsonify({'error': '获取头像失败'}), 500
+    
+
+@bp.route('/avatar', methods=['DELETE'])
+@token_required
+def delete_avatar(current_user):
+    """删除用户头像，恢复为默认头像"""
+    try:
+        # 检查是否是默认头像
+        if current_user.avatar_url == current_app.config['DEFAULT_AVATAR']:
+            return jsonify({'message': '已经是默认头像'})
+        
+        # 删除头像文件
+        if current_user.avatar_url and current_user.avatar_url.startswith('/static/'):
+            avatar_path = os.path.join(current_app.root_path, 'static', 
+                                     current_user.avatar_url.replace('/static/', ''))
+            if os.path.exists(avatar_path):
+                try:
+                    os.remove(avatar_path)
+                    current_app.logger.info(f'删除头像文件: {avatar_path}')
+                except Exception as e:
+                    current_app.logger.warning(f'删除头像文件失败: {str(e)}')
+        
+        # 恢复默认头像
+        current_user.avatar_url = current_app.config['DEFAULT_AVATAR']
+        db.session.commit()
+        
+        return jsonify({'message': '已恢复默认头像'})
+    except Exception as e:
+        current_app.logger.error(f'删除头像失败: {str(e)}')
+        db.session.rollback()
+        return jsonify({'error': '删除头像失败'}), 500

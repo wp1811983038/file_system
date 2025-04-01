@@ -18,6 +18,8 @@ class User(UserMixin, db.Model):
     contact_info = db.Column(db.String(100), unique=True)  # 修改为唯一
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # 添加头像URL字段
+    avatar_url = db.Column(db.String(255), default='/static/images/default-avatar.png')
     
     # 新增字段
     company_address = db.Column(db.Text, comment='企业地址')
@@ -47,6 +49,7 @@ class User(UserMixin, db.Model):
             Config.SECRET_KEY,
             algorithm='HS256'
         )
+    
         
     def to_dict(self):
         """转换为字典，用于API响应"""
