@@ -70,6 +70,41 @@ def get_activities(current_user):
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@bp.route('/users/<int:user_id>', methods=['GET'])
+@token_required
+@admin_required
+def get_user(current_user, user_id):
+    """获取单个用户的详细信息"""
+    try:
+        # 查询指定ID的用户
+        user = User.query.get_or_404(user_id)
+        
+        # 获取该用户的文件提交数量
+        file_count = UserFile.query.filter_by(user_id=user.id).count()
+        
+        # 构建响应数据
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'company_name': user.company_name,
+            'contact_info': user.contact_info,
+            'company_address': user.company_address,
+            'industry': user.industry,
+            'recruitment_unit': user.recruitment_unit,
+            'is_admin': user.is_admin,
+            'avatar_url': user.avatar_url,
+            'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else None,
+            'file_count': file_count
+        }
+        
+        return jsonify(user_data)
+    except Exception as e:
+        current_app.logger.error(f"Error getting user details: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    
 
 @bp.route('/users', methods=['GET'])
 @token_required

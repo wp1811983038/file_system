@@ -47,8 +47,21 @@ Page({
           wx.hideLoading();
           if (res.statusCode === 200) {
             console.log('用户数据:', res.data.users); // 调试用
+            
+            // 处理每个用户的头像URL
+            const users = res.data.users.map(user => {
+              // 如果服务器返回的头像URL有效，添加服务器基础URL
+              if (user.avatar_url && user.avatar_url.startsWith('/static/')) {
+                user.avatar_url = app.globalData.baseUrl + user.avatar_url;
+              } else {
+                // 设置默认头像为本地路径
+                user.avatar_url = '/images/default-avatar.png';
+              }
+              return user;
+            });
+            
             this.setData({
-              users: res.data.users
+              users: users
             });
           } else {
             wx.showToast({
@@ -70,7 +83,7 @@ Page({
       });
     });
   },
-
+  
   onSearchTypeChange(e) {
     this.setData({
       searchTypeIndex: e.detail.value
@@ -115,6 +128,20 @@ Page({
 
     this.setData({
       users: filteredUsers
+    });
+  },
+
+  // 导航到用户详情页
+  navigateToDetail(e) {
+    const userId = e.currentTarget.dataset.id;
+    
+    // 防止点击操作按钮时触发跳转
+    if (e.target.dataset.stopPropagation) {
+      return;
+    }
+    
+    wx.navigateTo({
+      url: `/pages/admin/user/detail?id=${userId}`,
     });
   },
 

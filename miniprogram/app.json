@@ -9,7 +9,8 @@
     "pages/user/profile/list",
     "pages/user/password/list",
     "pages/user/profile/edit",
-    "pages/admin/settings/index"
+    "pages/admin/settings/index",
+    "pages/admin/user/detail"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -38,7 +39,7 @@
       {
         "pagePath": "pages/admin/settings/index",
         "text": "设置"
-      }, 
+      },
       {
         "pagePath": "pages/user/files/list",
         "text": "文件"

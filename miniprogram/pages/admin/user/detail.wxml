@@ -1,0 +1,65 @@
+<view class="container">
+  <!-- 顶部带背景头像的区域 -->
+  <view class="profile-header" style="background-image: url('{{userInfo.avatar_url || \"/images/default-avatar.png\"}}')">
+    <view class="overlay"></view>
+    <view class="user-info">
+      <view class="user-name">{{userInfo.username}}</view>
+      <view class="user-role">{{userInfo.is_admin ? '管理员' : '普通用户'}}</view>
+    </view>
+  </view>
+  
+  <!-- 用户详细信息卡片 -->
+  <view class="info-card">
+    <view class="section-title">基本信息</view>
+    
+    <view class="info-item" wx:if="{{userInfo.company_name}}">
+      <view class="info-label">公司名称</view>
+      <view class="info-value">{{userInfo.company_name}}</view>
+    </view>
+    
+    <view class="info-item" wx:if="{{userInfo.contact_info}}">
+      <view class="info-label">联系方式</view>
+      <view class="info-value clickable" bindtap="makePhoneCall" data-phone="{{userInfo.contact_info}}">
+        <text>{{userInfo.contact_info}}</text>
+        <view class="action-icon call-icon">
+          <image src="/images/phone.png" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+    
+    <view class="info-item" wx:if="{{userInfo.company_address}}">
+      <view class="info-label">企业地址</view>
+      <view class="info-value clickable" bindtap="openLocation" data-address="{{userInfo.company_address}}">
+        <text class="address-text">{{userInfo.company_address}}</text>
+        <view class="action-icon map-icon">
+          <image src="/images/location.png" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+    
+    <view class="info-divider"></view>
+    
+    <view class="section-title">附加信息</view>
+    
+    <view class="info-item" wx:if="{{userInfo.industry}}">
+      <view class="info-label">所属行业</view>
+      <view class="info-value">{{userInfo.industry}}</view>
+    </view>
+    
+    <view class="info-item" wx:if="{{userInfo.recruitment_unit}}">
+      <view class="info-label">招商单位</view>
+      <view class="info-value">{{userInfo.recruitment_unit}}</view>
+    </view>
+    
+    <view class="info-item">
+      <view class="info-label">注册时间</view>
+      <view class="info-value">{{userInfo.created_at || '未知'}}</view>
+    </view>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="action-btn edit-btn" bindtap="editUser">编辑资料</button>
+    <button wx:if="{{!userInfo.is_admin}}" class="action-btn delete-btn" bindtap="deleteUser">删除用户</button>
+  </view>
+</view>

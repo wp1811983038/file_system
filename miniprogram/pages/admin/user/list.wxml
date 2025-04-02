@@ -11,133 +11,134 @@
     <button class="add-btn" bindtap="addUser">添加用户</button>
   </view>
 
-  <!-- 用户列表 -->
-  <view class="table-container">
-    <!-- 表头 -->
-    <view class="table-header">
-      <view class="th">用户名</view>
-      <view class="th">公司名称</view>
-      <view class="th">联系方式</view>
-      <view class="th">操作</view>
-    </view>
-
-    <!-- 表格内容 -->
+  <!-- 卡片式用户列表 -->
+  <view class="card-list">
     <block wx:if="{{!users.length}}">
       <view class="no-data">暂无用户数据</view>
     </block>
     <block wx:else>
-      <view class="table-row" wx:for="{{users}}" wx:key="id">
-        <view class="td">{{item.username}}</view>
-        <view class="td">{{item.company_name || '未设置'}}</view>
-        <view class="td">{{item.contact_info || '未设置'}}</view>
-        <view class="td actions">
-          <button class="action-btn edit-btn" bindtap="editUser" data-user="{{item}}">编辑</button>
-          <button wx:if="{{!item.is_admin}}" class="action-btn delete-btn" bindtap="deleteUser" data-id="{{item.id}}">删除</button>
+      <view class="user-card" wx:for="{{users}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
+        <!-- 用户头像 -->
+        <view class="user-avatar">
+           <image src="{{item.avatar_url}}" mode="aspectFill"></image>
+        </view>
+        
+        <!-- 用户信息 -->
+        <view class="user-info">
+          <view class="user-name">{{item.username}}</view>
+          <view class="user-company">{{item.company_name || '未设置公司'}}</view>
+          <view class="user-phone">{{item.contact_info || '未设置联系方式'}}</view>
+        </view>
+        
+        <!-- 操作按钮 -->
+        <view class="card-actions">
+          <button class="action-btn edit-btn" catchtap="editUser" data-user="{{item}}" data-stop-propagation="true">编辑</button>
+          <button wx:if="{{!item.is_admin}}" class="action-btn delete-btn" catchtap="deleteUser" data-id="{{item.id}}" data-stop-propagation="true">删除</button>
         </view>
       </view>
     </block>
+  </view>
 
-    <!-- 编辑/添加用户模态框 - 优化版 -->
-    <view class="modal" wx:if="{{showEditModal}}" catchtouchmove="preventTouchMove">
-      <view class="modal-mask" bindtap="closeEditModal"></view>
-      <view class="modal-content">
-        <view class="modal-header">
-          <text class="modal-title">{{modalTitle}}</text>
-          <text class="close" bindtap="closeEditModal">×</text>
-        </view>
-        
-        <scroll-view scroll-y="true" class="modal-body" enhanced="true" show-scrollbar="false">
-          <form bindsubmit="submitEdit">
-            <input type="text" hidden name="id" value="{{editUser.id}}" />
+  <!-- 用户编辑模态框 -->
+  <view class="modal" wx:if="{{showEditModal}}" catchtouchmove="preventTouchMove">
+    <view class="modal-mask" bindtap="closeEditModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{modalTitle}}</text>
+        <text class="close" bindtap="closeEditModal">×</text>
+      </view>
+      
+      <scroll-view scroll-y="true" class="modal-body" enhanced="true" show-scrollbar="false">
+        <form bindsubmit="submitEdit">
+          <input type="text" hidden name="id" value="{{editUser.id}}" />
+          
+          <!-- 基础信息区块 -->
+          <view class="form-section">
+            <view class="section-title">基础信息</view>
             
-            <!-- 基础信息区块 -->
-            <view class="form-section">
-              <view class="section-title">基础信息</view>
-              
-              <view class="form-item">
-                <view class="form-label required">用户名</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="username" value="{{editUser.username}}" placeholder="请输入用户名"/>
-                  <view class="error-tip" wx:if="{{errors.username}}">{{errors.username}}</view>
-                </view>
+            <view class="form-item">
+              <view class="form-label required">用户名</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="username" value="{{editUser.username}}" placeholder="请输入用户名"/>
+                <view class="error-tip" wx:if="{{errors.username}}">{{errors.username}}</view>
               </view>
+            </view>
 
-              <view class="form-item">
-                <view class="form-label">密码</view>
-                <view class="input-wrapper">
-                  <view class="password-input-group">
-                    <input class="form-input" name="password" password="{{!showPassword}}" 
-                          placeholder="不修改请留空"
-                          required="{{!editUser.id}}"/>
-                    <view class="password-toggle" catchtap="togglePassword">
-                      <image class="eye-icon" src="/images/{{showPassword ? 'eye-off' : 'eye'}}.png"></image>
-                    </view>
+            <view class="form-item">
+              <view class="form-label">密码</view>
+              <view class="input-wrapper">
+                <view class="password-input-group">
+                  <input class="form-input" name="password" password="{{!showPassword}}" 
+                        placeholder="不修改请留空"
+                        required="{{!editUser.id}}"/>
+                  <view class="password-toggle" catchtap="togglePassword">
+                    <image class="eye-icon" src="/images/{{showPassword ? 'eye-off' : 'eye'}}.png"></image>
                   </view>
                 </view>
               </view>
             </view>
+          </view>
+          
+          <!-- 企业信息区块 -->
+          <view class="form-section">
+            <view class="section-title">企业信息</view>
             
-            <!-- 企业信息区块 -->
-            <view class="form-section">
-              <view class="section-title">企业信息</view>
-              
-              <view class="form-item">
-                <view class="form-label">公司名称</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="company_name" value="{{editUser.company_name}}" placeholder="请输入公司名称"/>
-                </view>
-              </view>
-
-              <view class="form-item">
-                <view class="form-label">联系方式</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="contact_info" value="{{editUser.contact_info}}" placeholder="请输入联系方式" type="number" maxlength="11"/>
-                  <view class="error-tip" wx:if="{{errors.contact_info}}">{{errors.contact_info}}</view>
-                </view>
-              </view>
-              
-              <view class="form-item">
-                <view class="form-label">企业地址</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="company_address" value="{{editUser.company_address}}" placeholder="请输入企业地址"/>
-                </view>
-              </view>
-              
-              <view class="form-item">
-                <view class="form-label">所属行业</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="industry" value="{{editUser.industry}}" placeholder="请输入所属行业"/>
-                </view>
-              </view>
-              
-              <view class="form-item">
-                <view class="form-label">招商单位</view>
-                <view class="input-wrapper">
-                  <input class="form-input" name="recruitment_unit" value="{{editUser.recruitment_unit}}" placeholder="请输入招商单位"/>
-                </view>
-              </view>
-            </view>
-            
-            <!-- 权限设置区块 -->
-            <view class="form-section">
-              <view class="section-title">权限设置</view>
-              
-              <view class="form-item switch-item">
-                <view class="form-label">管理员权限</view>
-                <view class="input-wrapper switch-wrapper">
-                  <switch name="is_admin" checked="{{editUser.is_admin}}" color="#1890ff"/>
-                  <text class="switch-hint">{{editUser.is_admin ? '具有管理权限' : '普通用户权限'}}</text>
-                </view>
+            <view class="form-item">
+              <view class="form-label">公司名称</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="company_name" value="{{editUser.company_name}}" placeholder="请输入公司名称"/>
               </view>
             </view>
 
-            <view class="form-actions">
-              <button class="btn-small cancel" bindtap="closeEditModal">取消</button>
-              <button class="btn-small confirm" form-type="submit">保存</button>
+            <view class="form-item">
+              <view class="form-label">联系方式</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="contact_info" value="{{editUser.contact_info}}" placeholder="请输入联系方式" type="number" maxlength="11"/>
+                <view class="error-tip" wx:if="{{errors.contact_info}}">{{errors.contact_info}}</view>
+              </view>
             </view>
-          </form>
-        </scroll-view>
-      </view>
+            
+            <view class="form-item">
+              <view class="form-label">企业地址</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="company_address" value="{{editUser.company_address}}" placeholder="请输入企业地址"/>
+              </view>
+            </view>
+            
+            <view class="form-item">
+              <view class="form-label">所属行业</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="industry" value="{{editUser.industry}}" placeholder="请输入所属行业"/>
+              </view>
+            </view>
+            
+            <view class="form-item">
+              <view class="form-label">招商单位</view>
+              <view class="input-wrapper">
+                <input class="form-input" name="recruitment_unit" value="{{editUser.recruitment_unit}}" placeholder="请输入招商单位"/>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 权限设置区块 -->
+          <view class="form-section">
+            <view class="section-title">权限设置</view>
+            
+            <view class="form-item switch-item">
+              <view class="form-label">管理员权限</view>
+              <view class="input-wrapper switch-wrapper">
+                <switch name="is_admin" checked="{{editUser.is_admin}}" color="#1890ff"/>
+                <text class="switch-hint">{{editUser.is_admin ? '具有管理权限' : '普通用户权限'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="form-actions">
+            <button class="btn-small cancel" bindtap="closeEditModal">取消</button>
+            <button class="btn-small confirm" form-type="submit">保存</button>
+          </view>
+        </form>
+      </scroll-view>
     </view>
   </view>
 </view>
