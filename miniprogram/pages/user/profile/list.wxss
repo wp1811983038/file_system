@@ -207,3 +207,34 @@
     color: #666;
   }
 }
+
+.avatar-container {
+  position: relative;
+  margin-bottom: 30rpx;
+}
+
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 80rpx;
+  border: 6rpx solid rgba(255, 255, 255, 0.3);
+  background-color: #fff;
+}
+
+.avatar-edit-hint {
+  position: absolute;
+  bottom: -10rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  opacity: 0.8;
+}
+
+/* 头像悬停效果 */
+.avatar-container:active .avatar {
+  opacity: 0.8;
+}

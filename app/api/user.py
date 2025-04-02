@@ -217,13 +217,8 @@ def upload_avatar(current_user):
         os.makedirs(avatar_dir, exist_ok=True)
         
         # 生成安全的文件名
-        original_filename = file.filename
-        filename = secure_filename(original_filename)
-        
-        # 添加时间戳确保唯一性
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        basename, extension = os.path.splitext(filename)
-        unique_filename = f"avatar_{timestamp}{extension}"
+        unique_filename = f"avatar_{timestamp}{os.path.splitext(file.filename)[1]}"
         
         file_path = os.path.join(avatar_dir, unique_filename)
         
@@ -242,17 +237,29 @@ def upload_avatar(current_user):
                 except Exception as e:
                     current_app.logger.warning(f'删除旧头像失败: {str(e)}')
         
-        # 更新用户头像URL
-        relative_path = os.path.join('uploads', 'avatars', str(current_user.id), unique_filename)
-        avatar_url = f'/static/{relative_path.replace(os.sep, "/")}'
+        # 更新用户头像URL - 确保URL格式统一
+        relative_path = f"uploads/avatars/{current_user.id}/{unique_filename}"
+        avatar_url = f"/static/{relative_path.replace(os.sep, '/')}"
         
-        # 更新数据库
+        # 关键修复：记录更新前后的值，确保数据库更新成功
+        current_app.logger.info(f'更新头像URL: {current_user.avatar_url} -> {avatar_url}')
+        
+        # 直接操作数据库，确保更新成功
+        from app import db
         current_user.avatar_url = avatar_url
         db.session.commit()
         
+        # 验证更新是否成功
+        db.session.refresh(current_user)
+        current_app.logger.info(f'验证更新后的头像URL: {current_user.avatar_url}')
+        
+        # 添加时间戳防止缓存
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        response_url = f"{avatar_url}?t={timestamp}"
+        
         return jsonify({
             'message': '头像上传成功',
-            'avatar_url': f"{avatar_url}?t={timestamp}"  # 添加时间戳防止缓存
+            'avatar_url': response_url
         })
     except Exception as e:
         current_app.logger.error(f'头像上传失败: {str(e)}')

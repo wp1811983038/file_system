@@ -19,7 +19,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # 添加头像URL字段
-    avatar_url = db.Column(db.String(255), default='/static/images/default-avatar.png')
+    avatar_url = db.Column(db.String(255), default='/app/static/images/default-avatar.png')
     
     # 新增字段
     company_address = db.Column(db.Text, comment='企业地址')

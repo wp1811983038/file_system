@@ -1,8 +1,9 @@
 <view class="container">
   <!-- 个人信息头部区域 -->
   <view class="profile-header">
-    <view class="avatar-container">
-      <image class="avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+    <view class="avatar-container" bindtap="chooseAvatar" bindlongpress="longPressAvatar">
+      <image class="avatar" src="{{userInfo.avatar_url ? userInfo.avatar_url : '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="avatar-edit-hint">点击更换</view>
     </view>
     <view class="user-info" bindtap="toggleUserInfoExpand">
       <view class="username-container">
