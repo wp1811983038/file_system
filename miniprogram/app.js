@@ -1,16 +1,26 @@
+// 导入腾讯位置服务SDK
+const QQMapWX = require('./utils/qqmap-wx-jssdk.js');
+
 App({
   globalData: {
-    baseUrl: 'http://10.255.61.255:5000',//192.168.1.101,    
+    baseUrl: 'http://',//192.168.1.101,    
     // 如需在生产环境使用其他URL，可以手动切换或通过其他方式配置
     // baseUrl: 'https://pdswjgl.cn:5000',
     userInfo: null,
     networkStatus: {
       isConnected: true,
       networkType: 'unknown'
-    }
+    },
+    // 添加腾讯地图SDK实例
+    qqmapsdk: null
   },
   
   onLaunch() {
+    // 初始化腾讯位置服务
+    this.globalData.qqmapsdk = new QQMapWX({
+      key: '' // 替换为您申请的腾讯位置服务密钥
+    });
+    
     // 监听网络状态
     this._initNetworkListener()
     
@@ -139,6 +149,36 @@ App({
         complete: options.complete
       })
     })
+  },
+  
+  // 地理编码方法 - 将地址转换为经纬度
+  geocoder(address, companyName = '') {
+    return new Promise((resolve, reject) => {
+      // 结合公司名称和地址进行搜索
+      const searchKeyword = companyName ? `${companyName} ${address}` : address;
+      
+      this.globalData.qqmapsdk.geocoder({
+        address: searchKeyword,
+        success: res => {
+          if (res.status === 0) {
+            console.log('地址解析成功:', res.result);
+            resolve(res.result);
+          } else {
+            // 如果组合搜索失败，仅使用地址再试一次
+            if (companyName) {
+              console.log('组合搜索失败，尝试仅使用地址');
+              this.geocoder(address).then(resolve).catch(reject);
+            } else {
+              reject(new Error(res.message || '地址解析失败'));
+            }
+          }
+        },
+        fail: error => {
+          console.error('地址解析请求失败:', error);
+          reject(error);
+        }
+      });
+    });
   },
   
   onError(err) {
