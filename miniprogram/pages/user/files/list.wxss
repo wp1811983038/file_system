@@ -25,94 +25,54 @@
   font-size: 28rpx;
 }
 
-/* 表格容器样式 */
-.table-container {
+/* 文件卡片样式 */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.file-card {
   background: #fff;
   border-radius: 12rpx;
-  padding: 0;
-  overflow: hidden;
+  padding: 24rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-  width: 100%;
-  display: block;
+  transition: transform 0.3s;
 }
 
-/* 表头样式 */
-.table-header {
+.file-card:active {
+  transform: scale(0.98);
+}
+
+.file-header {
   display: flex;
-  background: #f5f7fa;
-  padding: 20rpx 0;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.file-name {
+  font-size: 32rpx;
   font-weight: bold;
-  border-bottom: 2rpx solid #e8e8e8;
-  width: 100%;
+  color: #333;
+  flex: 1;
+  margin-right: 20rpx;
+  word-break: break-all;
 }
 
-/* 表格行样式 */
-.table-row {
-  display: flex;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
-  width: 100%;
+.file-status {
+  flex-shrink: 0;
 }
 
-.table-row:last-child {
-  border-bottom: none;
-}
-
-/* 单元格通用样式 */
-.th, .td {
-  text-align: center;
-  font-size: 28rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  display: block;
-}
-
-/* 列宽设置 */
-.th:nth-child(1), .td:nth-child(1) {
-  width: 12%;
-  flex: 0 0 12%;
-}
-
-.th:nth-child(2), .td:nth-child(2) {
-  width: 18%;
-  flex: 0 0 18%;
-}
-
-.th:nth-child(3), .td:nth-child(3) {
-  width: 15%;
-  flex: 0 0 15%;
-}
-
-.th:nth-child(4), .td:nth-child(4) {
-  width: 15%;
-  flex: 0 0 15%;
-}
-
-.th:nth-child(5), .td:nth-child(5) {
-  width: 40%;
-  flex: 0 0 40%;
-}
-
-/* 表头样式 */
-.th {
-  font-weight: bold;
-  color: #666;
-  font-size: 28rpx;
-}
-
-/* 状态标签样式 - 更小更紧凑 */
+/* 状态标签样式 */
 .status-badge {
   display: inline-block;
-  padding: 4rpx 10rpx;
-  border-radius: 20rpx;
-  font-size: 22rpx;
-  font-weight: normal;
-  min-width: 80rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 6rpx;
+  font-size: 24rpx;
   text-align: center;
 }
 
-/* 不同状态的样式 */
 .status-submitted {
   background: #e6f7ff;
   border: 1rpx solid #91d5ff;
@@ -137,29 +97,54 @@
   color: #f5222d;
 }
 
-/* 操作按钮容器 */
-.td.actions {
+/* 文件描述样式 */
+.file-description {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+  padding: 12rpx;
+  background: #f9f9f9;
+  border-radius: 6rpx;
+  border-left: 4rpx solid #1890ff;
+}
+
+.description-label {
+  font-weight: 500;
+  margin-right: 8rpx;
+}
+
+.description-text {
+  color: #666;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:active {
+  opacity: 0.7;
+}
+
+/* 操作按钮组 */
+.file-actions {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10rpx;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 20rpx;
 }
 
 /* 按钮样式 */
 .btn {
-  font-size: 24rpx !important;
-  padding: 8rpx 12rpx !important;
+  font-size: 26rpx !important;
+  padding: 10rpx 24rpx !important;
   border-radius: 6rpx !important;
-  margin: 4rpx !important;
-  line-height: 1.5 !important;
-  min-width: 120rpx !important;
-  height: auto !important;
-  display: inline-block !important;
-  box-sizing: border-box !important;
+  margin: 0 !important;
+  line-height: 1.6 !important;
+  min-width: 140rpx !important;
   text-align: center !important;
-  word-break: keep-all !important;
-  white-space: nowrap !important;
 }
 
 .primary-btn {
@@ -176,6 +161,14 @@
   background: #f5f5f5 !important;
   color: #666 !important;
   border: 1rpx solid #ddd !important;
+}
+
+/* 无数据显示 */
+.no-data {
+  text-align: center;
+  color: #999;
+  padding: 100rpx 0;
+  font-size: 28rpx;
 }
 
 /* 模态框样式 */
@@ -228,25 +221,6 @@
   justify-content: flex-end;
   gap: 20rpx;
   margin-top: 40rpx;
-}
-
-.no-data {
-  text-align: center;
-  color: #999;
-  padding: 60rpx 0;
-  font-size: 28rpx;
-}
-
-/* 可点击的单元格样式 */
-.td.clickable {
-  cursor: pointer;
-  position: relative;
-  color: #1890ff;
-  text-decoration: underline;
-}
-
-.td.clickable:active {
-  opacity: 0.7;
 }
 
 /* 描述模态框样式 */
@@ -340,43 +314,12 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-.modal-content {
-  background: #fff;
-  border-radius: 12rpx;
-  width: 80%;
-  max-width: 600rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
-  position: relative;
-  z-index: 1001;
-  animation: modalFadeIn 0.3s;
-  overflow: hidden;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 30rpx;
   border-bottom: 1rpx solid #e8e8e8;
-}
-
-.modal-title {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #333;
-  display: flex;
-  align-items: center;
 }
 
 .modal-icon {
@@ -406,12 +349,4 @@
   padding: 20rpx 30rpx;
   display: flex;
   justify-content: flex-end;
-}
-
-.btn-primary {
-  background: #1890ff;
-  color: white;
-  padding: 16rpx 32rpx;
-  border-radius: 8rpx;
-  font-size: 28rpx;
 }

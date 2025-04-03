@@ -7,42 +7,36 @@
            bindinput="onSearch"/>
   </view>
 
-  <!-- 文件列表 -->
-  <view class="table-container">
-    <!-- 表头 -->
-    <view class="table-header">
-      <view class="th">序号</view>
-      <view class="th">文件名</view>
-      <view class="th">描述</view>
-      <view class="th">状态</view>
-      <view class="th">操作</view>
-    </view>
-
-    <!-- 表格内容 -->
+  <!-- 文件卡片列表 -->
+  <view class="file-list">
     <block wx:if="{{!templates.length}}">
       <view class="no-data">暂无数据</view>
     </block>
     <block wx:else>
-      <view class="table-row" wx:for="{{templates}}" wx:key="id">
-        <view class="td">{{index + 1}}</view>
-        <view class="td">{{item.name || '未命名'}}</view>
-        <view class="td clickable" bindtap="showDescription" data-description="{{item.description || '无'}}">
-          {{item.description || '无'}}
+      <view class="file-card" wx:for="{{templates}}" wx:key="id">
+        <view class="file-header">
+          <view class="file-name">{{item.name || '未命名'}}</view>
+          <view class="file-status">
+            <block wx:if="{{!item.status}}">
+              <text class="status-badge status-pending">未提交</text>
+            </block>
+            <block wx:else>
+              <text class="status-badge {{item.submission_status === 'approved' ? 'status-approved' : (item.submission_status === 'rejected' ? 'status-rejected' : 'status-submitted')}}"
+                    bindtap="showApprovalDetail" 
+                    data-id="{{item.submission_id}}"
+                    data-status="{{item.submission_status}}">
+                {{item.submission_status === 'approved' ? '已批准' : (item.submission_status === 'rejected' ? '已拒绝' : '待审批')}}
+              </text>
+            </block>
+          </view>
         </view>
-        <view class="td">
-          <block wx:if="{{!item.status}}">
-            <text class="status-badge status-pending">未提交</text>
-          </block>
-          <block wx:else>
-            <text class="status-badge {{item.submission_status === 'approved' ? 'status-approved' : (item.submission_status === 'rejected' ? 'status-rejected' : 'status-submitted')}}"
-                  bindtap="showApprovalDetail" 
-                  data-id="{{item.submission_id}}"
-                  data-status="{{item.submission_status}}">
-              {{item.submission_status === 'approved' ? '已批准' : (item.submission_status === 'rejected' ? '已拒绝' : '待审批')}}
-            </text>
-          </block>
+        
+        <view class="file-description clickable" bindtap="showDescription" data-description="{{item.description || '无'}}">
+          <text class="description-label">描述：</text>
+          <text class="description-text">{{item.description || '无'}}</text>
         </view>
-        <view class="td actions">
+        
+        <view class="file-actions">
           <button class="btn download-btn" bindtap="downloadTemplate" 
                   data-id="{{item.id}}" 
                   data-name="{{item.name}}">

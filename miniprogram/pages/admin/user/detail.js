@@ -1,3 +1,4 @@
+// pages/admin/user/detail.js
 const app = getApp();
 
 Page({
@@ -5,7 +6,8 @@ Page({
     userId: null,
     userInfo: {},
     loading: true,
-    addressCache: {} // 地址解析结果缓存
+    addressCache: {}, // 地址解析结果缓存
+    defaultLocation: {lat: 34.746, lng: 113.625} // 默认位置（可根据实际情况调整）
   },
 
   onLoad(options) {
@@ -14,6 +16,8 @@ Page({
         userId: options.id
       });
       this.loadUserDetail(options.id);
+      // 加载缓存的地址解析结果
+      this.loadAddressCache();
     } else {
       wx.showToast({
         title: '用户ID不存在',
@@ -22,6 +26,29 @@ Page({
       setTimeout(() => {
         wx.navigateBack();
       }, 1500);
+    }
+  },
+
+  // 从本地存储加载地址缓存
+  loadAddressCache() {
+    try {
+      const cache = wx.getStorageSync('addressCache');
+      if (cache) {
+        this.setData({
+          addressCache: JSON.parse(cache)
+        });
+      }
+    } catch (e) {
+      console.error('加载地址缓存失败:', e);
+    }
+  },
+
+  // 保存地址缓存到本地存储
+  saveAddressCache() {
+    try {
+      wx.setStorageSync('addressCache', JSON.stringify(this.data.addressCache));
+    } catch (e) {
+      console.error('保存地址缓存失败:', e);
     }
   },
 
@@ -95,128 +122,171 @@ Page({
     });
   },
 
-  // 打开地图位置并导航
-// 在detail.js中修改openLocation方法
-openLocation(e) {
-  const address = e.currentTarget.dataset.address;
-  const companyName = this.data.userInfo.company_name;
-  
-  if (!address) {
-    wx.showToast({
-      title: '地址不存在',
-      icon: 'none'
-    });
-    return;
-  }
-  
-  // 生成缓存键，包含公司名称和地址
-  const cacheKey = `${companyName}:${address}`;
-  
-  // 检查缓存中是否已有解析结果
-  if (this.data.addressCache[cacheKey]) {
-    this.showNavigationOptions(
-      this.data.addressCache[cacheKey], 
-      address,
-      companyName
-    );
-    return;
-  }
-  
-  wx.showLoading({ title: '获取位置中...' });
-  
-  // 调用改进的地址解析服务，传入公司名称
-  app.geocoder(address, companyName).then(result => {
-    wx.hideLoading();
+  // 打开地图位置并导航 - 简化版本
+  openLocation(e) {
+    const address = e.currentTarget.dataset.address;
+    const companyName = this.data.userInfo.company_name;
     
-    // 缓存结果
-    const addressCache = this.data.addressCache;
-    addressCache[cacheKey] = result.location;
-    this.setData({ addressCache });
+    if (!address) {
+      wx.showToast({
+        title: '地址不存在',
+        icon: 'none'
+      });
+      return;
+    }
     
-    // 显示导航选项，传入公司名称用于导航显示
-    this.showNavigationOptions(result.location, address, companyName);
-  }).catch(error => {
-    wx.hideLoading();
-    console.error('地址解析失败:', error);
+    // 生成缓存键，包含公司名称和地址
+    const cacheKey = `${companyName}:${address}`;
     
-    // 提供备选方案
-    wx.showModal({
-      title: '地址解析失败',
-      content: '无法获取准确位置，是否尝试使用公司名称搜索？',
-      success: (res) => {
-        if (res.confirm) {
-          // 使用微信内置地图的搜索功能
-          wx.openLocation({
-            latitude: 34.746,
-            longitude: 113.625,
-            name: companyName || '企业位置',
-            address: address,
-            scale: 18
-          });
-        }
-      }
-    });
-  });
-},
+    // 检查缓存中是否已有解析结果
+    if (this.data.addressCache[cacheKey]) {
+      this.openWxMapNavigation(
+        this.data.addressCache[cacheKey], 
+        address,
+        companyName
+      );
+      return;
+    }
+    
+    wx.showLoading({ title: '获取位置中...' });
+    
+    // 实现智能降级搜索策略
+    this.findLocationWithFallback(address, companyName)
+      .then(location => {
+        wx.hideLoading();
+        
+        // 缓存结果
+        const addressCache = this.data.addressCache;
+        addressCache[cacheKey] = location;
+        this.setData({ addressCache });
+        this.saveAddressCache(); // 持久化保存缓存
+        
+        // 直接使用微信内置导航
+        this.openWxMapNavigation(location, address, companyName);
+      })
+      .catch(error => {
+        wx.hideLoading();
+        console.error('地址解析失败:', error);
+                this.openWxMapNavigation(
+                  this.data.defaultLocation,
+                  address,
+                  companyName
+                );
+              
+        
+        // 所有方法都失败后的兜底方案
+        // wx.showModal({
+        //   title: '地址解析失败',
+        //   content: '无法获取准确位置，是否使用默认位置导航？',
+        //   success: (res) => {
+        //     if (res.confirm) {
+        //       this.openWxMapNavigation(
+        //         this.data.defaultLocation,
+        //         address,
+        //         companyName
+        //       );
+        //     }
+        //   }
+        // });
+      });
+  },
 
-// 修改导航方法，使用公司名称增强显示
-openWxMapNavigation(location, address, companyName) {
-  wx.openLocation({
-    latitude: location.lat,
-    longitude: location.lng,
-    name: companyName || '企业位置',
-    address: address,
-    scale: 18
-  });
-},
-
-  // 打开高德地图导航
-  openAmapNavigation(location, address) {
-    let url = `androidamap://navi?sourceApplication=${app.globalData.appName || '文件管理系统'}&lat=${location.lat}&lon=${location.lng}&dev=0&style=2`;
-    
-    // 尝试打开高德地图应用
-    wx.showModal({
-      title: '打开高德地图',
-      content: '即将跳转到高德地图进行导航，是否继续？',
-      success: (res) => {
-        if (res.confirm) {
-          // 通过设置Clipboard方式间接打开外部应用
-          wx.setClipboardData({
-            data: url,
-            success: () => {
-              wx.showToast({
-                title: '链接已复制',
-                icon: 'success'
+  // 智能降级位置搜索策略
+  findLocationWithFallback(address, companyName) {
+    return new Promise((resolve, reject) => {
+      // 步骤1: 公司名称+地址组合搜索
+      if (companyName) {
+        this.searchByCompanyAndAddress(companyName, address)
+          .then(resolve)
+          .catch(() => {
+            console.log('公司名称+地址搜索失败，尝试仅使用公司名称');
+            
+            // 步骤2: 仅用公司名称搜索
+            this.searchByCompanyName(companyName)
+              .then(resolve)
+              .catch(() => {
+                console.log('公司名称搜索失败，尝试仅使用地址');
+                
+                // 步骤3: 仅用地址搜索
+                this.searchByAddress(address)
+                  .then(resolve)
+                  .catch(reject);
               });
-            }
           });
-        }
+      } else {
+        // 如果没有公司名称，直接用地址搜索
+        this.searchByAddress(address)
+          .then(resolve)
+          .catch(reject);
       }
     });
   },
 
-  // 打开百度地图导航
-  openBmapNavigation(location, address) {
-    // 这里应该添加坐标转换，将GCJ-02转为BD-09
-    // 简化实现，实际项目中使用坐标转换函数
-    let url = `baidumap://map/direction?destination=${location.lat},${location.lng}&coord_type=gcj02&mode=driving&src=${app.globalData.appName || '文件管理系统'}`;
-    
-    wx.showModal({
-      title: '打开百度地图',
-      content: '即将跳转到百度地图进行导航，是否继续？',
-      success: (res) => {
-        if (res.confirm) {
-          wx.setClipboardData({
-            data: url,
-            success: () => {
-              wx.showToast({
-                title: '链接已复制',
-                icon: 'success'
-              });
-            }
-          });
+  // 使用公司名称+地址搜索
+  searchByCompanyAndAddress(company, address) {
+    return new Promise((resolve, reject) => {
+      // 先尝试POI搜索（更精确）
+      app.globalData.qqmapsdk.search({
+        keyword: `${company} ${address}`,
+        success: res => {
+          if (res.status === 0 && res.data.length > 0) {
+            console.log('POI搜索成功:', res.data[0]);
+            resolve(res.data[0].location);
+          } else {
+            // 回退到地理编码
+            app.geocoder(`${company} ${address}`)
+              .then(result => resolve(result.location))
+              .catch(reject);
+          }
+        },
+        fail: () => {
+          // 回退到地理编码
+          app.geocoder(`${company} ${address}`)
+            .then(result => resolve(result.location))
+            .catch(reject);
         }
-      }
+      });
+    });
+  },
+
+  // 仅用公司名称搜索
+  searchByCompanyName(company) {
+    return new Promise((resolve, reject) => {
+      app.globalData.qqmapsdk.search({
+        keyword: company,
+        success: res => {
+          if (res.status === 0 && res.data.length > 0) {
+            console.log('公司名称搜索成功:', res.data[0]);
+            resolve(res.data[0].location);
+          } else {
+            reject(new Error('公司名称搜索失败'));
+          }
+        },
+        fail: reject
+      });
+    });
+  },
+
+  // 仅用地址搜索
+  searchByAddress(address) {
+    return new Promise((resolve, reject) => {
+      app.geocoder(address)
+        .then(result => {
+          console.log('地址搜索成功:', result);
+          resolve(result.location);
+        })
+        .catch(reject);
+    });
+  },
+
+  // 微信内置地图导航
+  openWxMapNavigation(location, address, companyName) {
+    wx.openLocation({
+      latitude: location.lat,
+      longitude: location.lng,
+      name: companyName || '企业位置',
+      address: address,
+      scale: 18
     });
   },
 
