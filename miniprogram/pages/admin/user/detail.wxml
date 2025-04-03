@@ -3,7 +3,7 @@
   <view class="profile-header" style="background-image: url('{{userInfo.avatar_url || \"/images/default-avatar.png\"}}')">
     <view class="overlay"></view>
     <view class="user-info">
-      <view class="user-name">{{userInfo.username}}</view>
+      <view class="user-name">{{userInfo.username || '未知用户'}}</view>
       <view class="user-role">{{userInfo.is_admin ? '管理员' : '普通用户'}}</view>
     </view>
   </view>
@@ -52,8 +52,13 @@
     </view>
     
     <view class="info-item">
+      <view class="info-label">文件数量</view>
+      <view class="info-value">{{userInfo.file_count || 0}} 个文件</view>
+    </view>
+    
+    <view class="info-item" wx:if="{{userInfo.created_at}}">
       <view class="info-label">注册时间</view>
-      <view class="info-value">{{userInfo.created_at || '未知'}}</view>
+      <view class="info-value">{{userInfo.created_at}}</view>
     </view>
   </view>
   

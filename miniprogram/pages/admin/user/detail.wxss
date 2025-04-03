@@ -67,6 +67,19 @@ page {
   font-weight: 600;
   color: #333;
   margin-bottom: 30rpx;
+  position: relative;
+  padding-left: 24rpx;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6rpx;
+  bottom: 6rpx;
+  width: 8rpx;
+  background: #1890ff;
+  border-radius: 4rpx;
 }
 
 .info-divider {
