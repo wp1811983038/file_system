@@ -41,15 +41,12 @@ Page({
           // 确保头像URL正确
           if (userData.avatar_url && userData.avatar_url.startsWith('/static/')) {
             userData.avatar_url = app.globalData.baseUrl + userData.avatar_url
-          } else if (!userData.avatar_url) {
+          } else {
+            // 使用绝对路径确保图片能正确加载
             userData.avatar_url = '/images/default-avatar.png'
           }
           
-          // 格式化日期
-          if (userData.created_at) {
-            const date = new Date(userData.created_at)
-            userData.created_at = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-          }
+          
           
           this.setData({
             userInfo: userData,
