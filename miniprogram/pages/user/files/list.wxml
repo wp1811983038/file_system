@@ -7,6 +7,37 @@
            bindinput="onSearch"/>
   </view>
 
+  <!-- 搜索区域后添加功能卡片 -->
+<view class="card-container">
+  <!-- 消息中心卡片 -->
+  <view class="function-card" bindtap="navigateToMessage">
+    <view class="card-left">
+      <view class="card-icon message-icon">
+        <image src="/images/message.png" mode="aspectFit"></image>
+      </view>
+      <view class="card-content">
+        <view class="card-title">消息中心</view>
+        <view class="card-desc">{{unreadMessage}}条未读消息</view>
+      </view>
+    </view>
+    <view class="card-arrow">〉</view>
+  </view>
+  
+  <!-- 统计分析卡片 -->
+  <view class="function-card" bindtap="navigateToStats">
+    <view class="card-left">
+      <view class="card-icon stats-icon">
+        <image src="/images/stats.png" mode="aspectFit"></image>
+      </view>
+      <view class="card-content">
+        <view class="card-title">统计分析</view>
+        <view class="card-desc">已提交{{submissionCount}}个文件</view>
+      </view>
+    </view>
+    <view class="card-arrow">〉</view>
+  </view>
+</view>
+
   <!-- 文件卡片列表 -->
   <view class="file-list">
     <block wx:if="{{!templates.length}}">

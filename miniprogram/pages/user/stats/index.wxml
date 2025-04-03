@@ -1,0 +1,133 @@
+<view class="container">
+  <!-- 统计概览卡片 -->
+  <view class="stats-card overview-card">
+    <view class="card-title">数据概览</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <view class="stat-value">{{overviewData.total || 0}}</view>
+        <view class="stat-label">总模板数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{overviewData.submitted || 0}}</view>
+        <view class="stat-label">已提交数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{overviewData.approved || 0}}</view>
+        <view class="stat-label">已通过数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{overviewData.submissionRate || 0}}%</view>
+        <view class="stat-label">提交率</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交状态分布卡片 -->
+  <view class="stats-card">
+    <view class="card-title">提交状态分布</view>
+    <view class="chart-container">
+      <!-- 使用自定义组件 -->
+      <pie-chart 
+        wx:if="{{statusData.total > 0}}"
+        percentage="{{statusData.submission_rate}}" 
+        primaryColor="#10b981" 
+        secondaryColor="#f59e0b"
+        submittedCount="{{statusData.status_counts.approved + statusData.status_counts.rejected + statusData.status_counts.pending}}"
+        pendingCount="{{statusData.not_submitted}}">
+      </pie-chart>
+      
+      <!-- 当没有数据时显示 -->
+      <view class="no-data" wx:else>
+        暂无提交数据
+      </view>
+      
+      <!-- 图例 -->
+      <view class="chart-legend" wx:if="{{statusData.total > 0}}">
+        <view class="legend-item">
+          <view class="legend-color approved"></view>
+          <view class="legend-text">已通过 ({{statusData.status_counts.approved || 0}})</view>
+        </view>
+        <view class="legend-item">
+          <view class="legend-color rejected"></view>
+          <view class="legend-text">未通过 ({{statusData.status_counts.rejected || 0}})</view>
+        </view>
+        <view class="legend-item">
+          <view class="legend-color pending"></view>
+          <view class="legend-text">审核中 ({{statusData.status_counts.pending || 0}})</view>
+        </view>
+        <view class="legend-item">
+          <view class="legend-color not-submitted"></view>
+          <view class="legend-text">未提交 ({{statusData.not_submitted || 0}})</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 审批时效分析卡片 -->
+  <view class="stats-card">
+    <view class="card-title">审批时效分析</view>
+    <view class="efficiency-container">
+      <view class="efficiency-summary">
+        <view class="efficiency-item">
+          <view class="efficiency-value">{{efficiencyData.average_hours || 0}}</view>
+          <view class="efficiency-label">平均审批时间(小时)</view>
+        </view>
+        <view class="efficiency-item">
+          <view class="efficiency-value">{{efficiencyData.approval_rate || 0}}%</view>
+          <view class="efficiency-label">审批通过率</view>
+        </view>
+      </view>
+      
+      <!-- 时效详情列表 -->
+      <view class="efficiency-list">
+        <view class="list-header">
+          <view class="header-item">模板名称</view>
+          <view class="header-item">审批结果</view>
+          <view class="header-item">耗时(小时)</view>
+        </view>
+        
+        <view class="no-data" wx:if="{{!efficiencyData.details || efficiencyData.details.length === 0}}">
+          暂无审批数据
+        </view>
+        
+        <view class="list-content" wx:else>
+          <view class="list-item" wx:for="{{efficiencyData.details}}" wx:key="file_id">
+            <view class="item-name">{{item.template_name}}</view>
+            <view class="item-status status-{{item.status}}">
+              {{item.status === 'approved' ? '通过' : '拒绝'}}
+            </view>
+            <view class="item-hours">{{item.hours}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 模板提交情况卡片 -->
+  <view class="stats-card">
+    <view class="card-title">模板提交情况</view>
+    
+    <view class="template-list">
+      <view class="list-header">
+        <view class="header-item flex-2">模板名称</view>
+        <view class="header-item flex-1">状态</view>
+      </view>
+      
+      <view class="no-data" wx:if="{{!templateData.templates || templateData.templates.length === 0}}">
+        暂无模板数据
+      </view>
+      
+      <view class="list-content" wx:else>
+        <view class="list-item" wx:for="{{templateData.templates}}" wx:key="id">
+          <view class="item-name flex-2">{{item.name}}</view>
+          <view class="item-status flex-1 {{item.has_submitted ? 'status-' + item.status : 'status-not-submitted'}}">
+            {{item.has_submitted ? 
+              (item.status === 'approved' ? '已通过' : 
+               item.status === 'rejected' ? '未通过' : '审核中') 
+              : '未提交'}}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,50 @@
+<view class="container">
+  <!-- 消息类型标签栏 -->
+  <view class="message-tabs">
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-type="all">全部</view>
+    <view class="tab {{activeTab === 'system' ? 'active' : ''}}" bindtap="switchTab" data-type="system">系统通知</view>
+    <view class="tab {{activeTab === 'file_receive' ? 'active' : ''}}" bindtap="switchTab" data-type="file_receive">文件接收</view>
+    <view class="tab {{activeTab === 'file_process' ? 'active' : ''}}" bindtap="switchTab" data-type="file_process">审批结果</view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="message-list" scroll-y="true" bindscrolltolower="loadMore" lower-threshold="100">
+    <view class="no-data" wx:if="{{messages.length === 0}}">
+      暂无消息
+    </view>
+    
+    <view class="message-item {{item.status === 'unread' ? 'unread' : ''}}" 
+          wx:for="{{messages}}" 
+          wx:key="id"
+          bindtap="viewMessageDetail" 
+          data-id="{{item.id}}">
+      <!-- 消息图标 -->
+      <view class="message-icon {{item.type}}">
+        <image wx:if="{{item.type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
+      </view>
+      
+      <!-- 消息内容 -->
+      <view class="message-content">
+        <view class="message-title">{{item.title}}</view>
+        <view class="message-preview">{{item.content}}</view>
+        <view class="message-time">{{item.created_at}}</view>
+      </view>
+      
+      <!-- 未读标记 -->
+      <view class="unread-dot" wx:if="{{item.status === 'unread'}}"></view>
+    </view>
+    
+    <!-- 加载更多提示 -->
+    <view class="load-more" wx:if="{{hasMoreData}}">
+      <text wx:if="{{isLoading}}">加载中...</text>
+      <text wx:else>上拉加载更多</text>
+    </view>
+  </scroll-view>
+  
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{unreadCount > 0}}">
+    <button class="btn-mark-all-read" bindtap="markAllAsRead">全部标为已读 ({{unreadCount}})</button>
+  </view>
+</view>

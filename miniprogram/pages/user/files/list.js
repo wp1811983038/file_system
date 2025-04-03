@@ -1,5 +1,6 @@
 // pages/user/files/list.js
-const app = getApp()
+const app = getApp();
+const fileUtils = require('../../../utils/file');
 
 // 文件处理工具函数 - 下载并直接打开预览
 async function handleFileWithPreview(tempFilePath, options = {}) {
@@ -76,26 +77,31 @@ Page({
     isResubmit: false,
     currentUserId: null,
     showDescriptionModal: false,  // 控制描述模态框显示
-    currentDescription: '',        // 当前查看的描述内容
-    showApprovalModal: false,      // 控制审批详情模态框显示
-    approvalDetail: {              // 审批详情数据
+    currentDescription: '',       // 当前查看的描述内容
+    showApprovalModal: false,     // 控制审批详情模态框显示
+    approvalDetail: {             // 审批详情数据
       status: '',
       approval_date: '',
       comments: '',
       approver_name: ''
     },
-    // 添加通知相关数据
+    // 通知相关数据
     showNotification: false,
-    notificationContent: ''
+    notificationContent: '',
+    // 新增 - 消息和统计相关数据
+    unreadMessage: 0,
+    submissionCount: 0
   },
 
   onLoad() {
     console.log('页面加载')
     this.loadUserInfo()
     this.loadTemplates()
-    
-    // 加载系统通知
     this.loadNotification()
+    
+    // 新增 - 加载消息和统计数据
+    this.loadMessageCount()
+    this.loadSubmissionStats()
   },
 
   onShow() {
@@ -104,11 +110,18 @@ Page({
         selected: 0
       })
     }
+    
+    // 重新加载未读消息数，确保数据最新
+    this.loadMessageCount()
   },
 
   onPullDownRefresh() {
     console.log('触发下拉刷新')
-    this.loadTemplates().then(() => {
+    Promise.all([
+      this.loadTemplates(),
+      this.loadMessageCount(),
+      this.loadSubmissionStats()
+    ]).then(() => {
       wx.stopPullDownRefresh()
     })
   },
@@ -492,6 +505,8 @@ Page({
 
           this.closeUploadModal()
           await this.loadTemplates()
+          // 更新统计数据
+          this.loadSubmissionStats()
         } catch (parseError) {
           console.error('解析响应数据失败:', {
             error: parseError,
@@ -815,6 +830,82 @@ Page({
   closeNotification() {
     this.setData({
       showNotification: false
+    })
+    
+    // 添加触感反馈
+    wx.vibrateShort({ type: 'light' })
+  },
+
+  // 新增 - 获取未读消息数
+  async loadMessageCount() {
+    try {
+      const token = wx.getStorageSync('token')
+      if (!token) return
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/messages/unread/count`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        })
+      })
+      
+      if (res.statusCode === 200) {
+        this.setData({
+          unreadMessage: res.data.count || 0
+        })
+      }
+    } catch (err) {
+      console.error('获取未读消息数失败:', err)
+    }
+  },
+
+  // 新增 - 获取提交统计
+  async loadSubmissionStats() {
+    try {
+      const token = wx.getStorageSync('token')
+      if (!token) return
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/stats/submissions/count`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        })
+      })
+      
+      if (res.statusCode === 200) {
+        this.setData({
+          submissionCount: res.data.count || 0
+        })
+      }
+    } catch (err) {
+      console.error('获取提交统计失败:', err)
+    }
+  },
+
+  // 新增 - 导航到消息中心
+  navigateToMessage() {
+    wx.navigateTo({
+      url: '/pages/user/message/list'
+    })
+    
+    // 添加触感反馈
+    wx.vibrateShort({ type: 'light' })
+  },
+
+  // 新增 - 导航到统计分析
+  navigateToStats() {
+    wx.navigateTo({
+      url: '/pages/user/stats/index'
     })
     
     // 添加触感反馈

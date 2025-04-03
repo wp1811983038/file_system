@@ -1,0 +1,192 @@
+.container {
+  padding: 30rpx;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* 消息头部 */
+.message-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.message-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.message-icon.system {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.message-icon.file_receive {
+  background: rgba(82, 196, 26, 0.1);
+}
+
+.message-icon.file_process {
+  background: rgba(250, 173, 20, 0.1);
+}
+
+.message-icon image {
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.message-meta {
+  flex: 1;
+}
+
+.message-title {
+  font-size: 34rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.message-time {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 消息内容 */
+.message-content {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.message-content text {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* 关联信息 */
+.related-info {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.related-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.info-item {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+
+.info-label {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.info-value.status-approved {
+  color: #52c41a;
+}
+
+.info-value.status-rejected {
+  color: #f5222d;
+}
+
+.info-value.status-pending {
+  color: #faad14;
+}
+
+/* 操作按钮 */
+.action-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  margin-top: 30rpx;
+}
+
+.btn-view, .btn-download, .btn-submit {
+  min-width: 160rpx;
+  height: 70rpx;
+  line-height: 70rpx;
+  font-size: 28rpx;
+  padding: 0 30rpx;
+  border-radius: 8rpx;
+}
+
+.btn-view {
+  background: #1890ff;
+  color: #fff;
+}
+
+.btn-download {
+  background: #faad14;
+  color: #fff;
+}
+
+.btn-submit {
+  background: #52c41a;
+  color: #fff;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f1f1f;
+  }
+  
+  .message-title {
+    color: #e0e0e0;
+  }
+  
+  .message-content {
+    background: #2c2c2c;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
+  }
+  
+  .message-content text {
+    color: #e0e0e0;
+  }
+  
+  .related-info {
+    background: #2c2c2c;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
+  }
+  
+  .related-title {
+    color: #e0e0e0;
+    border-bottom: 1rpx solid #444;
+  }
+  
+  .info-label {
+    color: #b0b0b0;
+  }
+  
+  .info-value {
+    color: #e0e0e0;
+  }
+  
+  .btn-view {
+    background: #177ddc;
+  }
+}

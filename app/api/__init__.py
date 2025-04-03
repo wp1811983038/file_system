@@ -5,20 +5,23 @@ from flask import Blueprint
 
 # 创建蓝图
 bp_auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
-
 bp_admin = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
 bp_user = Blueprint('user', __name__, url_prefix='/api/v1/users')
 bp_files = Blueprint('files', __name__, url_prefix='/api/v1/files')
+bp_message = Blueprint('message', __name__, url_prefix='/api/v1/messages')
+bp_stats = Blueprint('stats', __name__, url_prefix='/api/v1/stats')
 
 def init_app(app):
     # 导入路由模块
-    from . import auth, admin, user, files
+    from . import auth, admin, user, files, message, stats
     
     # 注册蓝图
     app.register_blueprint(bp_auth)
     app.register_blueprint(bp_admin)
     app.register_blueprint(bp_user)
     app.register_blueprint(bp_files)
+    app.register_blueprint(bp_message)
+    app.register_blueprint(bp_stats)
     
     # 添加调试信息
     # print("已注册的蓝图:")

@@ -15,6 +15,7 @@ from datetime import datetime
 from flask import url_for
 import urllib.parse  # 添加这行
 import traceback    # 添加这行
+from app.services.message_service import MessageService
 
 # 修改 get_user_templates 函数，包含提交状态信息
 
@@ -551,7 +552,7 @@ def approve_submission(current_user, file_id):
         user_file.status = approval_status
         db.session.commit()
         
-        # 发送审核通知 - 新增部分
+        # 发送微信订阅消息通知
         try:
             # 导入通知服务
             from app.services.notification_service import NotificationService
@@ -567,6 +568,29 @@ def approve_submission(current_user, file_id):
         except Exception as e:
             # 通知发送失败不影响审批流程
             current_app.logger.error(f'发送审核通知异常: {str(e)}')
+            current_app.logger.error(traceback.format_exc())
+        
+        # 创建系统内部消息 - 新增部分
+        try:
+            # 导入消息服务
+            from app.services.message_service import MessageService
+            
+            # 创建文件处理消息
+            message_result = MessageService.create_file_process_message(
+                user_id=user_file.user_id,
+                file_id=file_id,
+                status=approval_status,
+                comments=comments
+            )
+            
+            if message_result:
+                current_app.logger.info(f'创建审批消息成功: user_id={user_file.user_id}, file_id={file_id}')
+            else:
+                current_app.logger.warning(f'创建审批消息失败: user_id={user_file.user_id}, file_id={file_id}')
+                
+        except Exception as e:
+            # 消息创建失败不影响审批流程
+            current_app.logger.error(f'创建审批消息异常: {str(e)}')
             current_app.logger.error(traceback.format_exc())
         
         return jsonify({

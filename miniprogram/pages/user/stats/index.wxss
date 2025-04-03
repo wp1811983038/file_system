@@ -1,0 +1,277 @@
+.container {
+  padding: 20rpx;
+  background: #f5f7fa;
+  min-height: 100vh;
+  /* 添加底部安全距离，确保内容不会被TabBar覆盖 */
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
+}
+
+/* 统计卡片通用样式 */
+.stats-card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 30rpx;
+  position: relative;
+  padding-left: 20rpx;
+}
+
+.card-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8rpx;
+  bottom: 8rpx;
+  width: 6rpx;
+  background: #1890ff;
+  border-radius: 3rpx;
+}
+
+/* 概览统计格子样式 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.stat-item {
+  background: #f9f9f9;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 图表容器 */
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20rpx 0;
+}
+
+/* 图例样式 */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 30rpx;
+  gap: 20rpx;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20rpx;
+}
+
+.legend-color {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+}
+
+.legend-color.approved {
+  background-color: #10b981;
+}
+
+.legend-color.rejected {
+  background-color: #ef4444;
+}
+
+.legend-color.pending {
+  background-color: #f59e0b;
+}
+
+.legend-color.not-submitted {
+  background-color: #9ca3af;
+}
+
+.legend-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 时效分析样式 */
+.efficiency-summary {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30rpx;
+}
+
+.efficiency-item {
+  text-align: center;
+}
+
+.efficiency-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 8rpx;
+}
+
+.efficiency-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 列表样式 */
+.list-header {
+  display: flex;
+  background: #f9f9f9;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 10rpx;
+}
+
+.header-item {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #666;
+  flex: 1;
+}
+
+.list-item {
+  display: flex;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-status {
+  font-size: 26rpx;
+  flex: 1;
+  text-align: center;
+}
+
+.item-hours {
+  font-size: 26rpx;
+  flex: 1;
+  text-align: center;
+}
+
+/* 状态颜色 */
+.status-approved {
+  color: #10b981;
+}
+
+.status-rejected {
+  color: #ef4444;
+}
+
+.status-pending {
+  color: #f59e0b;
+}
+
+.status-not-submitted {
+  color: #9ca3af;
+}
+
+/* 列表布局辅助类 */
+.flex-1 {
+  flex: 1;
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+/* 无数据提示 */
+.no-data {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* 适配深色模式 */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f1f1f;
+  }
+  
+  .stats-card {
+    background: #2c2c2c;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
+  }
+  
+  .card-title {
+    color: #e0e0e0;
+  }
+  
+  .card-title::before {
+    background: #177ddc;
+  }
+  
+  .stat-item {
+    background: #333;
+  }
+  
+  .stat-value {
+    color: #177ddc;
+  }
+  
+  .stat-label {
+    color: #b0b0b0;
+  }
+  
+  .legend-text {
+    color: #b0b0b0;
+  }
+  
+  .list-header {
+    background: #333;
+  }
+  
+  .header-item {
+    color: #b0b0b0;
+  }
+  
+  .list-item {
+    border-bottom: 1rpx solid #444;
+  }
+  
+  .item-name {
+    color: #e0e0e0;
+  }
+  
+  .efficiency-label {
+    color: #b0b0b0;
+  }
+  
+  .efficiency-value {
+    color: #177ddc;
+  }
+}

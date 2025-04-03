@@ -10,7 +10,10 @@
     "pages/user/password/list",
     "pages/user/profile/edit",
     "pages/admin/settings/index",
-    "pages/admin/user/detail"
+    "pages/admin/user/detail",
+    "pages/user/message/list",
+    "pages/user/message/detail",
+    "pages/user/stats/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
