@@ -1,0 +1,32 @@
+<!-- miniprogram/pages/enforcer/index/index.wxml -->
+<view class="container">
+  <view class="header">
+    <view class="title">执法管理系统</view>
+  </view>
+  
+  <view class="stats-container">
+    <view class="stat-card">
+      <text class="stat-number">{{stats.company_count}}</text>
+      <text class="stat-label">企业总数</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-number">{{stats.template_count}}</text>
+      <text class="stat-label">模板总数</text>  
+    </view>
+    <view class="stat-card">
+      <text class="stat-number">{{stats.submission_count}}</text>
+      <text class="stat-label">提交总数</text>
+    </view>
+  </view>
+  
+  <view class="compliance-container">
+    <view class="compliance-card">
+      <view class="compliance-title">合规率统计</view>
+      <view class="compliance-rate">{{stats.compliance_rate}}%</view>
+      <view class="compliance-detail">
+        <text>已批准: {{stats.approved_count}}</text>
+        <text>总提交: {{stats.submission_count}}</text>
+      </view>
+    </view>
+  </view>
+</view>

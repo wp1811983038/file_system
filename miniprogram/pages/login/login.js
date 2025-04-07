@@ -95,6 +95,10 @@ Page({
                 wx.setStorageSync('token', res.data.token);
                 wx.setStorageSync('isAdmin', res.data.is_admin);
                 
+                // 获取role信息并保存
+                const userRole = res.data.role || 'user';
+                wx.setStorageSync('userRole', userRole);
+                
                 // 保存用户名密码（如果选择了记住密码）
                 if (rememberPassword) {
                   wx.setStorageSync('savedUsername', username);
@@ -104,8 +108,8 @@ Page({
                   wx.removeStorageSync('savedPassword');
                 }
                 
-                // 获取用户信息
-                this.getUserInfo(res.data.token, res.data.is_admin);
+                // 获取用户信息并传递userRole
+                this.getUserInfo(res.data.token, res.data.is_admin, userRole);
                 
                 // 登录成功后请求订阅消息授权
                 setTimeout(() => {
@@ -218,7 +222,7 @@ Page({
     });
   },
 
-  getUserInfo(token, isAdmin) {
+  getUserInfo(token, isAdmin, userRole) {
     wx.request({
       url: `${app.globalData.baseUrl}/api/v1/users/profile`,
       method: 'GET',
@@ -233,18 +237,25 @@ Page({
 
           // 保存用户信息
           app.globalData.userInfo = res.data
+          app.globalData.userRole = userRole
           
           wx.showToast({
             title: '登录成功',
             icon: 'success',
             duration: 1500,
             complete: () => {
-              // 跳转到对应页面
-              if (isAdmin) {
+              // 根据角色跳转到对应页面
+              if (userRole === 'admin' || isAdmin) {
                 wx.reLaunch({
                   url: '/pages/admin/index/index'
                 })
+              } else if (userRole === 'enforcer') {
+                console.log('重定向到执法端首页');
+                wx.reLaunch({
+                  url: '/pages/enforcer/index/index'
+                })
               } else {
+                // 普通用户
                 wx.reLaunch({
                   url: '/pages/user/files/list'
                 })

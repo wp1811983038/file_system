@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify,g
 from app.models.user import User
 from app import db
 import jwt
@@ -45,3 +45,13 @@ def admin_required(f):
             return jsonify({'error': '需要管理员权限'}), 403
         return f(*args, **kwargs)
     return decorated 
+
+
+
+def enforcer_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not hasattr(g, 'current_user') or not g.current_user.is_enforcer:
+            return jsonify({'error': '只有执法人员才能访问此资源'}), 403
+        return f(*args, **kwargs)
+    return decorated

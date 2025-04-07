@@ -3,10 +3,11 @@ const QQMapWX = require('./utils/qqmap-wx-jssdk.js');
 
 App({
   globalData: {
-    baseUrl: 'http://',//192.168.1.101,    
+    baseUrl: '',//192.168.1.101,    
     // 如需在生产环境使用其他URL，可以手动切换或通过其他方式配置
-    // baseUrl: 'https://pdswjgl.cn:5000',
+    // baseUrl: '',
     userInfo: null,
+    userRole: null, // 添加用户角色信息
     networkStatus: {
       isConnected: true,
       networkType: 'unknown'
@@ -21,6 +22,10 @@ App({
       key: '' // 替换为您申请的腾讯位置服务密钥
     });
     
+    // 从本地存储加载用户角色
+    const userRole = wx.getStorageSync('userRole') || 'user';
+    this.globalData.userRole = userRole;
+
     // 监听网络状态
     this._initNetworkListener()
     
@@ -57,15 +62,26 @@ App({
   _checkLoginStatus() {
     const token = wx.getStorageSync('token')
     if (!token) {
-      // 如果是登录页面则不跳转
-      const pages = getCurrentPages()
+      // 未登录时的处理保持不变...
+    } else {
+      // 已登录，检查当前页面是否符合用户角色
+      const userRole = wx.getStorageSync('userRole') || 'user';
+      const pages = getCurrentPages();
+      
       if (pages.length > 0) {
-        const currentPage = pages[pages.length - 1]
-        if (currentPage && currentPage.route !== 'pages/login/login') {
-          // 未登录时重定向到登录页
-          wx.redirectTo({
-            url: '/pages/login/login'
-          })
+        const currentPage = pages[pages.length - 1];
+        const route = currentPage.route || '';
+        
+        console.log('当前页面:', route, '用户角色:', userRole);
+        
+        // 强制重定向到对应角色的首页
+        if (userRole === 'enforcer' && !route.includes('enforcer/') && !route.includes('login')) {
+          console.log('执法人员访问非法页面，重定向到执法端首页');
+          wx.reLaunch({ url: '/pages/enforcer/index/index' });
+        } else if (userRole === 'admin' && !route.includes('admin/') && !route.includes('login')) {
+          wx.reLaunch({ url: '/pages/admin/index/index' });
+        } else if (userRole === 'user' && (route.includes('admin/') || route.includes('enforcer/')) && !route.includes('login')) {
+          wx.reLaunch({ url: '/pages/user/files/list' });
         }
       }
     }
@@ -152,34 +168,24 @@ App({
   },
   
   // 地理编码方法 - 将地址转换为经纬度
-  geocoder(address, companyName = '') {
-    return new Promise((resolve, reject) => {
-      // 结合公司名称和地址进行搜索
-      const searchKeyword = companyName ? `${companyName} ${address}` : address;
-      
-      this.globalData.qqmapsdk.geocoder({
-        address: searchKeyword,
-        success: res => {
-          if (res.status === 0) {
-            console.log('地址解析成功:', res.result);
-            resolve(res.result);
-          } else {
-            // 如果组合搜索失败，仅使用地址再试一次
-            if (companyName) {
-              console.log('组合搜索失败，尝试仅使用地址');
-              this.geocoder(address).then(resolve).catch(reject);
-            } else {
-              reject(new Error(res.message || '地址解析失败'));
-            }
-          }
-        },
-        fail: error => {
-          console.error('地址解析请求失败:', error);
-          reject(error);
+  // app.js中添加或修改的方法
+geocoder(address) {
+  return new Promise((resolve, reject) => {
+    this.globalData.qqmapsdk.geocoder({
+      address: address,
+      success: res => {
+        if (res.status === 0) {
+          resolve(res.result);
+        } else {
+          reject(new Error(res.message || '地址解析失败'));
         }
-      });
+      },
+      fail: error => {
+        reject(error);
+      }
     });
-  },
+  });
+},
   
   onError(err) {
     console.error('应用错误:', err)

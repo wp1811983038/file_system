@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     company_name = db.Column(db.String(100))
     contact_info = db.Column(db.String(100), unique=True)  # 修改为唯一
+    # 添加角色字段 - 'user', 'admin', 'enforcer'
+    role = db.Column(db.String(20), default='user', nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # 添加头像URL字段
@@ -62,6 +64,7 @@ class User(UserMixin, db.Model):
             'industry': self.industry,
             'recruitment_unit': self.recruitment_unit,
             'is_admin': self.is_admin,
+            'role': self.role,
             'avatar_url': self.avatar_url,  # 添加头像URL
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

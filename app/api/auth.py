@@ -39,6 +39,7 @@ def login():
         'message': '登录成功',
         'token': token,
         'is_admin': user.is_admin,
+        'role': user.role,  # 添加角色信息
         'user_id': user.id
     }), 200
 
@@ -99,5 +100,6 @@ def code2session():
         'message': '登录成功',
         'token': token,
         'is_admin': user.is_admin,
+        'role': user.role,  # 添加角色信息
         'user_id': user.id
     }), 200

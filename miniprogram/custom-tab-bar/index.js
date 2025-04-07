@@ -7,7 +7,7 @@ Component({
     adminList: [{
       pagePath: "/pages/admin/index/index",
       text: "首页",
-      iconPath: "/images/home.png",
+      iconPath: "/images/.png",
       selectedIconPath: "/images/home-active.png"
     }, {
       pagePath: "/pages/admin/template/list",
@@ -36,16 +36,38 @@ Component({
       iconPath: "/images/user.png",
       selectedIconPath: "/images/user-active.png"
     }],
+    enforcerList: [
+      {
+        pagePath: "/pages/enforcer/index/index",
+        text: "首页",
+        iconPath: "/images/home.png",
+        selectedIconPath: "/images/home-active.png"
+      },
+      {
+        pagePath: "/pages/user/profile/list",
+        text: "我的",
+        iconPath: "/images/user.png",
+        selectedIconPath: "/images/user-active.png"
+      }
+    ],
     list: []
   },
 
   lifetimes: {
-    attached() {
-      console.log('TabBar组件初始化')
-      // 初始化选择的标签页
-      const isAdmin = wx.getStorageSync('isAdmin')
-      const list = isAdmin ? this.data.adminList : this.data.userList
-      this.setData({ list })
+    attached: function() {
+      // 获取用户角色
+      const userRole = wx.getStorageSync('userRole') || 'user';
+      console.log('当前用户角色:', userRole);
+      
+      // 根据角色设置对应TabBar项
+      if (userRole === 'admin' || wx.getStorageSync('isAdmin')) {
+        this.setData({ list: this.data.adminList });
+      } else if (userRole === 'enforcer') {
+        this.setData({ list: this.data.enforcerList });
+        console.log('设置执法端导航栏');
+      } else {
+        this.setData({ list: this.data.userList });
+      }
     }
   },
 

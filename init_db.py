@@ -17,6 +17,7 @@ def create_admin_user():
         username="admin",
         company_name="系统管理员",
         contact_info="13000000000",  # 管理员手机号
+        role="admin",  # 设置角色为admin
         is_admin=True,
         created_at=datetime.now(),
         avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
@@ -24,6 +25,20 @@ def create_admin_user():
     admin.set_password("admin123")  # 设置管理员初始密码
     db.session.add(admin)
     print("创建系统管理员账户: admin (密码: admin123)")
+
+# 创建执法人员账户
+    enforcer = User(
+        username="enforcer",
+        company_name="执法人员",
+        contact_info="13100000000",
+        role="enforcer",  # 设置角色为enforcer
+        is_admin=False,
+        created_at=datetime.now(),
+        avatar_url=Config.DEFAULT_AVATAR
+    )
+    enforcer.set_password("enforcer123")
+    db.session.add(enforcer)
+    print("创建执法人员账户: enforcer (密码: enforcer123)")
 
 def create_system_settings():
     """创建系统初始设置"""
@@ -191,6 +206,7 @@ def import_enterprises_from_excel(excel_file):
                     industry=industry,
                     recruitment_unit=recruitment_unit,
                     is_admin=False,
+                    role="user",  # 设置角色为普通用户
                     created_at=datetime.now(),
                     avatar_url=Config.DEFAULT_AVATAR  # 添加默认头像
                 )
