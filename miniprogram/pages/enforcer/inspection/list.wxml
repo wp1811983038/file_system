@@ -1,0 +1,53 @@
+<!-- pages/enforcer/inspection/list.wxml -->
+<view class="container">
+  <view class="filter-bar">
+    <view class="filter-tabs">
+      <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部</view>
+      <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" bindtap="switchTab" data-tab="pending">待执行</view>
+      <view class="tab {{activeTab === 'completed' ? 'active' : ''}}" bindtap="switchTab" data-tab="completed">已完成</view>
+    </view>
+    <view class="search-box">
+      <icon type="search" size="14" color="#999"></icon>
+      <input placeholder="搜索企业名称" confirm-type="search" bindinput="onSearchInput" bindconfirm="searchInspections" value="{{searchKeyword}}"></input>
+    </view>
+  </view>
+
+  <view class="inspection-list" wx:if="{{inspections.length > 0}}">
+    <view class="inspection-item" wx:for="{{inspections}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
+      <view class="company-info">
+        <view class="company-name">{{item.company_name}}</view>
+        <view class="status-badge {{item.status === 'completed' ? 'completed' : 'pending'}}">
+          {{item.status === 'completed' ? '已完成' : '待执行'}}
+        </view>
+      </view>
+      
+      <view class="inspection-meta">
+        <text class="inspection-type">{{item.inspection_type}}</text>
+        <text class="inspection-time">计划时间: {{item.planned_date}}</text>
+      </view>
+      
+      <view class="inspection-desc">{{item.description}}</view>
+      
+      <view class="inspection-stats" wx:if="{{item.status === 'completed'}}">
+        <text class="stat-item">问题: {{item.problem_count || 0}}项</text>
+        <text class="stat-item">照片: {{item.photo_count || 0}}张</text>
+        <text class="stat-item">完成时间: {{item.completed_time || '未知'}}</text>
+      </view>
+      
+      <view class="item-footer">
+        <view class="action-btn {{item.status === 'completed' ? 'view' : 'execute'}}" catchtap="navigateToAction" data-id="{{item.id}}" data-status="{{item.status}}">
+          {{item.status === 'completed' ? '查看详情' : '执行检查'}}
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <view class="empty-tip" wx:else>
+    <image class="empty-icon" src="/images/empty_list.png"></image>
+    <text>暂无检查任务</text>
+  </view>
+  
+  <view class="load-more" wx:if="{{hasMoreData && inspections.length > 0}}" bindtap="loadMoreData">
+    加载更多
+  </view>
+</view>

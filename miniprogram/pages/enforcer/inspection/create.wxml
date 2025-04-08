@@ -1,0 +1,66 @@
+<!-- pages/enforcer/inspection/create.wxml -->
+<view class="container">
+  <view class="form-title">发起企业检查</view>
+  
+  <view class="company-info">
+    <view class="company-name">{{company.company_name}}</view>
+    <view class="company-address">{{company.company_address}}</view>
+  </view>
+  
+  <view class="form-container">
+    <view class="form-item">
+      <view class="form-label required">检查类型</view>
+      <view class="form-content">
+        <picker mode="selector" range="{{inspectionTypes}}" value="{{typeIndex}}" bindchange="bindTypeChange">
+          <view class="picker {{typeIndex !== null ? '' : 'placeholder'}}">
+            {{typeIndex !== null ? inspectionTypes[typeIndex] : '请选择检查类型'}}
+          </view>
+        </picker>
+      </view>
+    </view>
+    
+    <view class="form-item">
+      <view class="form-label required">计划检查时间</view>
+      <view class="form-content">
+        <picker mode="date" value="{{formData.planned_date}}" start="{{minDate}}" bindchange="bindDateChange">
+          <view class="picker {{formData.planned_date ? '' : 'placeholder'}}">
+            {{formData.planned_date || '请选择检查日期'}}
+          </view>
+        </picker>
+      </view>
+    </view>
+    
+    <view class="form-item">
+      <view class="form-label required">检查内容描述</view>
+      <view class="form-content">
+        <textarea class="description-textarea" placeholder="请输入检查内容描述..." value="{{formData.description}}" bindinput="bindDescInput" maxlength="200"></textarea>
+        <view class="textarea-counter">{{formData.description.length}}/200</view>
+      </view>
+    </view>
+    
+    <view class="form-item">
+      <view class="form-label">检查依据</view>
+      <view class="form-content">
+        <textarea class="description-textarea" placeholder="请输入检查依据（选填）..." value="{{formData.basis}}" bindinput="bindBasisInput" maxlength="200"></textarea>
+        <view class="textarea-counter">{{formData.basis.length}}/200</view>
+      </view>
+    </view>
+    
+    <view class="form-item">
+      <view class="form-label">通知企业</view>
+      <view class="form-content">
+        <switch checked="{{formData.notify_company}}" bindchange="bindNotifyChange" color="#07c160"></switch>
+      </view>
+    </view>
+  </view>
+  
+  <view class="form-tips">
+    <text class="tip-text">提交后系统将自动通知管理端</text>
+  </view>
+  
+  <view class="footer-btn-container">
+    <button class="primary-btn" bindtap="submitForm" disabled="{{submitting}}">
+      {{submitting ? '提交中...' : '确认提交'}}
+    </button>
+  </view>
+</view>

@@ -1,0 +1,228 @@
+/* pages/enforcer/company/detail.wxss */
+.container {
+  padding: 20rpx;
+  background: #f5f5f5;
+}
+
+/* 企业信息卡片 */
+.company-card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+}
+
+.company-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.company-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.industry-badge {
+  font-size: 24rpx;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-label {
+  width: 160rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.call-btn {
+  background: #07c160;
+  color: #fff;
+  font-size: 24rpx;
+  padding: 6rpx 20rpx;
+  border-radius: 30rpx;
+  margin-left: 20rpx;
+}
+
+/* 地图容器 */
+.map-container {
+  margin-top: 20rpx;
+  position: relative;
+  height: 300rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-btn {
+  position: absolute;
+  bottom: 20rpx;
+  right: 20rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 24rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+/* 标题样式 */
+.section-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  margin: 30rpx 0 15rpx;
+  padding-left: 20rpx;
+  border-left: 8rpx solid #07c160;
+}
+
+/* 检查历史列表 */
+.inspection-list, .file-list {
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.inspection-item, .file-item {
+  padding: 25rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.inspection-time {
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 20rpx;
+}
+
+.inspection-status {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+}
+
+.inspection-status.completed {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.inspection-status.pending {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.inspection-desc {
+  font-size: 28rpx;
+  color: #333;
+  margin-top: 10rpx;
+  width: 100%;
+}
+
+.file-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-right: 20rpx;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 500rpx;
+}
+
+.file-meta {
+  display: flex;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.file-date {
+  margin-right: 20rpx;
+}
+
+.file-status {
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+}
+
+.file-status.approved {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.file-status.rejected {
+  background: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
+}
+
+.file-status.pending {
+  background: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+}
+
+.arrow-right {
+  width: 16rpx;
+  height: 16rpx;
+  border-top: 4rpx solid #ccc;
+  border-right: 4rpx solid #ccc;
+  transform: rotate(45deg);
+}
+
+/* 空列表提示 */
+.empty-tip {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  font-size: 28rpx;
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+/* 底部按钮 */
+.footer-btn-container {
+  padding: 40rpx 30rpx;
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.primary-btn {
+  background: #07c160;
+  color: #fff;
+  font-size: 32rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+}

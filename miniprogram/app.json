@@ -14,7 +14,11 @@
     "pages/user/message/list",
     "pages/user/message/detail",
     "pages/user/stats/index",
-    "pages/enforcer/index/index"
+    "pages/enforcer/index/index",
+    "pages/enforcer/company/detail",
+    "pages/enforcer/inspection/create",
+    "pages/enforcer/inspection/execute",
+    "pages/enforcer/inspection/list"
   ],
   "window": {
     "backgroundTextStyle": "light",

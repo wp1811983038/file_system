@@ -1,32 +1,57 @@
 <!-- miniprogram/pages/enforcer/index/index.wxml -->
 <view class="container">
-  <view class="header">
-    <view class="title">执法管理系统</view>
+  <view class="search-bar">
+    <icon type="search" size="18" color="#999"></icon>
+    <input placeholder="搜索企业名称" bindinput="onSearchInput" value="{{searchKeyword}}" confirm-type="search" bindconfirm="searchCompany"/>
+    <view class="search-btn" bindtap="searchCompany">搜索</view>
   </view>
-  
-  <view class="stats-container">
-    <view class="stat-card">
+
+  <view class="stats-row">
+    <view class="stat-card" bindtap="navigateToCompanies">
       <text class="stat-number">{{stats.company_count}}</text>
       <text class="stat-label">企业总数</text>
     </view>
-    <view class="stat-card">
-      <text class="stat-number">{{stats.template_count}}</text>
-      <text class="stat-label">模板总数</text>  
+    <view class="stat-card" bindtap="navigateToInspections">
+      <text class="stat-number">{{stats.pending_count}}</text>
+      <text class="stat-label">待检查</text>
     </view>
-    <view class="stat-card">
-      <text class="stat-number">{{stats.submission_count}}</text>
-      <text class="stat-label">提交总数</text>
+    <view class="stat-card" bindtap="navigateToCompleted">
+      <text class="stat-number">{{stats.completed_count}}</text>
+      <text class="stat-label">已完成</text>
     </view>
   </view>
-  
-  <view class="compliance-container">
-    <view class="compliance-card">
-      <view class="compliance-title">合规率统计</view>
-      <view class="compliance-rate">{{stats.compliance_rate}}%</view>
-      <view class="compliance-detail">
-        <text>已批准: {{stats.approved_count}}</text>
-        <text>总提交: {{stats.submission_count}}</text>
+
+  <view class="section-title">待检查企业</view>
+  <view class="company-list" wx:if="{{pendingInspections.length > 0}}">
+    <view class="company-item" wx:for="{{pendingInspections}}" wx:key="id" bindtap="navigateToInspection" data-id="{{item.id}}">
+      <view class="company-info">
+        <view class="company-name">{{item.company_name}}</view>
+        <view class="company-address">{{item.company_address}}</view>
       </view>
+      <view class="inspection-time">
+        <text>计划检查: {{item.planned_time}}</text>
+      </view>
+      <view class="action-btn">执行检查</view>
     </view>
+  </view>
+  <view class="empty-tip" wx:else>暂无待检查企业</view>
+
+  <view class="section-title">企业列表</view>
+  <view class="company-list" wx:if="{{companies.length > 0}}">
+    <view class="company-item" wx:for="{{companies}}" wx:key="id" bindtap="selectCompany" data-id="{{item.id}}">
+      <view class="company-info">
+        <view class="company-name">{{item.company_name}}</view>
+        <view class="company-address">{{item.company_address}}</view>
+      </view>
+      <view class="industry-badge">{{item.industry}}</view>
+      <view class="action-btn">发起检查</view>
+    </view>
+  </view>
+  <view class="empty-tip" wx:else>暂无匹配企业</view>
+  
+  <view class="load-more" wx:if="{{hasMoreCompanies}}" bindtap="loadMoreCompanies">加载更多</view>
+
+  <view class="fab-button" bindtap="showCompanySelector">
+    <text class="fab-icon">+</text>
   </view>
 </view>

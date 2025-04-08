@@ -1,0 +1,72 @@
+<!-- pages/enforcer/company/detail.wxml -->
+<view class="container">
+  <!-- 企业基本信息卡片 -->
+  <view class="company-card">
+    <view class="company-header">
+      <view class="company-name">{{company.company_name}}</view>
+      <view class="industry-badge">{{company.industry || '未分类'}}</view>
+    </view>
+    
+    <view class="info-item">
+      <text class="info-label">联系人：</text>
+      <text class="info-value">{{company.username}}</text>
+    </view>
+    
+    <view class="info-item">
+      <text class="info-label">联系电话：</text>
+      <text class="info-value">{{company.contact_info}}</text>
+      <view class="call-btn" catchtap="makePhoneCall" data-phone="{{company.contact_info}}">呼叫</view>
+    </view>
+    
+    <view class="info-item">
+      <text class="info-label">企业地址：</text>
+      <text class="info-value">{{company.company_address}}</text>
+    </view>
+    
+    <view class="info-item">
+      <text class="info-label">招商单位：</text>
+      <text class="info-value">{{company.recruitment_unit || '未知'}}</text>
+    </view>
+    
+    <view class="map-container" wx:if="{{company.company_address}}">
+      <map id="companyMap" longitude="{{mapLocation.longitude}}" latitude="{{mapLocation.latitude}}" markers="{{markers}}" scale="14" show-location></map>
+      <view class="map-btn" bindtap="openLocation">导航到企业</view>
+    </view>
+  </view>
+  
+  <!-- 检查历史 -->
+  <view class="section-title">检查历史</view>
+  <view class="inspection-list" wx:if="{{inspectionHistory.length > 0}}">
+    <view class="inspection-item" wx:for="{{inspectionHistory}}" wx:key="id" bindtap="viewInspectionDetail" data-id="{{item.id}}">
+      <view class="inspection-time">{{item.inspection_time}}</view>
+      <view class="inspection-status {{item.status === 'completed' ? 'completed' : 'pending'}}">
+        {{item.status === 'completed' ? '已完成' : '进行中'}}
+      </view>
+      <view class="inspection-desc">{{item.description || '常规检查'}}</view>
+      <view class="arrow-right"></view>
+    </view>
+  </view>
+  <view class="empty-tip" wx:else>暂无检查历史</view>
+  
+  <!-- 提交的文件 -->
+  <view class="section-title">已提交文件</view>
+  <view class="file-list" wx:if="{{files.length > 0}}">
+    <view class="file-item" wx:for="{{files}}" wx:key="id" bindtap="previewFile" data-id="{{item.id}}">
+      <image class="file-icon" src="/images/file_icon_{{item.file_type}}.png"></image>
+      <view class="file-info">
+        <view class="file-name">{{item.filename}}</view>
+        <view class="file-meta">
+          <text class="file-date">提交时间：{{item.upload_date}}</text>
+          <text class="file-status {{item.status}}">{{item.status === 'approved' ? '已通过' : (item.status === 'rejected' ? '已拒绝' : '审核中')}}</text>
+        </view>
+      </view>
+      <view class="arrow-right"></view>
+    </view>
+  </view>
+  <view class="empty-tip" wx:else>暂无提交文件</view>
+  
+  <!-- 底部按钮 -->
+  <view class="footer-btn-container">
+    <button class="primary-btn" bindtap="createInspection">发起检查</button>
+  </view>
+</view>

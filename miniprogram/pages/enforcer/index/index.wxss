@@ -4,41 +4,58 @@
   background: #f5f5f5;
 }
 
-.header {
-  padding: 30rpx 0;
-  text-align: center;
+/* 搜索栏样式 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 10rpx 20rpx;
+  border-radius: 10rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
 }
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
+.search-bar input {
+  flex: 1;
+  height: 70rpx;
+  padding: 0 20rpx;
 }
 
-/* 统计卡片样式 */
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
-  padding: 20rpx;
+.search-btn {
+  padding: 10rpx 20rpx;
+  background: #07c160;
+  color: #fff;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+}
+
+/* 统计卡片行样式 */
+.stats-row {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 30rpx;
 }
 
 .stat-card {
+  flex: 1;
   background: #fff;
-  padding: 40rpx 30rpx;
+  padding: 30rpx 20rpx;
+  margin: 0 10rpx;
   border-radius: 12rpx;
   text-align: center;
   box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
-  transition: transform 0.3s ease;
 }
 
-.stat-card:active {
-  transform: scale(0.98);
+.stat-card:first-child {
+  margin-left: 0;
+}
+
+.stat-card:last-child {
+  margin-right: 0;
 }
 
 .stat-number {
-  font-size: 40rpx;
+  font-size: 38rpx;
   font-weight: bold;
   color: #1890ff;
   display: block;
@@ -46,40 +63,119 @@
 }
 
 .stat-label {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #666;
   display: block;
 }
 
-/* 合规率卡片样式 */
-.compliance-container {
-  padding: 20rpx;
-}
-
-.compliance-card {
-  background: #fff;
-  padding: 40rpx 30rpx;
-  border-radius: 12rpx;
-  text-align: center;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
-}
-
-.compliance-title {
+/* 标题样式 */
+.section-title {
   font-size: 30rpx;
-  color: #333;
-  margin-bottom: 20rpx;
-}
-
-.compliance-rate {
-  font-size: 60rpx;
   font-weight: bold;
-  color: #52c41a;
-  margin-bottom: 20rpx;
+  margin: 30rpx 0 15rpx;
+  padding-left: 20rpx;
+  border-left: 8rpx solid #07c160;
 }
 
-.compliance-detail {
+/* 企业列表样式 */
+.company-list {
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.company-item {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  align-items: center;
+  position: relative;
+}
+
+.company-info {
+  flex: 1;
+  min-width: 60%;
+  padding-right: 20rpx;
+}
+
+.company-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.company-address {
   font-size: 26rpx;
-  color: #666;
+  color: #999;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.industry-badge {
+  font-size: 22rpx;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+  margin-right: 20rpx;
+}
+
+.inspection-time {
+  font-size: 24rpx;
+  color: #ff9800;
+  margin: 10rpx 0;
+  width: 100%;
+}
+
+.action-btn {
+  padding: 10rpx 20rpx;
+  background: #07c160;
+  color: #fff;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+}
+
+/* 空列表提示 */
+.empty-tip {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  font-size: 28rpx;
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 20rpx;
+  color: #07c160;
+  font-size: 28rpx;
+}
+
+/* 悬浮按钮 */
+.fab-button {
+  position: fixed;
+  right: 30rpx;
+  bottom: 50rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #07c160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 10rpx rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.fab-icon {
+  color: #fff;
+  font-size: 50rpx;
+  font-weight: bold;
 }

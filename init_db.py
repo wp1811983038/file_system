@@ -11,6 +11,12 @@ from app.models.user_file import UserFile
 from app.models.file_approval import FileApproval
 from config import Config
 
+# 导入新增的执法端相关模型
+# 注意：这些模型文件需要先创建好
+from app.models.inspection import Inspection
+from app.models.inspection_problem import InspectionProblem
+from app.models.inspection_photo import InspectionPhoto
+
 def create_admin_user():
     """创建系统管理员账户"""
     admin = User(
@@ -26,7 +32,7 @@ def create_admin_user():
     db.session.add(admin)
     print("创建系统管理员账户: admin (密码: admin123)")
 
-# 创建执法人员账户
+    # 创建执法人员账户
     enforcer = User(
         username="enforcer",
         company_name="执法人员",
@@ -90,6 +96,18 @@ def create_avatar_directories():
         except ImportError:
             print("未安装PIL库，无法自动创建默认头像")
             print("请手动添加一张名为'default-avatar.png'的图片到指定位置")
+
+def create_inspection_models():
+    """创建执法端相关的数据库表"""
+    print("创建执法端相关数据库表:")
+    print("- inspections表：存储检查任务信息")
+    print("- inspection_problems表：存储检查问题记录")
+    print("- inspection_photos表：存储检查照片记录")
+    
+    # 创建执法文件上传目录
+    enforcer_upload_dir = os.path.join(Config.UPLOAD_FOLDER, 'enforcer')
+    os.makedirs(enforcer_upload_dir, exist_ok=True)
+    print(f"创建执法照片上传目录: {enforcer_upload_dir}")
 
 def import_enterprises_from_excel(excel_file):
     """从Excel文件导入企业数据"""
@@ -404,6 +422,9 @@ def init_database():
         
         # 创建头像目录和默认头像
         create_avatar_directories()
+        
+        # 创建执法端相关模型
+        create_inspection_models()
         
         # 导入企业数据
         excel_file = "企业数据.xlsx"  # Excel文件名
