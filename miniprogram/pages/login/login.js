@@ -190,14 +190,14 @@ Page({
   requestSubscription() {
     wx.requestSubscribeMessage({
       tmplIds: [
-        '', // 收到文件通知模板ID
-        ''  // 文件处理结果通知模板ID
+        'NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM', // 收到文件通知模板ID
+        'FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM'  // 文件处理结果通知模板ID
       ],
       success: (res) => {
         // 获取订阅结果
         const subscribeStatus = {
-          fileReceiveStatus: res[''],
-          fileProcessStatus: res['']
+          fileReceiveStatus: res['NStXO1lTsJkqfczwVeyCo9gQpKupn3kILvLet6iMqiM'],
+          fileProcessStatus: res['FaiHqSy6DgS7csoZNllV_62pv2Tv9oagseeaqcX8eyM']
         };
       
         // 将订阅状态提交到后端保存

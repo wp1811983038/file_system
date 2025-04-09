@@ -28,10 +28,13 @@
       <text class="info-value">{{company.recruitment_unit || '未知'}}</text>
     </view>
     
-    <view class="map-container" wx:if="{{company.company_address}}">
-      <map id="companyMap" longitude="{{mapLocation.longitude}}" latitude="{{mapLocation.latitude}}" markers="{{markers}}" scale="14" show-location></map>
-      <view class="map-btn" bindtap="openLocation">导航到企业</view>
-    </view>
+    <view class="info-item">
+  <text class="info-label">企业地址：</text>
+  <view class="address-container" bindtap="navigateToAddress">
+    <text class="info-value">{{company.company_address || '暂无地址'}}</text>
+    <text class="navigate-text" wx:if="{{company.company_address}}">导航</text>
+  </view>
+</view>
   </view>
   
   <!-- 检查历史 -->

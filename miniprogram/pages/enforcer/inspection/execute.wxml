@@ -1,0 +1,152 @@
+<!-- pages/enforcer/inspection/execute.wxml -->
+<view class="container">
+  <view class="execute-header">
+    <view class="status-badge {{inspection.status === 'completed' ? 'completed' : 'pending'}}">
+      {{inspection.status === 'completed' ? '已完成' : '执行中'}}
+    </view>
+    <view class="inspection-company">{{company.company_name}}</view>
+    <view class="inspection-info">
+      <view class="info-item">
+        <text class="info-label">检查类型：</text>
+        <text class="info-value">{{inspection.inspection_type}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">计划时间：</text>
+        <text class="info-value">{{inspection.planned_date}}</text>
+      </view>
+    </view>
+    <view class="inspection-desc">{{inspection.description}}</view>
+  </view>
+  
+  <view class="section">
+    <view class="section-header">
+      <view class="section-title">问题记录</view>
+      <view class="add-btn" bindtap="showAddProblem" wx:if="{{inspection.status !== 'completed'}}">添加问题</view>
+    </view>
+    
+    <view class="problem-list" wx:if="{{problems.length > 0}}">
+      <view class="problem-item" wx:for="{{problems}}" wx:key="index">
+        <view class="problem-header">
+          <view class="problem-index">问题 {{index+1}}</view>
+          <view class="problem-actions" wx:if="{{inspection.status !== 'completed'}}">
+            <text class="action-edit" bindtap="editProblem" data-index="{{index}}">编辑</text>
+            <text class="action-delete" bindtap="deleteProblem" data-index="{{index}}">删除</text>
+          </view>
+        </view>
+        <view class="problem-type">
+          <text class="type-label">类型：</text>
+          <text class="type-value">{{item.type}}</text>
+          <view class="severity-badge {{item.severity}}">{{item.severity === 'high' ? '严重' : (item.severity === 'medium' ? '中等' : '轻微')}}</view>
+        </view>
+        <view class="problem-content">{{item.description}}</view>
+      </view>
+    </view>
+    
+    <view class="empty-tip" wx:else>暂无问题记录</view>
+  </view>
+  
+  <view class="section">
+    <view class="section-header">
+      <view class="section-title">照片记录</view>
+      <view class="add-btn" bindtap="chooseImage" wx:if="{{inspection.status !== 'completed'}}">添加照片</view>
+    </view>
+    
+    <view class="photo-gallery" wx:if="{{photos.length > 0}}">
+      <view class="photo-item" wx:for="{{photos}}" wx:key="index">
+        <image class="photo-image" src="{{item.path}}" mode="aspectFill" bindtap="previewImage" data-url="{{item.path}}"></image>
+        <view class="photo-desc">{{item.description || '无描述'}}</view>
+        <view class="photo-delete" wx:if="{{inspection.status !== 'completed'}}" bindtap="deletePhoto" data-index="{{index}}">×</view>
+      </view>
+    </view>
+    
+    <view class="empty-tip" wx:else>暂无照片记录</view>
+  </view>
+  
+  <view class="footer-btn-container" wx:if="{{inspection.status !== 'completed'}}">
+    <button class="primary-btn" bindtap="submitInspection" disabled="{{submitting || !canSubmit}}">
+      {{submitting ? '提交中...' : '提交检查结果'}}
+    </button>
+  </view>
+</view>
+
+<!-- 添加/编辑问题弹窗 -->
+<view class="problem-modal {{showProblemModal ? 'show' : ''}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask" bindtap="hideProblemModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text>{{editingProblemIndex !== null ? '编辑问题' : '添加问题'}}</text>
+      <view class="modal-close" bindtap="hideProblemModal">×</view>
+    </view>
+    <view class="modal-body">
+      <view class="form-item">
+        <view class="form-label">问题类型</view>
+        <view class="form-content">
+          <picker mode="selector" range="{{problemTypes}}" value="{{currentProblem.typeIndex}}" bindchange="bindProblemTypeChange">
+            <view class="picker {{currentProblem.typeIndex !== null ? '' : 'placeholder'}}">
+              {{currentProblem.typeIndex !== null ? problemTypes[currentProblem.typeIndex] : '请选择问题类型'}}
+            </view>
+          </picker>
+        </view>
+      </view>
+      
+      <view class="form-item">
+        <view class="form-label">严重程度</view>
+        <view class="form-content">
+          <radio-group class="severity-radio-group" bindchange="bindSeverityChange">
+            <label class="severity-radio">
+              <radio value="low" checked="{{currentProblem.severity === 'low'}}" color="#52c41a" />
+              <text>轻微</text>
+            </label>
+            <label class="severity-radio">
+              <radio value="medium" checked="{{currentProblem.severity === 'medium'}}" color="#faad14" />
+              <text>中等</text>
+            </label>
+            <label class="severity-radio">
+              <radio value="high" checked="{{currentProblem.severity === 'high'}}" color="#ff4d4f" />
+              <text>严重</text>
+            </label>
+          </radio-group>
+        </view>
+      </view>
+      
+      <view class="form-item">
+        <view class="form-label">问题描述</view>
+        <view class="form-content">
+          <textarea class="description-textarea" placeholder="请描述问题内容..." value="{{currentProblem.description}}" bindinput="bindProblemDescInput" maxlength="500"></textarea>
+          <view class="textarea-counter">{{currentProblem.description.length}}/500</view>
+        </view>
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="cancel-btn" bindtap="hideProblemModal">取消</button>
+      <button class="confirm-btn" bindtap="saveProblem">确定</button>
+    </view>
+  </view>
+</view>
+
+<!-- 添加照片描述弹窗 -->
+<view class="photo-desc-modal {{showPhotoDescModal ? 'show' : ''}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask" bindtap="hidePhotoDescModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text>添加照片描述</text>
+      <view class="modal-close" bindtap="hidePhotoDescModal">×</view>
+    </view>
+    <view class="modal-body">
+      <view class="photo-preview">
+        <image src="{{currentPhoto.path}}" mode="aspectFit"></image>
+      </view>
+      <view class="form-item">
+        <view class="form-label">照片描述</view>
+        <view class="form-content">
+          <textarea class="description-textarea" placeholder="请输入照片说明..." value="{{currentPhoto.description}}" bindinput="bindPhotoDescInput" maxlength="200"></textarea>
+          <view class="textarea-counter">{{currentPhoto.description.length}}/200</view>
+        </view>
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="cancel-btn" bindtap="hidePhotoDescModal">取消</button>
+      <button class="confirm-btn" bindtap="savePhotoDesc">确定</button>
+    </view>
+  </view>
+</view>

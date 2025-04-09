@@ -10,6 +10,7 @@ Page({
     minDate: '',
     formData: {
       planned_date: '',
+      planned_time: '09:00', // 默认时间设置为上午9点
       description: '',
       basis: '',
       notify_company: true
@@ -49,28 +50,52 @@ Page({
     try {
       wx.showLoading({ title: '加载中...' })
       
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`,
-        method: 'GET',
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
-        }
-      })
+      // 打印详细的请求信息
+      const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`;
+      console.log('请求企业信息URL:', url);
+      console.log('请求头:', { 'Authorization': `Bearer ${wx.getStorageSync('token')}` });
       
-      if (res.statusCode === 200) {
+      // 使用Promise包装wx.request以获取更多错误信息
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: url,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          },
+          success: (result) => {
+            console.log('企业信息请求成功:', result);
+            resolve(result);
+          },
+          fail: (error) => {
+            console.error('企业信息请求失败:', error);
+            reject(error);
+          }
+        });
+      });
+      
+      // 安全处理响应数据
+      if (res && res.statusCode === 200 && res.data) {
+        console.log('获取到企业数据:', res.data);
         this.setData({
           company: res.data
-        })
+        });
       } else {
+        const errorMsg = (res && res.data && res.data.error) || '企业信息获取失败';
+        console.error('企业信息API错误:', res);
         wx.showToast({
-          title: '获取企业信息失败',
+          title: errorMsg,
           icon: 'none'
-        })
+        });
       }
     } catch (err) {
-      console.error('加载企业信息失败:', err)
+      console.error('企业信息加载异常:', err);
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none'
+      });
     } finally {
-      wx.hideLoading()
+      wx.hideLoading();
     }
   },
 
@@ -85,6 +110,13 @@ Page({
   bindDateChange(e) {
     this.setData({
       'formData.planned_date': e.detail.value
+    })
+  },
+  
+  // 时间选择
+  bindTimeChange(e) {
+    this.setData({
+      'formData.planned_time': e.detail.value
     })
   },
 
@@ -121,6 +153,14 @@ Page({
     
     if (!this.data.formData.planned_date) {
       wx.showToast({
+        title: '请选择计划检查日期',
+        icon: 'none'
+      })
+      return false
+    }
+    
+    if (!this.data.formData.planned_time) {
+      wx.showToast({
         title: '请选择计划检查时间',
         icon: 'none'
       })
@@ -146,54 +186,76 @@ Page({
     this.setData({ submitting: true })
     
     try {
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/create`,
-        method: 'POST',
-        data: {
-          company_id: this.data.companyId,
-          inspection_type: this.data.inspectionTypes[this.data.typeIndex],
-          planned_date: this.data.formData.planned_date,
-          description: this.data.formData.description,
-          basis: this.data.formData.basis,
-          notify_company: this.data.formData.notify_company
-        },
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      // 合并日期和时间
+      const plannedDateTime = `${this.data.formData.planned_date} ${this.data.formData.planned_time}`;
+      console.log('计划检查时间:', plannedDateTime);
       
-      if (res.statusCode === 201) {
+      // 正确包装wx.request为Promise
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/create`,
+          method: 'POST',
+          data: {
+            company_id: this.data.companyId,
+            inspection_type: this.data.inspectionTypes[this.data.typeIndex],
+            planned_date: this.data.formData.planned_date,
+            planned_time: this.data.formData.planned_time,
+            planned_datetime: plannedDateTime,
+            description: this.data.formData.description,
+            basis: this.data.formData.basis,
+            notify_company: this.data.formData.notify_company
+          },
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+            'Content-Type': 'application/json'
+          },
+          success: result => {
+            console.log('请求成功，响应数据:', result);
+            resolve(result);
+          },
+          fail: error => {
+            console.error('请求失败:', error);
+            reject(error);
+          }
+        });
+      });
+      
+      console.log('响应状态码:', res.statusCode);
+      console.log('响应数据:', res.data);
+      
+      if (res.statusCode === 201 || res.statusCode === 200) {
         wx.showToast({
           title: '检查任务创建成功',
           icon: 'success'
-        })
+        });
         
         setTimeout(() => {
           // 如果是当天的检查任务，直接跳转到执行页面
-          const today = new Date().toISOString().slice(0, 10)
-          if (this.data.formData.planned_date === today) {
+          const today = new Date().toISOString().slice(0, 10);
+          if (this.data.formData.planned_date === today && res.data && res.data.inspection_id) {
             wx.redirectTo({
               url: `/pages/enforcer/inspection/execute?id=${res.data.inspection_id}`
-            })
+            });
           } else {
-            wx.navigateBack()
+            wx.navigateBack();
           }
-        }, 1500)
+        }, 1500);
       } else {
+        // 安全获取错误消息
+        const errorMsg = (res.data && res.data.error) || '创建失败';
         wx.showToast({
-          title: res.data.error || '创建失败',
+          title: errorMsg,
           icon: 'none'
-        })
+        });
       }
     } catch (err) {
-      console.error('提交检查任务失败:', err)
+      console.error('提交检查任务失败:', err);
       wx.showToast({
         title: '提交失败，请重试',
         icon: 'none'
-      })
+      });
     } finally {
-      this.setData({ submitting: false })
+      this.setData({ submitting: false });
     }
   }
-})
+});

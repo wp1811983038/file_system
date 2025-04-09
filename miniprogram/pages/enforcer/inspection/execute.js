@@ -33,60 +33,84 @@ Page({
 
   onLoad(options) {
     if (options.id) {
+      console.log('接收到检查任务ID:', options.id);
       this.setData({
         inspectionId: options.id
-      })
-      this.loadInspectionDetail()
+      });
+      this.loadInspectionDetail();
     } else {
+      console.error('未接收到检查任务ID');
       wx.showToast({
         title: '参数错误',
         icon: 'none'
-      })
+      });
       setTimeout(() => {
-        wx.navigateBack()
-      }, 1500)
+        wx.navigateBack();
+      }, 1500);
     }
   },
 
   // 加载检查任务详情
-  async loadInspectionDetail() {
-    try {
-      wx.showLoading({ title: '加载中...' })
-      
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/${this.data.inspectionId}`,
+  // 加载检查任务详情
+async loadInspectionDetail() {
+  try {
+    wx.showLoading({ title: '加载中...' });
+    
+    // 打印请求信息便于调试
+    const url = `${app.globalData.baseUrl}/api/v1/enforcer/inspections/${this.data.inspectionId}`;
+    console.log('请求检查任务URL:', url);
+    console.log('检查任务ID:', this.data.inspectionId);
+    console.log('Token:', wx.getStorageSync('token'));
+    
+    // 正确包装wx.request为Promise
+    const res = await new Promise((resolve, reject) => {
+      wx.request({
+        url: url,
         method: 'GET',
         header: {
           'Authorization': `Bearer ${wx.getStorageSync('token')}`
+        },
+        success: (result) => {
+          console.log('检查任务请求成功:', result);
+          resolve(result);
+        },
+        fail: (error) => {
+          console.error('检查任务请求失败:', error);
+          reject(error);
         }
-      })
+      });
+    });
+    
+    // 安全处理响应数据
+    if (res && res.statusCode === 200 && res.data) {
+      console.log('获取到检查任务数据:', res.data);
+      this.setData({
+        inspection: res.data.inspection || {},
+        company: res.data.company || {},
+        problems: res.data.problems || [],
+        photos: res.data.photos || []
+      });
       
-      if (res.statusCode === 200) {
-        this.setData({
-          inspection: res.data.inspection,
-          company: res.data.company,
-          problems: res.data.problems || [],
-          photos: res.data.photos || []
-        })
-        
-        // 检查是否可以提交
-        this.checkSubmitStatus()
-      } else {
-        wx.showToast({
-          title: '获取检查任务失败',
-          icon: 'none'
-        })
-      }
-    } catch (err) {
-      console.error('加载检查任务失败:', err)
+      // 检查提交按钮状态
+      this.checkSubmitStatus();
+    } else {
+      console.error('检查任务响应错误:', res);
+      // 错误提示
       wx.showToast({
-        title: '加载失败',
+        title: '获取检查任务失败',
         icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
+      });
     }
-  },
+  } catch (err) {
+    console.error('加载检查任务失败:', err);
+    wx.showToast({
+      title: '加载失败',
+      icon: 'none'
+    });
+  } finally {
+    wx.hideLoading();
+  }
+},
 
   // 检查提交按钮状态
   checkSubmitStatus() {
@@ -332,45 +356,47 @@ Page({
   },
 
   // 提交检查结果
-  async submitInspection() {
-    if (!this.data.canSubmit) {
-      wx.showToast({
-        title: '请至少添加一条问题记录或照片',
-        icon: 'none'
-      })
-      return
+  // 提交检查结果
+async submitInspection() {
+  if (!this.data.canSubmit) {
+    wx.showToast({
+      title: '请至少添加一条问题记录或照片',
+      icon: 'none'
+    })
+    return
+  }
+  
+  this.setData({ submitting: true })
+  
+  try {
+    // 上传照片
+    const photoResults = []
+    for (let i = 0; i < this.data.photos.length; i++) {
+      const photo = this.data.photos[i]
+      wx.showLoading({ title: `上传照片 ${i+1}/${this.data.photos.length}` })
+      
+      try {
+        const uploadRes = await this.uploadFile(photo.path, 'inspection_photo')
+        photoResults.push({
+          photo_url: uploadRes.file_url,
+          description: photo.description
+        })
+      } catch (err) {
+        console.error('上传照片失败:', err)
+        wx.showToast({
+          title: '上传照片失败，请重试',
+          icon: 'none'
+        })
+        this.setData({ submitting: false })
+        return
+      }
     }
     
-    this.setData({ submitting: true })
+    wx.showLoading({ title: '提交检查结果' })
     
-    try {
-      // 上传照片
-      const photoResults = []
-      for (let i = 0; i < this.data.photos.length; i++) {
-        const photo = this.data.photos[i]
-        wx.showLoading({ title: `上传照片 ${i+1}/${this.data.photos.length}` })
-        
-        try {
-          const uploadRes = await this.uploadFile(photo.path, 'inspection_photo')
-          photoResults.push({
-            photo_url: uploadRes.file_url,
-            description: photo.description
-          })
-        } catch (err) {
-          console.error('上传照片失败:', err)
-          wx.showToast({
-            title: '上传照片失败，请重试',
-            icon: 'none'
-          })
-          this.setData({ submitting: false })
-          return
-        }
-      }
-      
-      wx.showLoading({ title: '提交检查结果' })
-      
-      // 提交检查结果
-      const res = await wx.request({
+    // 提交检查结果 - 使用Promise正确包装wx.request
+    const res = await new Promise((resolve, reject) => {
+      wx.request({
         url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/${this.data.inspectionId}/complete`,
         method: 'POST',
         data: {
@@ -380,69 +406,90 @@ Page({
         header: {
           'Authorization': `Bearer ${wx.getStorageSync('token')}`,
           'Content-Type': 'application/json'
+        },
+        success: (result) => {
+          console.log('提交结果响应:', result);
+          resolve(result);
+        },
+        fail: (error) => {
+          console.error('提交结果请求失败:', error);
+          reject(error);
         }
+      });
+    });
+    
+    console.log('完整响应对象:', res);
+    
+    if (res && res.statusCode === 200) {
+      wx.showToast({
+        title: '提交成功',
+        icon: 'success'
       })
       
-      if (res.statusCode === 200) {
-        wx.showToast({
-          title: '提交成功',
-          icon: 'success'
-        })
-        
-        // 重新加载数据
-        setTimeout(() => {
-          this.loadInspectionDetail()
-        }, 1500)
-      } else {
-        wx.showToast({
-          title: res.data.error || '提交失败',
-          icon: 'none'
-        })
-      }
-    } catch (err) {
-      console.error('提交检查结果失败:', err)
+      // 重新加载数据
+      setTimeout(() => {
+        this.loadInspectionDetail()
+      }, 1500)
+    } else {
+      // 安全获取错误消息
+      const errorMsg = (res && res.data && res.data.error) || '提交失败';
       wx.showToast({
-        title: '提交失败，请重试',
+        title: errorMsg,
         icon: 'none'
       })
-    } finally {
-      this.setData({ submitting: false })
-      wx.hideLoading()
     }
-  },
+  } catch (err) {
+    console.error('提交检查结果失败:', err)
+    wx.showToast({
+      title: '提交失败，请重试',
+      icon: 'none'
+    })
+  } finally {
+    this.setData({ submitting: false })
+    wx.hideLoading()
+  }
+},
 
   // 上传文件
-  uploadFile(filePath, fileType) {
-    return new Promise((resolve, reject) => {
-      wx.uploadFile({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/upload`,
-        filePath,
-        name: 'file',
-        formData: {
-          file_type: fileType
-        },
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
-        },
-        success(res) {
-          if (res.statusCode === 200) {
-            // 解析响应数据
-            try {
-              const data = JSON.parse(res.data)
-              resolve(data)
-            } catch (e) {
-              reject(new Error('解析上传响应失败'))
-            }
-          } else {
-            reject(new Error(`上传失败: ${res.statusCode}`))
+  // 上传文件
+uploadFile(filePath, fileType) {
+  return new Promise((resolve, reject) => {
+    console.log('开始上传文件:', filePath);
+    
+    wx.uploadFile({
+      url: `${app.globalData.baseUrl}/api/v1/enforcer/upload`,
+      filePath,
+      name: 'file',
+      formData: {
+        file_type: fileType
+      },
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success(res) {
+        console.log('文件上传响应:', res);
+        if (res.statusCode === 200) {
+          // 解析响应数据
+          try {
+            const data = JSON.parse(res.data);
+            console.log('解析后的上传响应:', data);
+            resolve(data);
+          } catch (e) {
+            console.error('解析上传响应失败:', e, res.data);
+            reject(new Error('解析上传响应失败'));
           }
-        },
-        fail(err) {
-          reject(err)
+        } else {
+          console.error('上传状态码错误:', res.statusCode);
+          reject(new Error(`上传失败: ${res.statusCode}`));
         }
-      })
-    })
-  },
+      },
+      fail(err) {
+        console.error('文件上传请求失败:', err);
+        reject(err);
+      }
+    });
+  });
+},
 
   // 防止穿透
   preventTouchMove() {

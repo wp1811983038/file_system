@@ -185,18 +185,26 @@ def create_inspection(current_user):
         if not all(key in data for key in ['company_id', 'inspection_type', 'planned_date', 'description']):
             return jsonify({'error': '缺少必要参数'}), 400
         
-        # 验证计划日期格式
+        # 处理日期和时间
+        planned_date_str = data['planned_date']
+        planned_time_str = data.get('planned_time', '00:00')  # 默认时间为00:00
+        
         try:
-            planned_date = datetime.strptime(data['planned_date'], '%Y-%m-%d').date()
+            # 如果提供了完整日期时间
+            if 'planned_datetime' in data:
+                planned_datetime = datetime.strptime(data['planned_datetime'], '%Y-%m-%d %H:%M')
+            else:
+                # 否则组合日期和时间
+                planned_datetime = datetime.strptime(f"{planned_date_str} {planned_time_str}", '%Y-%m-%d %H:%M')
         except ValueError:
-            return jsonify({'error': '日期格式无效，应为YYYY-MM-DD'}), 400
+            return jsonify({'error': '日期时间格式无效'}), 400
         
         # 创建检查任务
         inspection = Inspection(
             enforcer_id=current_user.id,
             company_id=data['company_id'],
             inspection_type=data['inspection_type'],
-            planned_date=planned_date,
+            planned_date=planned_datetime,  # 使用包含时间的日期时间对象
             description=data['description'],
             basis=data.get('basis', ''),
             status='pending',

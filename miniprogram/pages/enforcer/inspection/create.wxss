@@ -142,3 +142,26 @@
   background: #9be6bb !important;
   color: #fff !important;
 }
+
+/* 时间选择器样式 */
+.time-selector {
+  display: flex;
+  justify-content: space-between;
+}
+
+.date-picker, .time-picker {
+  background: #f8f8f8;
+  padding: 0 20rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 8rpx;
+}
+
+.date-picker {
+  flex: 3;
+  margin-right: 20rpx;
+}
+
+.time-picker {
+  flex: 2;
+}

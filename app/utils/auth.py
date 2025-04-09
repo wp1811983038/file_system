@@ -1,4 +1,5 @@
-# app/utils/auth.py
+# 修改 app/utils/auth.py
+
 from functools import wraps
 from flask import request, jsonify, g
 import jwt
@@ -38,6 +39,8 @@ def token_required(f):
             return jsonify({'error': '令牌已过期'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'error': '无效的令牌'}), 401
+        except Exception as e:
+            return jsonify({'error': f'认证过程出错: {str(e)}'}), 401
             
     return decorated
 
@@ -54,7 +57,7 @@ def admin_required(f):
 def enforcer_required(f):
     @wraps(f)
     def decorated(current_user, *args, **kwargs):
-        # 直接使用传入的current_user参数，不从g对象中获取
+        # 检查用户角色是否为执法人员
         if current_user.role != 'enforcer':
             return jsonify({'error': '需要执法人员权限'}), 403
             

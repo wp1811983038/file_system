@@ -34,12 +34,26 @@ Page({
   },
 
   // 加载检查任务列表
-  async loadInspections() {
-    try {
-      wx.showLoading({ title: '加载中...' })
-      
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections`,
+  // 加载检查任务列表
+// 加载检查任务列表
+async loadInspections() {
+  try {
+    wx.showLoading({ title: '加载中...' });
+    
+    // 打印请求信息便于调试
+    const url = `${app.globalData.baseUrl}/api/v1/enforcer/inspections`;
+    console.log('请求检查任务列表URL:', url);
+    console.log('查询参数:', {
+      page: this.data.page,
+      limit: this.data.limit,
+      status: this.data.activeTab !== 'all' ? this.data.activeTab : '',
+      keyword: this.data.searchKeyword
+    });
+    
+    // 正确包装wx.request为Promise
+    const res = await new Promise((resolve, reject) => {
+      wx.request({
+        url: url,
         method: 'GET',
         data: {
           page: this.data.page,
@@ -49,35 +63,48 @@ Page({
         },
         header: {
           'Authorization': `Bearer ${wx.getStorageSync('token')}`
+        },
+        success: (result) => {
+          console.log('检查任务列表响应:', result);
+          resolve(result);
+        },
+        fail: (error) => {
+          console.error('检查任务列表请求失败:', error);
+          reject(error);
         }
-      })
+      });
+    });
+    
+    // 安全处理响应数据
+    if (res && res.statusCode === 200 && res.data) {
+      console.log('获取到检查任务数据:', res.data);
       
-      if (res.statusCode === 200) {
-        // 如果是第一页，替换数据，否则追加数据
-        const inspections = this.data.page === 1 ? 
-          res.data.inspections : 
-          [...this.data.inspections, ...res.data.inspections]
-        
-        this.setData({
-          inspections,
-          hasMoreData: inspections.length < res.data.total
-        })
-      } else {
-        wx.showToast({
-          title: '获取检查任务失败',
-          icon: 'none'
-        })
-      }
-    } catch (err) {
-      console.error('加载检查任务列表失败:', err)
+      // 如果是第一页，替换数据，否则追加数据
+      const inspections = this.data.page === 1 ? 
+        res.data.inspections || [] : 
+        [...this.data.inspections, ...(res.data.inspections || [])];
+      
+      this.setData({
+        inspections,
+        hasMoreData: inspections.length < (res.data.total || 0)
+      });
+    } else {
+      console.error('API响应错误:', res);
       wx.showToast({
-        title: '加载失败',
+        title: '获取检查任务失败',
         icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
+      });
     }
-  },
+  } catch (err) {
+    console.error('加载检查任务列表失败:', err);
+    wx.showToast({
+      title: '加载失败',
+      icon: 'none'
+    });
+  } finally {
+    wx.hideLoading();
+  }
+},
 
   // 切换标签
   switchTab(e) {
