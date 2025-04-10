@@ -226,3 +226,18 @@ map {
   line-height: 80rpx;
   border-radius: 40rpx;
 }
+
+.address-container {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.navigate-text {
+  color: #07c160;
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border: 1px solid #07c160;
+  border-radius: 20rpx;
+  margin-left: 20rpx;
+}

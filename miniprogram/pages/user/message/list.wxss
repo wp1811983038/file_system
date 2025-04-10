@@ -221,3 +221,9 @@
     background: #177ddc;
   }
 }
+
+.message-icon.inspection_notice {
+  background: rgba(82, 93, 196, 0.1);  /* 蓝紫色背景 */
+}
+
+/* 其他现有样式保持不变 */

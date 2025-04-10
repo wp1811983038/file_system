@@ -148,3 +148,127 @@
   font-size: 28rpx;
   background: #fff;
 }
+
+/* 消息通知区域样式 */
+.message-container {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+  color: #333;
+}
+
+.more-link {
+  font-size: 24rpx;
+  color: #1890ff;
+  font-weight: normal;
+}
+
+.message-list {
+  min-height: 100rpx;
+}
+
+.message-item {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: relative;
+}
+
+.message-item:last-child {
+  border-bottom: none;
+}
+
+.message-item.unread {
+  background-color: rgba(24, 144, 255, 0.05);
+}
+
+.message-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.message-icon.system {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.message-icon.file_receive {
+  background: rgba(82, 196, 26, 0.1);
+}
+
+.message-icon.file_process {
+  background: rgba(250, 173, 20, 0.1);
+}
+
+.message-icon.inspection_notice {
+  background: rgba(82, 93, 196, 0.1);
+}
+
+.message-icon image {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.message-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.message-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-preview {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 20rpx;
+  right: 10rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #f5222d;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  font-size: 28rpx;
+}

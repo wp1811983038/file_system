@@ -1,12 +1,12 @@
 <view class="container">
   <!-- 消息类型标签栏 -->
-<view class="message-tabs">
-  <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-type="all">全部</view>
-  <view class="tab {{activeTab === 'system' ? 'active' : ''}}" bindtap="switchTab" data-type="system">系统通知</view>
-  <view class="tab {{activeTab === 'file_receive' ? 'active' : ''}}" bindtap="switchTab" data-type="file_receive">文件接收</view>
-  <view class="tab {{activeTab === 'file_process' ? 'active' : ''}}" bindtap="switchTab" data-type="file_process">审批结果</view>
-  <view class="tab {{activeTab === 'inspection_notice' ? 'active' : ''}}" bindtap="switchTab" data-type="inspection_notice">执法检查</view>
-</view>
+  <view class="message-tabs">
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-type="all">全部</view>
+    <view class="tab {{activeTab === 'system' ? 'active' : ''}}" bindtap="switchTab" data-type="system">系统通知</view>
+    <view class="tab {{activeTab === 'file_receive' ? 'active' : ''}}" bindtap="switchTab" data-type="file_receive">文件接收</view>
+    <view class="tab {{activeTab === 'file_process' ? 'active' : ''}}" bindtap="switchTab" data-type="file_process">审批结果</view>
+    <view class="tab {{activeTab === 'inspection_notice' ? 'active' : ''}}" bindtap="switchTab" data-type="inspection_notice">执法检查</view>
+  </view>
 
   <!-- 消息列表 -->
   <scroll-view class="message-list" scroll-y="true" bindscrolltolower="loadMore" lower-threshold="100">
@@ -21,11 +21,11 @@
           data-id="{{item.id}}">
       <!-- 消息图标 -->
       <view class="message-icon {{item.type}}">
-  <image wx:if="{{item.type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
-  <image wx:if="{{item.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
-  <image wx:if="{{item.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
-  <image wx:if="{{item.type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
-</view>
+        <image wx:if="{{item.type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
+      </view>
       
       <!-- 消息内容 -->
       <view class="message-content">

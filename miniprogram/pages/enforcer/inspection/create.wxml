@@ -20,15 +20,23 @@
     </view>
     
     <view class="form-item">
-      <view class="form-label required">计划检查时间</view>
-      <view class="form-content">
-        <picker mode="date" value="{{formData.planned_date}}" start="{{minDate}}" bindchange="bindDateChange">
-          <view class="picker {{formData.planned_date ? '' : 'placeholder'}}">
-            {{formData.planned_date || '请选择检查日期'}}
-          </view>
-        </picker>
+  <view class="form-label required">计划检查时间</view>
+  <view class="form-content time-selector">
+    <!-- 日期选择器 -->
+    <picker mode="date" value="{{formData.planned_date}}" start="{{minDate}}" bindchange="bindDateChange">
+      <view class="picker date-picker {{formData.planned_date ? '' : 'placeholder'}}">
+        {{formData.planned_date || '选择日期'}}
       </view>
-    </view>
+    </picker>
+    
+    <!-- 时间选择器 -->
+    <picker mode="time" value="{{formData.planned_time}}" bindchange="bindTimeChange">
+      <view class="picker time-picker {{formData.planned_time ? '' : 'placeholder'}}">
+        {{formData.planned_time || '选择时间'}}
+      </view>
+    </picker>
+  </view>
+</view>
     
     <view class="form-item">
       <view class="form-label required">检查内容描述</view>

@@ -18,7 +18,9 @@
     "pages/enforcer/company/detail",
     "pages/enforcer/inspection/create",
     "pages/enforcer/inspection/execute",
-    "pages/enforcer/inspection/list"
+    "pages/enforcer/inspection/list",
+    "pages/admin/message/list",
+    "pages/admin/message/detail"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -32,6 +32,10 @@
         <text class="info-value">{{message.related_info.template_name}}</text>
       </view>
       <view class="info-item">
+        <text class="info-label">提交用户：</text>
+        <text class="info-value">{{message.related_info.username || '未知用户'}}</text>
+      </view>
+      <view class="info-item">
         <text class="info-label">审批状态：</text>
         <text class="info-value status-{{message.related_info.status}}">
           {{message.related_info.status === 'approved' ? '已通过' : 
@@ -56,7 +60,6 @@
       </view>
       <view class="action-btns">
         <button class="btn-download" bindtap="downloadTemplate" wx:if="{{message.related_info.id}}">下载模板</button>
-        <button class="btn-submit" bindtap="submitFile" wx:if="{{message.related_info.id}}">提交文件</button>
       </view>
     </view>
     
@@ -84,6 +87,9 @@
         <text class="info-value status-{{message.related_info.status}}">
           {{message.related_info.status === 'completed' ? '已完成' : '待执行'}}
         </text>
+      </view>
+      <view class="action-btns">
+        <button class="btn-view" bindtap="viewInspectionDetail" wx:if="{{message.related_info.id}}">查看详情</button>
       </view>
     </view>
   </view>

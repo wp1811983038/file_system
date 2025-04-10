@@ -16,6 +16,46 @@
     </view>
   </view>
 
+  <!-- 新增：消息通知区域 -->
+<!-- 新增：消息通知区域 -->
+<view class="message-container">
+  <view class="section-title">
+    <text>最新通知</text>
+    <view class="more-link" bindtap="viewMoreMessages">查看全部</view>
+  </view>
+  
+  <view class="message-list">
+    <block wx:if="{{!messages.length}}">
+      <view class="no-data">暂无通知</view>
+    </block>
+    <block wx:elif="{{messages.length > 0}}">
+      <!-- 只显示第一条消息 -->
+      <view class="message-item {{messages[0].status === 'unread' ? 'unread' : ''}}" 
+            bindtap="viewMessageDetail" 
+            data-id="{{messages[0].id}}">
+        <!-- 消息图标 -->
+        <view class="message-icon {{messages[0].type}}">
+          <image wx:if="{{messages[0].type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
+          <image wx:if="{{messages[0].type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
+          <image wx:if="{{messages[0].type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
+          <image wx:if="{{messages[0].type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
+        </view>
+        
+        <!-- 消息内容 -->
+        <view class="message-content">
+          <view class="message-title">{{messages[0].title}}</view>
+          <view class="message-preview">{{messages[0].content}}</view>
+          <view class="message-time">{{messages[0].created_at}}</view>
+        </view>
+        
+        <!-- 未读标记 -->
+        <view class="unread-dot" wx:if="{{messages[0].status === 'unread'}}"></view>
+      </view>
+    </block>
+  </view>
+</view>
+
+
   <!-- 活动列表 -->
 <view class="recent-activity">
   <view class="section-title">最近活动</view>

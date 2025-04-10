@@ -10,8 +10,11 @@ class Message(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     # 消息类型与微信订阅消息类型对齐
+   # 消息类型与微信订阅消息类型对齐
+    # 消息类型与微信订阅消息类型对齐
+    # 消息类型
     type = db.Column(db.String(20), default='system', 
-                    comment='消息类型: system-系统通知, file_receive-文件接收, file_process-文件处理')
+                    comment='消息类型: system-系统通知, file_receive-文件接收, file_process-文件处理, inspection_notice-执法检查')
     # 关联ID - 可能是文件ID或模板ID
     related_id = db.Column(db.Integer, nullable=True)
     related_type = db.Column(db.String(20), nullable=True, 

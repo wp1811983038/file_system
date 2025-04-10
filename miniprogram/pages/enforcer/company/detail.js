@@ -11,7 +11,11 @@ Page({
       latitude: 34.746,
       longitude: 113.625
     },
-    markers: []
+    markers: [],
+    defaultLocation: {
+      latitude: 34.746,
+      longitude: 113.625
+    }
   },
 
   onLoad(options) {
@@ -34,42 +38,45 @@ Page({
   },
 
   // 加载企业详细信息
-  async loadCompanyDetail() {
-    try {
-      wx.showLoading({ title: '加载中...' })
-      
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`,
-        method: 'GET',
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
+  loadCompanyDetail() {
+    wx.showLoading({ title: '加载中...' });
+    
+    const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`;
+    console.log('请求URL:', url);
+    console.log('公司ID:', this.data.companyId);
+    
+    wx.request({
+      url: url,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        console.log('请求成功:', res);
+        if (res.statusCode === 200) {
+          this.setData({ company: res.data });
+          if (res.data.company_address) {
+            this.geocodeAddress(res.data.company_address);
+          }
+        } else {
+          console.error('API错误:', res);
+          wx.showToast({
+            title: '获取企业信息失败',
+            icon: 'none'
+          });
         }
-      })
-      
-      if (res.statusCode === 200) {
-        this.setData({
-          company: res.data
-        })
-        
-        // 解析地址为地理坐标
-        if (res.data.company_address) {
-          this.geocodeAddress(res.data.company_address)
-        }
-      } else {
+      },
+      fail: (err) => {
+        console.error('请求失败详情:', err);
         wx.showToast({
-          title: '获取企业信息失败',
+          title: '网络请求失败',
           icon: 'none'
-        })
+        });
+      },
+      complete: () => {
+        wx.hideLoading();
       }
-    } catch (err) {
-      console.error('加载企业详情失败:', err)
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      })
-    } finally {
-      wx.hideLoading()
-    }
+    });
   },
 
   // 加载检查历史
@@ -133,7 +140,7 @@ Page({
     }
   },
 
-  // 地址解析为坐标
+  // 地址解析为坐标 - 修改版本，添加错误处理
   geocodeAddress(address) {
     app.geocoder(address).then(res => {
       const location = res.location
@@ -152,6 +159,23 @@ Page({
       })
     }).catch(err => {
       console.error('地址解析失败:', err)
+      // 地址解析失败时使用默认坐标
+      this.setData({
+        mapLocation: this.data.defaultLocation,
+        markers: [{
+          id: 1,
+          latitude: this.data.defaultLocation.latitude,
+          longitude: this.data.defaultLocation.longitude,
+          title: this.data.company.company_name
+        }]
+      })
+      
+      // 可选：提示用户地址解析失败但可以使用默认位置
+      wx.showToast({
+        title: '定位失败，将使用默认位置',
+        icon: 'none',
+        duration: 2000
+      })
     })
   },
 
@@ -165,16 +189,23 @@ Page({
     }
   },
 
-  // 地图导航
+  // 地图导航 - 修改版本，兜底使用默认坐标
   openLocation() {
-    const { latitude, longitude } = this.data.mapLocation
+    // 检查mapLocation是否有效，否则使用默认坐标
+    const location = this.data.mapLocation || this.data.defaultLocation
+    
     wx.openLocation({
-      latitude,
-      longitude,
+      latitude: location.latitude || location.lat,
+      longitude: location.longitude || location.lng,
       name: this.data.company.company_name,
       address: this.data.company.company_address,
       scale: 18
     })
+  },
+  
+  // 新增：点击地址直接导航
+  navigateToAddress() {
+    this.openLocation();
   },
 
   // 查看检查详情
