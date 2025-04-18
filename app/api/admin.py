@@ -94,6 +94,7 @@ def get_user(current_user, user_id):
             'industry': user.industry,
             'recruitment_unit': user.recruitment_unit,
             'is_admin': user.is_admin,
+            'role': user.role,  # 添加这一行
             'avatar_url': user.avatar_url,
             'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else None,
             'file_count': file_count
@@ -153,6 +154,7 @@ def get_users(current_user):
                 'industry': user.industry,
                 'recruitment_unit': user.recruitment_unit,
                 'is_admin': user.is_admin,
+                'role': user.role,  # 添加这一行
                 'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else None,
                 'file_count': file_count
             })

@@ -65,7 +65,7 @@ Page({
               }
               
               // 记录用户角色信息
-              console.log(`用户 ${user.username} (ID: ${user.id}) 的角色: ${user.role}, 是否管理员: ${user.is_admin}`);
+              // console.log(`用户 ${user.username} (ID: ${user.id}) 的角色: ${user.role}, 是否管理员: ${user.is_admin}`);
               
               // 如果服务器返回的头像URL有效，添加服务器基础URL
               if (user.avatar_url && user.avatar_url.startsWith('/static/')) {
@@ -90,7 +90,7 @@ Page({
               const priorityA = getRolePriority(a);
               const priorityB = getRolePriority(b);
               
-              console.log(`排序: ${a.username} (${a.role}, 优先级: ${priorityA}) vs ${b.username} (${b.role}, 优先级: ${priorityB})`);
+              // console.log(`排序: ${a.username} (${a.role}, 优先级: ${priorityA}) vs ${b.username} (${b.role}, 优先级: ${priorityB})`);
               
               return priorityA - priorityB;
             });
