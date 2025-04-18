@@ -1,175 +1,244 @@
 // pages/enforcer/inspection/list.js
-const app = getApp()
+const app = getApp();
 
 Page({
   data: {
-    activeTab: 'all',
-    inspections: [],
-    page: 1,
-    limit: 10,
-    hasMoreData: false,
-    searchKeyword: ''
+    activeTab: 'all',        // 当前选中的标签：all, pending, completed
+    keyword: '',             // 搜索关键词
+    page: 1,                 // 当前页码
+    perPage: 10,             // 每页数量
+    inspections: [],         // 检查任务列表
+    hasMoreData: true,       // 是否还有更多数据
+    isLoading: false         // 是否正在加载
   },
 
   onLoad(options) {
-    // 如果有状态参数，设置默认活动标签
-    if (options.status) {
-      this.setData({
-        activeTab: options.status
-      })
+    // 如果URL传入了标签类型，设置为当前激活的标签
+    if (options.type && ['all', 'pending', 'completed'].includes(options.type)) {
+      this.setData({ activeTab: options.type });
     }
     
-    this.loadInspections()
+    // 加载检查任务列表
+    this.loadInspections();
+  },
+
+  onShow() {
+    // 每次页面显示时，刷新数据
+    this.setData({
+      page: 1,
+      inspections: [],
+      hasMoreData: true
+    }, () => {
+      this.loadInspections();
+    });
   },
 
   onPullDownRefresh() {
+    // 下拉刷新
     this.setData({
       page: 1,
-      inspections: []
-    })
-    
-    this.loadInspections().then(() => {
-      wx.stopPullDownRefresh()
-    })
+      inspections: [],
+      hasMoreData: true
+    }, () => {
+      this.loadInspections().then(() => {
+        wx.stopPullDownRefresh();
+      });
+    });
   },
-
-  // 加载检查任务列表
-  // 加载检查任务列表
-// 加载检查任务列表
-async loadInspections() {
-  try {
-    wx.showLoading({ title: '加载中...' });
-    
-    // 打印请求信息便于调试
-    const url = `${app.globalData.baseUrl}/api/v1/enforcer/inspections`;
-    console.log('请求检查任务列表URL:', url);
-    console.log('查询参数:', {
-      page: this.data.page,
-      limit: this.data.limit,
-      status: this.data.activeTab !== 'all' ? this.data.activeTab : '',
-      keyword: this.data.searchKeyword
-    });
-    
-    // 正确包装wx.request为Promise
-    const res = await new Promise((resolve, reject) => {
-      wx.request({
-        url: url,
-        method: 'GET',
-        data: {
-          page: this.data.page,
-          limit: this.data.limit,
-          status: this.data.activeTab !== 'all' ? this.data.activeTab : '',
-          keyword: this.data.searchKeyword
-        },
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
-        },
-        success: (result) => {
-          console.log('检查任务列表响应:', result);
-          resolve(result);
-        },
-        fail: (error) => {
-          console.error('检查任务列表请求失败:', error);
-          reject(error);
-        }
-      });
-    });
-    
-    // 安全处理响应数据
-    if (res && res.statusCode === 200 && res.data) {
-      console.log('获取到检查任务数据:', res.data);
-      
-      // 如果是第一页，替换数据，否则追加数据
-      const inspections = this.data.page === 1 ? 
-        res.data.inspections || [] : 
-        [...this.data.inspections, ...(res.data.inspections || [])];
-      
-      this.setData({
-        inspections,
-        hasMoreData: inspections.length < (res.data.total || 0)
-      });
-    } else {
-      console.error('API响应错误:', res);
-      wx.showToast({
-        title: '获取检查任务失败',
-        icon: 'none'
-      });
-    }
-  } catch (err) {
-    console.error('加载检查任务列表失败:', err);
-    wx.showToast({
-      title: '加载失败',
-      icon: 'none'
-    });
-  } finally {
-    wx.hideLoading();
-  }
-},
 
   // 切换标签
   switchTab(e) {
-    const tab = e.currentTarget.dataset.tab
+    const type = e.currentTarget.dataset.type;
     
-    if (tab !== this.data.activeTab) {
+    if (type !== this.data.activeTab) {
       this.setData({
-        activeTab: tab,
+        activeTab: type,
         page: 1,
-        inspections: []
-      })
-      
-      this.loadInspections()
+        inspections: [],
+        hasMoreData: true
+      }, () => {
+        this.loadInspections();
+      });
     }
   },
 
-  // 搜索输入
-  onSearchInput(e) {
-    this.setData({
-      searchKeyword: e.detail.value
-    })
+  // 输入关键词
+  onKeywordInput(e) {
+    this.setData({ keyword: e.detail.value });
   },
 
-  // 执行搜索
-  searchInspections() {
+  // 清除关键词
+  clearKeyword() {
+    this.setData({ 
+      keyword: '',
+      page: 1,
+      inspections: [],
+      hasMoreData: true
+    }, () => {
+      this.loadInspections();
+    });
+  },
+
+  // 搜索检查任务
+  searchInspections(e) {
+    // 重置页码
     this.setData({
       page: 1,
-      inspections: []
-    })
-    
-    this.loadInspections()
+      inspections: [],
+      hasMoreData: true
+    }, () => {
+      this.loadInspections();
+    });
   },
 
-  // 加载更多数据
-  loadMoreData() {
-    if (this.data.hasMoreData) {
-      this.setData({
-        page: this.data.page + 1
-      })
+  // 加载检查任务列表
+  loadInspections() {
+    if (this.data.isLoading || !this.data.hasMoreData) return Promise.resolve();
+    
+    this.setData({ isLoading: true });
+    
+    return new Promise((resolve, reject) => {
+      const token = wx.getStorageSync('token');
+      if (!token) {
+        wx.redirectTo({ url: '/pages/login/login' });
+        return resolve();
+      }
       
-      this.loadInspections()
+      // 构建API请求参数
+      let params = `page=${this.data.page}&limit=${this.data.perPage}`;
+      
+      // 添加过滤条件
+      if (this.data.activeTab !== 'all') {
+        params += `&status=${this.data.activeTab}`;
+      }
+      
+      // 添加搜索关键词
+      if (this.data.keyword) {
+        params += `&keyword=${encodeURIComponent(this.data.keyword)}`;
+      }
+      
+      wx.request({
+        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections?${params}`,
+        method: 'GET',
+        header: {
+          'Authorization': `Bearer ${token}`
+        },
+        success: (res) => {
+          if (res.statusCode === 200) {
+            const newData = res.data.inspections || [];
+            
+            this.setData({
+              inspections: [...this.data.inspections, ...newData],
+              hasMoreData: newData.length >= this.data.perPage,
+              page: this.data.page + 1,
+              isLoading: false
+            });
+          } else {
+            this.setData({ isLoading: false });
+            wx.showToast({
+              title: '加载失败',
+              icon: 'none'
+            });
+          }
+          resolve();
+        },
+        fail: (err) => {
+          console.error('加载检查任务失败:', err);
+          this.setData({ isLoading: false });
+          wx.showToast({
+            title: '网络错误',
+            icon: 'none'
+          });
+          reject(err);
+        }
+      });
+    });
+  },
+
+  // 加载更多
+  loadMore() {
+    if (!this.data.isLoading && this.data.hasMoreData) {
+      this.loadInspections();
     }
   },
 
-  // 导航到检查任务详情
-  navigateToDetail(e) {
-    const id = e.currentTarget.dataset.id
+  // 查看检查详情
+  viewInspectionDetail(e) {
+    const id = e.currentTarget.dataset.id;
     wx.navigateTo({
       url: `/pages/enforcer/inspection/detail?id=${id}`
-    })
+    });
   },
 
-  // 导航到执行检查或查看详情
-  navigateToAction(e) {
-    const id = e.currentTarget.dataset.id
-    const status = e.currentTarget.dataset.status
+  // 创建新检查任务
+  createNewInspection() {
+    wx.navigateTo({
+      url: '/pages/enforcer/inspection/create'
+    });
+  },
+
+  // 显示删除确认对话框
+  showDeleteConfirm(e) {
+    const id = e.currentTarget.dataset.id;
     
-    if (status === 'completed') {
-      wx.navigateTo({
-        url: `/pages/enforcer/inspection/detail?id=${id}`
-      })
-    } else {
-      wx.navigateTo({
-        url: `/pages/enforcer/inspection/execute?id=${id}`
-      })
-    }
+    wx.showModal({
+      title: '确认删除',
+      content: '确定要删除此检查任务吗？此操作不可恢复。',
+      confirmText: '删除',
+      confirmColor: '#ff4d4f',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          this.deleteInspection(id);
+        }
+      }
+    });
+  },
+
+  // 删除检查任务
+  deleteInspection(id) {
+    const token = wx.getStorageSync('token');
+    
+    wx.showLoading({ title: '删除中...' });
+    
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/${id}`,
+      method: 'DELETE',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          wx.showToast({
+            title: '删除成功',
+            icon: 'success'
+          });
+          
+          // 刷新列表
+          this.setData({
+            page: 1,
+            inspections: [],
+            hasMoreData: true
+          }, () => {
+            this.loadInspections();
+          });
+        } else {
+          wx.showToast({
+            title: res.data.error || '删除失败',
+            icon: 'none'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('删除检查任务失败:', err);
+        wx.showToast({
+          title: '删除失败',
+          icon: 'none'
+        });
+      },
+      complete: () => {
+        wx.hideLoading();
+      }
+    });
   }
-})
+});

@@ -25,7 +25,9 @@
         
         <!-- 用户信息 -->
         <view class="user-info">
-          <view class="user-name">{{item.username}}</view>
+          <view class="user-name">{{item.username}}
+            <text class="user-role {{item.role}}">{{item.role === 'admin' ? '管理员' : (item.role === 'enforcer' ? '执法人员' : '普通用户')}}</text>
+          </view>
           <view class="user-company">{{item.company_name || '未设置公司'}}</view>
           <view class="user-phone">{{item.contact_info || '未设置联系方式'}}</view>
         </view>
@@ -124,11 +126,24 @@
           <view class="form-section">
             <view class="section-title">权限设置</view>
             
-            <view class="form-item switch-item">
-              <view class="form-label">管理员权限</view>
-              <view class="input-wrapper switch-wrapper">
-                <switch name="is_admin" checked="{{editUser.is_admin}}" color="#1890ff"/>
-                <text class="switch-hint">{{editUser.is_admin ? '具有管理权限' : '普通用户权限'}}</text>
+            <view class="form-item">
+              <view class="form-label required">用户角色</view>
+              <view class="input-wrapper">
+                <radio-group name="role" class="role-group">
+                  <label class="radio-item">
+                    <radio value="user" checked="{{editUser.role === 'user' || !editUser.role}}" />
+                    <text>普通用户</text>
+                  </label>
+                  <label class="radio-item">
+                    <radio value="enforcer" checked="{{editUser.role === 'enforcer'}}" />
+                    <text>执法人员</text>
+                  </label>
+                  <label class="radio-item">
+                    <radio value="admin" checked="{{editUser.role === 'admin'}}" />
+                    <text>系统管理员</text>
+                  </label>
+                </radio-group>
+                <view class="role-hint">选择"管理员"将同时具有管理员权限</view>
               </view>
             </view>
           </view>

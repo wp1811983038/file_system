@@ -191,8 +191,26 @@ def update_user(current_user, user_id):
                 return jsonify({'error': '请输入有效的手机号码'}), 400
             user.contact_info = data['contact_info']
             
-        if 'is_admin' in data:
+        # 更新其他字段
+        if 'company_address' in data:
+            user.company_address = data['company_address']
+            
+        if 'industry' in data:
+            user.industry = data['industry']
+            
+        if 'recruitment_unit' in data:
+            user.recruitment_unit = data['recruitment_unit']
+            
+        # 处理角色和权限
+        if 'role' in data:
+            user.role = data['role']
+            # 如果角色是admin，自动设置is_admin为True
+            user.is_admin = (data['role'] == 'admin')
+        elif 'is_admin' in data:
             user.is_admin = data['is_admin']
+            # 如果设置了is_admin为True，确保角色也是admin
+            if data['is_admin'] and user.role != 'admin':
+                user.role = 'admin'
             
         db.session.commit()
         return jsonify({'message': '用户信息更新成功'})
@@ -594,7 +612,6 @@ def validate_phone_number(phone):
 def create_user(current_user):
     """创建新用户"""
     data = request.get_json()
-    print("接收到的创建用户数据:", data)
     
     if not data.get('username') or not data.get('password'):
         return jsonify({'error': '用户名和密码不能为空'}), 400
@@ -609,19 +626,16 @@ def create_user(current_user):
         return jsonify({'error': '请输入有效的手机号码'}), 400
     
     try:
-        # 打印更多调试信息
-        print("准备创建用户:", {
-            'username': data['username'],
-            'company_name': data.get('company_name'),
-            'contact_info': data.get('contact_info'),
-            'is_admin': data.get('is_admin', False)
-        })
-        
+        # 创建用户
         user = User(
             username=data['username'],
             company_name=data.get('company_name'),
             contact_info=data.get('contact_info'),
-            is_admin=data.get('is_admin', False)
+            company_address=data.get('company_address'),
+            industry=data.get('industry'),
+            recruitment_unit=data.get('recruitment_unit'),
+            role=data.get('role', 'user'),  # 默认为普通用户
+            is_admin=(data.get('role') == 'admin')  # 根据角色自动设置is_admin
         )
         user.set_password(data['password'])
         
@@ -635,14 +649,13 @@ def create_user(current_user):
                 'username': user.username,
                 'company_name': user.company_name,
                 'contact_info': user.contact_info,
+                'role': user.role,
                 'is_admin': user.is_admin
             }
         }), 201
     except Exception as e:
         db.session.rollback()
-        print("创建用户时出错:", str(e))
-        return jsonify({'error': str(e)}), 500
-    
+        return jsonify({'error': str(e)}), 500    
 
 @bp.route('/users/<int:user_id>', methods=['DELETE'])
 @token_required

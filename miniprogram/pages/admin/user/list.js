@@ -8,7 +8,8 @@ Page({
     showEditModal: false,
     editUser: null,
     showPassword: false,
-    modalTitle: '编辑用户信息'
+    modalTitle: '编辑用户信息',
+    errors: {}
   },
 
   onLoad(options) {
@@ -58,6 +59,18 @@ Page({
                 user.avatar_url = '/images/default-avatar.png';
               }
               return user;
+            });
+            
+            // 根据角色排序：管理员 > 执法人员 > 普通用户
+            users.sort((a, b) => {
+              // 确定角色优先级
+              const getRolePriority = (user) => {
+                if (user.role === 'admin' || user.is_admin) return 0; // 管理员优先级最高
+                if (user.role === 'enforcer') return 1; // 执法人员第二
+                return 2; // 普通用户优先级最低
+              };
+              
+              return getRolePriority(a) - getRolePriority(b);
             });
             
             this.setData({
@@ -158,8 +171,10 @@ Page({
         company_address: '',
         industry: '',
         recruitment_unit: '',
+        role: 'user', // 设置默认角色为普通用户
         is_admin: false
-      }
+      },
+      errors: {}
     });
   },
 
@@ -176,11 +191,15 @@ Page({
     if (!editUserData.industry) editUserData.industry = '';
     if (!editUserData.recruitment_unit) editUserData.recruitment_unit = '';
     
+    // 确保角色字段存在
+    if (!editUserData.role) editUserData.role = editUserData.is_admin ? 'admin' : 'user';
+    
     this.setData({
       showEditModal: true,
       modalTitle: '编辑用户信息',
       showPassword: false,
-      editUser: editUserData
+      editUser: editUserData,
+      errors: {}
     });
   },
 
@@ -188,7 +207,8 @@ Page({
     this.setData({
       showEditModal: false,
       editUser: null,
-      showPassword: false
+      showPassword: false,
+      errors: {}
     });
   },
 
@@ -201,6 +221,11 @@ Page({
   submitEdit(e) {
     const formData = e.detail.value;
     const userId = formData.id;
+    
+    // 清除之前的错误
+    this.setData({
+      errors: {}
+    });
 
     // 构建请求数据
     const requestData = {
@@ -211,8 +236,11 @@ Page({
       company_address: formData.company_address,
       industry: formData.industry,
       recruitment_unit: formData.recruitment_unit,
-      is_admin: formData.is_admin === 'true' || formData.is_admin === true
+      role: formData.role // 添加角色字段
     };
+
+    // 根据角色设置is_admin
+    requestData.is_admin = formData.role === 'admin';
 
     // 如果是新增用户或密码不为空，则添加到请求数据中
     if (!userId || formData.password) {
@@ -220,19 +248,27 @@ Page({
     }
 
     // 表单验证
+    let hasError = false;
+    let errors = {};
+    
     if (!requestData.username) {
-      wx.showToast({
-        title: '用户名不能为空',
-        icon: 'none'
-      });
-      return;
+      errors.username = '用户名不能为空';
+      hasError = true;
     }
 
     if (!userId && !formData.password) {
-      wx.showToast({
-        title: '密码不能为空',
-        icon: 'none'
-      });
+      errors.password = '密码不能为空';
+      hasError = true;
+    }
+    
+    // 手机号验证(简单验证)
+    if (requestData.contact_info && !/^1[3-9]\d{9}$/.test(requestData.contact_info)) {
+      errors.contact_info = '请输入有效的手机号码';
+      hasError = true;
+    }
+    
+    if (hasError) {
+      this.setData({ errors });
       return;
     }
 

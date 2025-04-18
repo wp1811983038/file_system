@@ -1,4 +1,4 @@
-// pages/enforcer/inspection/execute.js
+// pages/enforcer/inspection/execute.js   检查任务
 const app = getApp()
 
 Page({

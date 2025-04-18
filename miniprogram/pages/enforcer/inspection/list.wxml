@@ -1,53 +1,72 @@
 <!-- pages/enforcer/inspection/list.wxml -->
 <view class="container">
+  <!-- 顶部过滤栏 -->
   <view class="filter-bar">
-    <view class="filter-tabs">
-      <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部</view>
-      <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" bindtap="switchTab" data-tab="pending">待执行</view>
-      <view class="tab {{activeTab === 'completed' ? 'active' : ''}}" bindtap="switchTab" data-tab="completed">已完成</view>
-    </view>
-    <view class="search-box">
-      <icon type="search" size="14" color="#999"></icon>
-      <input placeholder="搜索企业名称" confirm-type="search" bindinput="onSearchInput" bindconfirm="searchInspections" value="{{searchKeyword}}"></input>
-    </view>
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-type="all">全部</view>
+    <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" bindtap="switchTab" data-type="pending">待执行</view>
+    <view class="tab {{activeTab === 'completed' ? 'active' : ''}}" bindtap="switchTab" data-type="completed">已完成</view>
   </view>
-
-  <view class="inspection-list" wx:if="{{inspections.length > 0}}">
-    <view class="inspection-item" wx:for="{{inspections}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
-      <view class="company-info">
+  
+  <!-- 搜索框 -->
+  <view class="search-box">
+    <icon type="search" size="16" color="#999"></icon>
+    <input type="text" placeholder="搜索企业名称" confirm-type="search" bindconfirm="searchInspections" value="{{keyword}}" bindinput="onKeywordInput" />
+    <icon type="clear" size="16" color="#999" wx:if="{{keyword}}" bindtap="clearKeyword"></icon>
+  </view>
+  
+  <!-- 检查任务列表 -->
+  <scroll-view class="inspection-list" scroll-y="true" bindscrolltolower="loadMore" lower-threshold="100">
+    <view class="no-data" wx:if="{{inspections.length === 0 && !isLoading}}">
+      暂无检查任务
+    </view>
+    
+    <view class="inspection-item" wx:for="{{inspections}}" wx:key="id">
+      <!-- 企业名称和状态标签 -->
+      <view class="item-header">
         <view class="company-name">{{item.company_name}}</view>
-        <view class="status-badge {{item.status === 'completed' ? 'completed' : 'pending'}}">
+        <view class="status-tag {{item.status === 'completed' ? 'completed' : 'pending'}}">
           {{item.status === 'completed' ? '已完成' : '待执行'}}
         </view>
       </view>
       
-      <view class="inspection-meta">
-        <text class="inspection-type">{{item.inspection_type}}</text>
-        <text class="inspection-time">计划时间: {{item.planned_date}}</text>
+      <!-- 检查类型和标签 -->
+      <view class="inspection-type-row">
+        <view class="inspection-type-tag {{item.inspection_type === '日常检查' ? 'routine' : 'safety'}}">
+          {{item.inspection_type}}
+        </view>
+        <view class="planned-date">计划时间: {{item.planned_date}}</view>
       </view>
       
-      <view class="inspection-desc">{{item.description}}</view>
+      <!-- 检查内容 -->
+      <view class="inspection-description">{{item.description}}</view>
       
+      <!-- 问题和照片统计 -->
       <view class="inspection-stats" wx:if="{{item.status === 'completed'}}">
-        <text class="stat-item">问题: {{item.problem_count || 0}}项</text>
-        <text class="stat-item">照片: {{item.photo_count || 0}}张</text>
-        <text class="stat-item">完成时间: {{item.completed_time || '未知'}}</text>
-      </view>
-      
-      <view class="item-footer">
-        <view class="action-btn {{item.status === 'completed' ? 'view' : 'execute'}}" catchtap="navigateToAction" data-id="{{item.id}}" data-status="{{item.status}}">
-          {{item.status === 'completed' ? '查看详情' : '执行检查'}}
+        <view class="stat-item">
+          <view class="stat-label">问题: {{item.problem_count}}项</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">照片: {{item.photo_count}}张</view>
+        </view>
+        <view class="stat-item" wx:if="{{item.completed_time}}">
+          <view class="stat-label">完成时间: {{item.completed_time}}</view>
         </view>
       </view>
+      
+      <!-- 操作按钮 -->
+      <view class="action-btns">
+        <button class="btn-detail" bindtap="viewInspectionDetail" data-id="{{item.id}}">查看详情</button>
+        <button class="btn-delete" wx:if="{{item.status === 'pending'}}" bindtap="showDeleteConfirm" data-id="{{item.id}}">删除</button>
+      </view>
     </view>
-  </view>
+    
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{hasMoreData && inspections.length > 0}}">
+      <view wx:if="{{isLoading}}">加载中...</view>
+      <view wx:else>上拉加载更多</view>
+    </view>
+  </scroll-view>
   
-  <view class="empty-tip" wx:else>
-    <image class="empty-icon" src="/images/empty_list.png"></image>
-    <text>暂无检查任务</text>
-  </view>
+  <!-- 底部新建按钮 -->
   
-  <view class="load-more" wx:if="{{hasMoreData && inspections.length > 0}}" bindtap="loadMoreData">
-    加载更多
-  </view>
 </view>

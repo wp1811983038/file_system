@@ -151,3 +151,93 @@
   background: #faad14;
   color: #fff;
 }
+
+/* 问题列表样式 */
+.problem-section {
+  margin-top: 30rpx;
+}
+
+.problem-list {
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+.problem-item {
+  padding: 20rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.problem-item:last-child {
+  border-bottom: none;
+}
+
+.problem-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.problem-type {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.problem-severity {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.severity-high {
+  background: #ffccc7;
+  color: #f5222d;
+}
+
+.severity-medium {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+.severity-low {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.problem-description {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 照片列表样式 */
+.photo-section {
+  margin-top: 30rpx;
+}
+
+.photo-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10rpx;
+}
+
+.photo-item {
+  width: calc(50% - 20rpx);
+  margin: 10rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+}
+
+.photo-image {
+  width: 100%;
+  height: 300rpx;
+}
+
+.photo-description {
+  padding: 10rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: rgba(255,255,255,0.9);
+}

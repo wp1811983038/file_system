@@ -20,7 +20,8 @@
     "pages/enforcer/inspection/execute",
     "pages/enforcer/inspection/list",
     "pages/admin/message/list",
-    "pages/admin/message/detail"
+    "pages/admin/message/detail",
+    "pages/enforcer/inspection/detail"
   ],
   "window": {
     "backgroundTextStyle": "light",

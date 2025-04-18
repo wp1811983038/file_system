@@ -1,0 +1,72 @@
+<!-- pages/enforcer/inspection/detail.wxml -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{isLoading}}">
+    <view class="loading">正在加载...</view>
+  </view>
+  
+  <!-- 错误提示 -->
+  <view class="error-container" wx:elif="{{error}}">
+    <view class="error-message">{{error}}</view>
+    <button class="btn-retry" bindtap="goBack">返回</button>
+  </view>
+  
+  <!-- 检查详情内容 -->
+  <block wx:elif="{{inspection}}">
+    <!-- 基本信息卡片 -->
+    <view class="info-card">
+      <view class="company-name">{{inspection.company.company_name}}</view>
+      <view class="inspection-type">
+        <text class="label">检查类型：</text>
+        <text class="value">{{inspection.inspection.inspection_type}}</text>
+      </view>
+      <view class="inspection-date">
+        <text class="label">计划检查时间：</text>
+        <text class="value">{{inspection.inspection.planned_date}}</text>
+      </view>
+      <view class="inspection-status">
+        <text class="label">状态：</text>
+        <text class="value status-{{inspection.inspection.status}}">{{inspection.inspection.status === 'completed' ? '已完成' : '待执行'}}</text>
+      </view>
+      <view class="inspection-description">
+        <text class="label">检查内容：</text>
+        <text class="value">{{inspection.inspection.description}}</text>
+      </view>
+      <view class="inspection-basis" wx:if="{{inspection.inspection.basis}}">
+        <text class="label">检查依据：</text>
+        <text class="value">{{inspection.inspection.basis}}</text>
+      </view>
+      <view class="inspection-completed" wx:if="{{inspection.inspection.completed_at}}">
+        <text class="label">完成时间：</text>
+        <text class="value">{{inspection.inspection.completed_at}}</text>
+      </view>
+    </view>
+    
+    <!-- 问题列表 -->
+    <view class="section-title">检查问题（{{inspection.problems.length || 0}}）</view>
+    <view class="problems-container" wx:if="{{inspection.problems && inspection.problems.length > 0}}">
+      <view class="problem-item" wx:for="{{inspection.problems}}" wx:key="id">
+        <view class="problem-header">
+          <view class="problem-type">{{item.type}}</view>
+          <view class="severity severity-{{item.severity}}">
+            {{item.severity === 'high' ? '严重' : (item.severity === 'medium' ? '中等' : '轻微')}}
+          </view>
+        </view>
+        <view class="problem-description">{{item.description}}</view>
+      </view>
+    </view>
+    <view class="no-data" wx:else>暂无问题记录</view>
+    
+    <!-- 照片列表 -->
+    <view class="section-title">检查照片（{{inspection.photos.length || 0}}）</view>
+    <view class="photos-container" wx:if="{{inspection.photos && inspection.photos.length > 0}}">
+      <view class="photo-grid">
+        <view class="photo-item" wx:for="{{inspection.photos}}" wx:key="id" bindtap="previewImage" data-url="{{item.photo_url}}">
+          <image class="photo" src="{{item.photo_url}}" mode="aspectFill"></image>
+          <view class="photo-description" wx:if="{{item.description}}">{{item.description}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="no-data" wx:else>暂无照片记录</view>
+  </block>
+</view>

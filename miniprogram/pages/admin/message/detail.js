@@ -176,5 +176,15 @@ Page({
     wx.navigateTo({
       url: `/pages/admin/inspection/detail?id=${inspectionId}`
     });
+  },
+  // 预览图片
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    const urls = this.data.message.related_info.photos.map(photo => photo.photo_url);
+    
+    wx.previewImage({
+      current: url,
+      urls: urls
+    });
   }
 });

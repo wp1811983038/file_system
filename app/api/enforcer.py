@@ -1,5 +1,6 @@
 # app/api/enforcer.py
 from flask import jsonify, request, current_app, url_for
+from app.models.message import Message
 from app.models.user import User
 from app.models.user_file import UserFile
 from app.models.file_template import FileTemplate
@@ -199,6 +200,10 @@ def create_inspection(current_user):
         except ValueError:
             return jsonify({'error': '日期时间格式无效'}), 400
         
+        # 获取企业信息
+        company = User.query.get(data['company_id'])
+        company_name = company.company_name if company else "未知企业"
+        
         # 创建检查任务
         inspection = Inspection(
             enforcer_id=current_user.id,
@@ -219,24 +224,38 @@ def create_inspection(current_user):
             # 获取所有管理员
             admins = User.query.filter_by(is_admin=True).all()
             
+            # 创建通知内容
+            notification_content = f"执法人员 {current_user.username} 创建了针对企业 {company_name} 的检查任务，"
+            notification_content += f"计划检查时间为 {planned_date_str}。"
+            notification_content += f"\n检查类型：{data['inspection_type']}"
+            notification_content += f"\n检查内容：{data['description']}"
+            if data.get('basis'):
+                notification_content += f"\n检查依据：{data.get('basis')}"
+            
             # 给管理员发送通知
             for admin in admins:
-                MessageService.create_system_message(
+                MessageService.create_inspection_message(
                     user_id=admin.id,
                     title="新检查任务通知",
-                    content=f"执法人员 {current_user.username} 创建了针对企业 {inspection.company.company_name} 的检查任务，计划检查时间为 {data['planned_date']}。"
+                    content=notification_content,
+                    inspection_id=inspection.id
                 )
             
             # 如果需要通知企业
             if data.get('notify_company', False):
                 # 发送通知给企业
-                MessageService.create_system_message(
+                company_notification = f"执法部门将于 {planned_date_str} 对您的企业进行{data['inspection_type']}，请做好准备。"
+                company_notification += f"\n检查内容：{data['description']}"
+                
+                MessageService.create_inspection_message(
                     user_id=data['company_id'],
                     title="检查通知",
-                    content=f"执法部门将于 {data['planned_date']} 对您的企业进行{data['inspection_type']}，请做好准备。检查内容：{data['description']}"
+                    content=company_notification,
+                    inspection_id=inspection.id
                 )
         except Exception as e:
             current_app.logger.error(f"发送检查通知失败: {str(e)}")
+            current_app.logger.error(traceback.format_exc())
             # 通知发送失败不影响检查任务创建
         
         return jsonify({
@@ -512,17 +531,19 @@ def complete_inspection(current_user, inspection_id):
             
             # 给管理员发送通知
             for admin in admins:
-                MessageService.create_system_message(
-                    user_id=admin.id,
-                    title="检查结果通知",
-                    content=notification_content
-                )
+                MessageService.create_inspection_message(
+                user_id=admin.id,
+                title="检查结果通知",
+                content=notification_content,
+                inspection_id=inspection_id  # 传入检查ID
+            )
             
             # 给企业发送通知
-            MessageService.create_system_message(
+            MessageService.create_inspection_message(
                 user_id=inspection.company_id,
                 title="检查结果通知",
-                content=f"执法人员已完成对贵企业的检查，共记录 {problem_count} 项问题，请注意整改。"
+                content=f"执法人员已完成对贵企业的检查，共记录 {problem_count} 项问题，请注意整改。",
+                inspection_id=inspection_id
             )
         except Exception as e:
             current_app.logger.error(f"发送检查结果通知失败: {str(e)}")
@@ -533,6 +554,39 @@ def complete_inspection(current_user, inspection_id):
         })
     except Exception as e:
         current_app.logger.error(f"提交检查结果失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@bp.route('/inspections/<int:inspection_id>', methods=['DELETE'])
+@token_required
+@enforcer_required
+def delete_inspection(current_user, inspection_id):
+    """删除待执行的检查任务"""
+    try:
+        # 查询检查任务
+        inspection = Inspection.query.filter_by(
+            id=inspection_id, 
+            enforcer_id=current_user.id
+        ).first_or_404()
+        
+        # 检查状态 - 只允许删除待执行的检查
+        if inspection.status != 'pending':
+            return jsonify({'error': '只能删除待执行的检查任务'}), 400
+            
+        # 删除关联的照片和问题记录
+        InspectionPhoto.query.filter_by(inspection_id=inspection_id).delete()
+        InspectionProblem.query.filter_by(inspection_id=inspection_id).delete()
+        
+        # 删除检查任务
+        db.session.delete(inspection)
+        db.session.commit()
+        
+        return jsonify({'message': '检查任务已删除'})
+    except Exception as e:
+        current_app.logger.error(f"删除检查任务失败: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

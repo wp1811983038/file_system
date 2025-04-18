@@ -126,6 +126,27 @@ page {
   color: #1890ff;
 }
 
+/* 用户角色标签样式 */
+.user-role {
+  font-size: 22rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 10rpx;
+  margin-left: 10rpx;
+  color: #fff;
+}
+
+.user-role.admin {
+  background-color: #1890ff;
+}
+
+.user-role.enforcer {
+  background-color: #ff7a45;
+}
+
+.user-role.user {
+  background-color: #52c41a;
+}
+
 /* 操作按钮 */
 .card-actions {
   display: flex;
@@ -345,4 +366,27 @@ page {
 .switch-hint {
   font-size: 24rpx;
   color: #666;
+}
+
+/* 角色选择器样式 */
+.role-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  margin-right: 30rpx;
+}
+
+.radio-item radio {
+  margin-right: 8rpx;
+}
+
+.role-hint {
+  font-size: 24rpx;
+  color: #666;
+  margin-top: 10rpx;
 }

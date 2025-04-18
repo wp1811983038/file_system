@@ -84,6 +84,8 @@ def get_unread_count(current_user):
         return jsonify({'error': str(e)}), 500
 
 # 获取消息详情
+# 获取消息详情
+# 获取消息详情
 @bp.route('/<int:message_id>', methods=['GET'])
 @token_required
 def get_message(current_user, message_id):
@@ -121,6 +123,47 @@ def get_message(current_user, message_id):
                         'name': template.name,
                         'description': template.description,
                         'created_at': template.created_at.strftime('%Y-%m-%d %H:%M:%S') if template.created_at else None
+                    }
+            elif message.related_type == 'inspection':
+                # 添加执法检查相关信息
+                from app.models.inspection import Inspection
+                from app.models.inspection_problem import InspectionProblem
+                from app.models.inspection_photo import InspectionPhoto
+                
+                inspection = Inspection.query.get(message.related_id)
+                if inspection:
+                    # 获取问题列表
+                    problems = []
+                    for problem in inspection.problems:
+                        problems.append({
+                            'id': problem.id,
+                            'type': problem.type,
+                            'severity': problem.severity,
+                            'description': problem.description
+                        })
+                    
+                    # 获取照片列表
+                    photos = []
+                    for photo in inspection.photos:
+                        photos.append({
+                            'id': photo.id,
+                            'photo_url': photo.photo_url,
+                            'description': photo.description
+                        })
+                    
+                    message_data['related_info'] = {
+                        'id': inspection.id,
+                        'inspection_type': inspection.inspection_type,
+                        'company_id': inspection.company_id,
+                        'company_name': inspection.company.company_name if inspection.company else "未知企业",
+                        'planned_date': inspection.planned_date.strftime('%Y-%m-%d') if inspection.planned_date else None,
+                        'description': inspection.description,
+                        'basis': inspection.basis,
+                        'status': inspection.status,
+                        'created_at': inspection.created_at.strftime('%Y-%m-%d %H:%M:%S') if inspection.created_at else None,
+                        'completed_at': inspection.completed_at.strftime('%Y-%m-%d %H:%M:%S') if inspection.completed_at else None,
+                        'problems': problems,
+                        'photos': photos
                     }
         
         return jsonify(message_data)
