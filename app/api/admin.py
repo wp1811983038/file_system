@@ -182,35 +182,41 @@ def update_user(current_user, user_id):
                 return jsonify({'error': '用户名已存在'}), 400
             user.username = data['username']
             
-        if 'company_name' in data:
+        if 'company_name' in data and data['company_name'] != user.company_name:
             user.company_name = data['company_name']
         
-        if 'contact_info' in data:
+        # 只在联系方式变更且不为空时更新
+        if 'contact_info' in data and data['contact_info'] and data['contact_info'] != user.contact_info:
             # 添加手机号验证
-            if data['contact_info'] and not validate_phone_number(data['contact_info']):
+            if not validate_phone_number(data['contact_info']):
                 return jsonify({'error': '请输入有效的手机号码'}), 400
+                
+            # 检查新联系方式是否已被其他用户使用
+            existing_user = User.query.filter(
+                User.contact_info == data['contact_info'],
+                User.id != user_id
+            ).first()
+            
+            if existing_user:
+                return jsonify({'error': '此联系方式已被其他用户使用'}), 400
+                
             user.contact_info = data['contact_info']
             
         # 更新其他字段
-        if 'company_address' in data:
+        if 'company_address' in data and data['company_address'] != user.company_address:
             user.company_address = data['company_address']
             
-        if 'industry' in data:
+        if 'industry' in data and data['industry'] != user.industry:
             user.industry = data['industry']
             
-        if 'recruitment_unit' in data:
+        if 'recruitment_unit' in data and data['recruitment_unit'] != user.recruitment_unit:
             user.recruitment_unit = data['recruitment_unit']
             
         # 处理角色和权限
-        if 'role' in data:
+        if 'role' in data and data['role'] != user.role:
             user.role = data['role']
             # 如果角色是admin，自动设置is_admin为True
             user.is_admin = (data['role'] == 'admin')
-        elif 'is_admin' in data:
-            user.is_admin = data['is_admin']
-            # 如果设置了is_admin为True，确保角色也是admin
-            if data['is_admin'] and user.role != 'admin':
-                user.role = 'admin'
             
         db.session.commit()
         return jsonify({'message': '用户信息更新成功'})

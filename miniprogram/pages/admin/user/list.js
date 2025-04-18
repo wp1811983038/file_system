@@ -22,6 +22,8 @@ Page({
         selected: 2  // 用户管理
       })
     }
+    // 每次进入页面时刷新用户列表
+    this.loadUsers();
   },
 
   onPullDownRefresh() {
@@ -38,19 +40,33 @@ Page({
   loadUsers() {
     return new Promise((resolve, reject) => {
       wx.showLoading({ title: '加载中...' });
+      // 添加随机参数避免缓存
+      const timestamp = new Date().getTime();
       wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/admin/users`,
+        url: `${app.globalData.baseUrl}/api/v1/admin/users?t=${timestamp}`,
         method: 'GET',
         header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
         success: (res) => {
           wx.hideLoading();
           if (res.statusCode === 200) {
-            console.log('用户数据:', res.data.users); // 调试用
+            console.log('获取到的原始用户数据:', res.data.users);
             
-            // 处理每个用户的头像URL
+            // 处理每个用户的头像URL和角色标记
             const users = res.data.users.map(user => {
+              // 确保角色字段有值，如果没有则基于is_admin设置一个默认值
+              if (!user.role) {
+                user.role = user.is_admin ? 'admin' : 'user';
+                console.log(`用户 ${user.username} 角色为undefined，设置默认值: ${user.role}`);
+              }
+              
+              // 记录用户角色信息
+              console.log(`用户 ${user.username} (ID: ${user.id}) 的角色: ${user.role}, 是否管理员: ${user.is_admin}`);
+              
               // 如果服务器返回的头像URL有效，添加服务器基础URL
               if (user.avatar_url && user.avatar_url.startsWith('/static/')) {
                 user.avatar_url = app.globalData.baseUrl + user.avatar_url;
@@ -70,11 +86,28 @@ Page({
                 return 2; // 普通用户优先级最低
               };
               
-              return getRolePriority(a) - getRolePriority(b);
+              // 获取优先级
+              const priorityA = getRolePriority(a);
+              const priorityB = getRolePriority(b);
+              
+              console.log(`排序: ${a.username} (${a.role}, 优先级: ${priorityA}) vs ${b.username} (${b.role}, 优先级: ${priorityB})`);
+              
+              return priorityA - priorityB;
             });
             
+            console.log('排序后的用户列表顺序:');
+            users.forEach((user, index) => {
+              // console.log(`${index+1}. ${user.username} - 角色: ${user.role}`);
+            });
+            
+            // 使用setData更新列表前清空现有列表，避免状态混淆
             this.setData({
-              users: users
+              users: []
+            }, () => {
+              // 在回调中设置新的列表，确保UI完全刷新
+              this.setData({
+                users: users
+              });
             });
           } else {
             wx.showToast({
@@ -117,30 +150,33 @@ Page({
     const searchType = searchTypes[this.data.searchTypeIndex];
     const searchValue = this.data.searchValue.toLowerCase();
 
-    const filteredUsers = this.data.users.filter(user => {
-      let searchText = '';
-      switch (searchType) {
-        case 'username':
-          searchText = user.username ? user.username.toLowerCase() : '';
-          break;
-        case 'company_name':
-          searchText = (user.company_name || '').toLowerCase();
-          break;
-        case 'contact_info':
-          searchText = (user.contact_info || '').toLowerCase();
-          break;
-        case 'industry':
-          searchText = (user.industry || '').toLowerCase();
-          break;
-        case 'recruitment_unit':
-          searchText = (user.recruitment_unit || '').toLowerCase();
-          break;
-      }
-      return searchText.includes(searchValue);
-    });
+    // 先确保有最新的用户数据
+    this.loadUsers().then(() => {
+      const filteredUsers = this.data.users.filter(user => {
+        let searchText = '';
+        switch (searchType) {
+          case 'username':
+            searchText = user.username ? user.username.toLowerCase() : '';
+            break;
+          case 'company_name':
+            searchText = (user.company_name || '').toLowerCase();
+            break;
+          case 'contact_info':
+            searchText = (user.contact_info || '').toLowerCase();
+            break;
+          case 'industry':
+            searchText = (user.industry || '').toLowerCase();
+            break;
+          case 'recruitment_unit':
+            searchText = (user.recruitment_unit || '').toLowerCase();
+            break;
+        }
+        return searchText.includes(searchValue);
+      });
 
-    this.setData({
-      users: filteredUsers
+      this.setData({
+        users: filteredUsers
+      });
     });
   },
 
@@ -183,16 +219,22 @@ Page({
     // 打印用户数据以确保所有字段都存在
     console.log('编辑用户:', user);
     
-    // 使用Object.assign创建一个新对象，避免直接修改原对象
-    const editUserData = Object.assign({}, user);
+    // 使用深拷贝创建一个新对象，避免直接修改原对象
+    const editUserData = JSON.parse(JSON.stringify(user));
     
     // 检查是否有企业信息字段，如果没有则设置为空字符串避免undefined
     if (!editUserData.company_address) editUserData.company_address = '';
     if (!editUserData.industry) editUserData.industry = '';
     if (!editUserData.recruitment_unit) editUserData.recruitment_unit = '';
     
-    // 确保角色字段存在
-    if (!editUserData.role) editUserData.role = editUserData.is_admin ? 'admin' : 'user';
+    // 确保角色字段存在并正确设置
+    if (!editUserData.role) {
+      editUserData.role = editUserData.is_admin ? 'admin' : 'user';
+      console.log(`用户${editUserData.username}角色为undefined，设置默认值: ${editUserData.role}`);
+    }
+    
+    // 记录当前角色用于调试
+    console.log(`开始编辑用户 ${editUserData.username}，角色为: ${editUserData.role}`);
     
     this.setData({
       showEditModal: true,
@@ -227,17 +269,36 @@ Page({
       errors: {}
     });
 
-    // 构建请求数据
+    // 构建基本请求数据 - 始终包含role字段和username
     const requestData = {
-      username: formData.username,
-      company_name: formData.company_name,
-      contact_info: formData.contact_info,
-      // 新增字段
-      company_address: formData.company_address,
-      industry: formData.industry,
-      recruitment_unit: formData.recruitment_unit,
-      role: formData.role // 添加角色字段
+      role: formData.role,
+      username: formData.username
     };
+    
+    // 添加其他字段
+    if (formData.company_name) {
+      requestData.company_name = formData.company_name;
+    }
+    
+    if (formData.contact_info) {
+      requestData.contact_info = formData.contact_info;
+    }
+    
+    if (formData.company_address) {
+      requestData.company_address = formData.company_address;
+    }
+    
+    if (formData.industry) {
+      requestData.industry = formData.industry;
+    }
+    
+    if (formData.recruitment_unit) {
+      requestData.recruitment_unit = formData.recruitment_unit;
+    }
+    
+    // 添加调试信息
+    console.log('提交的角色值:', formData.role);
+    console.log('提交的请求数据:', requestData);
 
     // 根据角色设置is_admin
     requestData.is_admin = formData.role === 'admin';
@@ -251,7 +312,7 @@ Page({
     let hasError = false;
     let errors = {};
     
-    if (!requestData.username) {
+    if (!formData.username) {
       errors.username = '用户名不能为空';
       hasError = true;
     }
@@ -261,8 +322,8 @@ Page({
       hasError = true;
     }
     
-    // 手机号验证(简单验证)
-    if (requestData.contact_info && !/^1[3-9]\d{9}$/.test(requestData.contact_info)) {
+    // 手机号验证
+    if (formData.contact_info && !/^1[3-9]\d{9}$/.test(formData.contact_info)) {
       errors.contact_info = '请输入有效的手机号码';
       hasError = true;
     }
@@ -290,13 +351,20 @@ Page({
       data: requestData,
       success: (res) => {
         wx.hideLoading();
+        console.log('API响应数据:', res.data);
         if (res.statusCode === 200 || res.statusCode === 201) {
           wx.showToast({
             title: userId ? '更新成功' : '添加成功',
             icon: 'success'
           });
           this.closeEditModal();
-          this.loadUsers();
+          
+          // 延迟执行加载用户列表，确保服务器有足够时间处理
+          setTimeout(() => {
+            console.log('开始重新加载用户列表...');
+            // 强制刷新用户列表
+            this.forceRefresh();
+          }, 1000);
         } else {
           let errorMsg = res.data && res.data.error ? res.data.error : '操作失败';
           wx.showToast({
@@ -337,7 +405,10 @@ Page({
                   title: '删除成功',
                   icon: 'success'
                 });
-                this.loadUsers();
+                // 删除成功后重新加载列表
+                setTimeout(() => {
+                  this.forceRefresh();
+                }, 500);
               } else {
                 wx.showToast({
                   title: res.data && res.data.error ? res.data.error : '删除失败',
@@ -356,6 +427,20 @@ Page({
           });
         }
       }
+    });
+  },
+  
+  // 添加强制刷新方法
+  forceRefresh() {
+    console.log('强制刷新用户列表...');
+    // 清空现有列表
+    this.setData({
+      users: []
+    }, () => {
+      // 短暂延迟后重新加载
+      setTimeout(() => {
+        this.loadUsers();
+      }, 100);
     });
   }
 });
