@@ -4,6 +4,7 @@ import os
 from flask import Blueprint
 from app.utils.auth import token_required, admin_required, enforcer_required
 
+
 # 创建蓝图
 bp_auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 bp_admin = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
@@ -12,10 +13,11 @@ bp_files = Blueprint('files', __name__, url_prefix='/api/v1/files')
 bp_message = Blueprint('message', __name__, url_prefix='/api/v1/messages')
 bp_stats = Blueprint('stats', __name__, url_prefix='/api/v1/stats')
 bp_enforcer = Blueprint('enforcer', __name__, url_prefix='/api/v1/enforcer')  # 新增执法端蓝图
+bp_feedback = Blueprint('feedback',  __name__, url_prefix='/api/v1/feedback')  # 新增反馈蓝图
 
 def init_app(app):
     # 导入路由模块
-    from . import auth, admin, user, files, message, stats, enforcer 
+    from . import auth, admin, user, files, message, stats, enforcer, feedback   
     
     # 注册蓝图
     app.register_blueprint(bp_auth)
@@ -25,6 +27,8 @@ def init_app(app):
     app.register_blueprint(bp_message)
     app.register_blueprint(bp_stats)
     app.register_blueprint(bp_enforcer)  # 注册执法端蓝图
+    app.register_blueprint(bp_feedback)  # 注册反馈蓝图
+    
     
     # 添加调试信息
     # print("已注册的蓝图:")

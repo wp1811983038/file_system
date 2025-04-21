@@ -24,7 +24,8 @@
     "pages/enforcer/inspection/detail",
     "pages/admin/settings/system-name",
     "pages/admin/settings/announcement",
-    "pages/admin/settings/notification"
+    "pages/admin/settings/notification",
+    "pages/user/feedback/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -57,6 +58,10 @@
       {
         "pagePath": "pages/user/files/list",
         "text": "文件"
+      },
+      {
+        "pagePath": "pages/user/feedback/index",
+        "text": "问题反馈"
       },
       {
         "pagePath": "pages/user/profile/list",

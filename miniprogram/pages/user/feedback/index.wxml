@@ -1,0 +1,71 @@
+<view class="container">
+  <view class="feedback-card">
+    <view class="card-title">问题反馈</view>
+    <form bindsubmit="handleFeedbackSubmit">
+      <view class="form-group">
+        <text class="label">问题类型</text>
+        <picker bindchange="onTypeChange" value="{{typeIndex}}" range="{{typeOptions}}">
+          <view class="picker-view {{typeIndex < 0 ? 'placeholder' : ''}}">
+            {{typeIndex < 0 ? '请选择问题类型' : typeOptions[typeIndex]}}
+            <view class="picker-arrow">▼</view>
+          </view>
+        </picker>
+        <view class="error-message" wx:if="{{errors.type}}">{{errors.type}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">问题描述</text>
+        <textarea 
+          class="textarea" 
+          name="content" 
+          value="{{content}}" 
+          placeholder="请详细描述您遇到的问题或建议..." 
+          bindinput="onContentInput"
+          maxlength="500"
+        ></textarea>
+        <view class="textarea-counter">{{contentLength}}/500</view>
+        <view class="error-message" wx:if="{{errors.content}}">{{errors.content}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">联系方式</text>
+        <input 
+          class="input" 
+          name="contact_info" 
+          value="{{contactInfo}}" 
+          placeholder="请输入您的联系方式，方便我们回复"
+          bindinput="onContactInfoInput"
+        />
+        <view class="error-message" wx:if="{{errors.contact_info}}">{{errors.contact_info}}</view>
+      </view>
+      
+      <view class="form-group">
+        <text class="label">上传截图(可选)</text>
+        <view class="upload-area">
+          <block wx:for="{{imageList}}" wx:key="index">
+            <view class="image-item">
+              <image class="preview-image" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
+              <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+            </view>
+          </block>
+          
+          <view class="upload-btn" bindtap="chooseImage" wx:if="{{imageList.length < 3}}">
+            <view class="upload-icon">+</view>
+            <view class="upload-text">添加图片</view>
+          </view>
+        </view>
+        <view class="upload-tip">最多上传3张图片，每张不超过2MB</view>
+      </view>
+      
+      <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
+        {{submitting ? '提交中...' : '提交反馈'}}
+      </button>
+    </form>
+  </view>
+  
+  <!-- 全局错误消息 -->
+  <view class="global-error" wx:if="{{globalError}}">{{globalError}}</view>
+  
+  <!-- 成功提示 -->
+  <view class="success-tip {{showSuccessTip ? 'show' : ''}}">{{successMessage}}</view>
+</view>

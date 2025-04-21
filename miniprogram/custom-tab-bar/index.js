@@ -30,7 +30,13 @@ Component({
       text: "文件",
       iconPath: "/images/file.png",
       selectedIconPath: "/images/file-active.png"
-    }, {
+    }, 
+    {
+      pagePath: "pages/user/feedback/index",
+      text: "问题反馈",
+      iconPath: "/images/feedback.png",
+      selectedIconPath: "/images/feedback-active.png"
+    },{
       pagePath: "/pages/user/profile/list",
       text: "我的",
       iconPath: "/images/user.png",
@@ -43,6 +49,7 @@ Component({
         iconPath: "/images/home.png",
         selectedIconPath: "/images/home-active.png"
       },
+      
       {
         pagePath: "/pages/user/profile/list",
         text: "我的",
