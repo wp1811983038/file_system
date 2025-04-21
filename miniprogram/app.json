@@ -21,7 +21,10 @@
     "pages/enforcer/inspection/list",
     "pages/admin/message/list",
     "pages/admin/message/detail",
-    "pages/enforcer/inspection/detail"
+    "pages/enforcer/inspection/detail",
+    "pages/admin/settings/system-name",
+    "pages/admin/settings/announcement",
+    "pages/admin/settings/notification"
   ],
   "window": {
     "backgroundTextStyle": "light",

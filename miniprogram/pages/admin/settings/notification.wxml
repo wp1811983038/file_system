@@ -1,0 +1,58 @@
+<view class="container">
+  <view class="settings-card">
+    <view class="card-header">
+      <view class="card-title">消息通知设置</view>
+      <view class="card-subtitle">管理微信订阅消息权限</view>
+    </view>
+    
+    <view class="notice-info">
+      <text>开启订阅消息后，系统可以通过微信向您推送重要通知。</text>
+    </view>
+    
+    <view class="subscription-list">
+      <view class="subscription-item {{subscriptionStatus.fileReceiveStatus === 'accept' ? 'active' : ''}}">
+        <view class="sub-icon-wrap">
+          <image class="sub-icon" src="/images/file-receive.png" mode="aspectFit"></image>
+        </view>
+        <view class="sub-info">
+          <view class="sub-title">文件接收通知</view>
+          <view class="sub-desc">当有新的文件模板发布或更新时通知您</view>
+        </view>
+        <view class="sub-status">
+          <view class="status-dot {{subscriptionStatus.fileReceiveStatus === 'accept' ? 'active' : ''}}"></view>
+          <text class="status-text">{{subscriptionStatus.fileReceiveStatus === 'accept' ? '已订阅' : '未订阅'}}</text>
+        </view>
+      </view>
+      
+      <view class="subscription-item {{subscriptionStatus.fileProcessStatus === 'accept' ? 'active' : ''}}">
+        <view class="sub-icon-wrap">
+          <image class="sub-icon" src="/images/file-process.png" mode="aspectFit"></image>
+        </view>
+        <view class="sub-info">
+          <view class="sub-title">文件处理通知</view>
+          <view class="sub-desc">当您提交的文件状态发生变化时通知您</view>
+        </view>
+        <view class="sub-status">
+          <view class="status-dot {{subscriptionStatus.fileProcessStatus === 'accept' ? 'active' : ''}}"></view>
+          <text class="status-text">{{subscriptionStatus.fileProcessStatus === 'accept' ? '已订阅' : '未订阅'}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <button class="btn btn-primary" bindtap="requestSubscription" disabled="{{submitting}}">
+      {{submitting ? '处理中...' : '更新订阅设置'}}
+    </button>
+    
+    <view class="tips-section">
+      <view class="tips-title">温馨提示</view>
+      <view class="tips-item">• 您可以随时修改订阅设置</view>
+      <view class="tips-item">• 如需恢复通知，请重新订阅</view>
+    </view>
+  </view>
+  
+  <!-- 全局错误消息 -->
+  <view class="global-error" wx:if="{{globalError}}">{{globalError}}</view>
+  
+  <!-- 成功提示 -->
+  <view class="success-tip {{showSuccessTip ? 'show' : ''}}">{{successMessage}}</view>
+</view>

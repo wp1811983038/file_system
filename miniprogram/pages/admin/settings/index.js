@@ -3,19 +3,16 @@ const app = getApp()
 
 Page({
   data: {
+    userInfo: {},
     systemSettings: {
       system_name: '',
       system_description: ''
     },
-    errors: {},
-    globalError: '',
-    submitting: false,
-    showSuccessTip: false,
-    successMessage: '',
-    systemAnnouncementLength: 0
+    avatarTimestamp: new Date().getTime() // 添加时间戳防止缓存
   },
 
   onLoad() {
+    this.loadUserInfo()
     this.loadSettings()
   },
 
@@ -29,9 +26,71 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.loadSettings().then(() => {
+    Promise.all([
+      this.loadUserInfo(),
+      this.loadSettings()
+    ]).then(() => {
       wx.stopPullDownRefresh()
     })
+  },
+
+  // 加载用户信息
+  async loadUserInfo() {
+    try {
+      const token = wx.getStorageSync('token')
+      if (!token) {
+        wx.redirectTo({ url: '/pages/login/login' })
+        return
+      }
+
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/users/profile`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        })
+      })
+
+      if (res.statusCode === 200) {
+        // 处理头像URL
+        let profileData = {...res.data}
+        
+        // 如果服务器返回的头像URL有效，添加服务器基础URL
+        if (profileData.avatar_url && profileData.avatar_url.startsWith('/static/')) {
+          profileData.avatar_url = app.globalData.baseUrl + profileData.avatar_url
+          
+          // 存储头像URL到本地缓存
+          wx.setStorageSync('userAvatarUrl', profileData.avatar_url)
+        } else {
+          // 如果没有有效头像，尝试从本地缓存读取
+          const cachedAvatarUrl = wx.getStorageSync('userAvatarUrl')
+          if (cachedAvatarUrl) {
+            profileData.avatar_url = cachedAvatarUrl
+          } else {
+            // 使用null表示没有自定义头像，WXML中将使用本地默认头像
+            profileData.avatar_url = null
+          }
+        }
+        
+        // 更新用户信息
+        this.setData({ 
+          userInfo: profileData,
+          avatarTimestamp: new Date().getTime()
+        })
+      } else {
+        throw new Error('获取用户信息失败')
+      }
+    } catch (err) {
+      console.error('加载用户信息失败:', err)
+      wx.showToast({
+        title: '获取信息失败',
+        icon: 'none'
+      })
+    }
   },
 
   // 加载系统设置
@@ -43,8 +102,6 @@ Page({
         return
       }
 
-      wx.showLoading({ title: '加载中...' })
-      
       const res = await new Promise((resolve, reject) => {
         wx.request({
           url: `${app.globalData.baseUrl}/api/v1/admin/settings`,
@@ -57,13 +114,9 @@ Page({
         })
       })
 
-      wx.hideLoading()
-      console.log('系统设置响应:', res)
-      
       if (res.statusCode === 200) {
         this.setData({ 
-          systemSettings: res.data,
-          systemAnnouncementLength: res.data.system_description ? res.data.system_description.length : 0
+          systemSettings: res.data
         })
       } else {
         throw new Error('获取系统设置失败')
@@ -76,103 +129,199 @@ Page({
       })
     }
   },
-
-  // 表单验证
-  validateSettings(data) {
-    const errors = {}
-    
-    if (!data.system_name.trim()) {
-      errors.system_name = '系统名称不能为空'
-    } else if (data.system_name.length > 50) {
-      errors.system_name = '系统名称不能超过50个字符'
-    }
-    
-    if (data.system_description && data.system_description.length > 500) {
-      errors.system_description = '系统公告不能超过500个字符'
-    }
-    
-    this.setData({ errors })
-    return Object.keys(errors).length === 0
-  },
-
-  // 监听公告内容输入，更新字数统计
-  onAnnouncementInput(e) {
-    const value = e.detail.value
-    this.setData({
-      systemAnnouncementLength: value ? value.length : 0,
-      'systemSettings.system_description': value
+  
+  // 选择并上传头像
+  chooseAvatar() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      camera: 'front',
+      success: (res) => {
+        // 获取选择的图片
+        const tempFilePath = res.tempFiles[0].tempFilePath
+        
+        // 裁剪图片（如果微信支持）
+        this.cropAvatar(tempFilePath)
+      }
     })
   },
 
-  // 处理设置提交
-  async handleSettingsSubmit(e) {
-    try {
-      // 先清除全局错误
-      this.setData({ globalError: '' })
-      
-      const data = e.detail.value
-      console.log('提交的设置数据:', data)
-      
-      // 表单验证
-      if (!this.validateSettings(data)) {
-        console.log('表单验证失败:', this.data.errors)
-        return
-      }
-
-      this.setData({ submitting: true })
-      wx.showLoading({ title: '保存中...' })
-      
-      const token = wx.getStorageSync('token')
-      
-      const res = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.baseUrl}/api/v1/admin/settings`,
-          method: 'PUT',
-          header: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          data: {
-            system_name: data.system_name.trim(),
-            system_description: data.system_description.trim()
-          },
-          success: resolve,
-          fail: reject
-        })
+  // 裁剪图片
+  cropAvatar(filePath) {
+    // 检查是否支持图片编辑器
+    if (wx.editImage) {
+      wx.editImage({
+        src: filePath,
+        success: (res) => {
+          // 上传裁剪后的图片
+          this.uploadAvatar(res.tempFilePath)
+        },
+        fail: () => {
+          // 如果编辑失败，直接上传原图
+          this.uploadAvatar(filePath)
+        }
       })
-
-      wx.hideLoading()
-      console.log('保存设置响应:', res)
-
-      if (res.statusCode === 200) {
-        // 添加轻微振动反馈
-        wx.vibrateShort({ type: 'light' })
-        
-        // 显示成功提示
-        this.showSuccess('设置保存成功')
-        
-        // 重新加载设置
-        await this.loadSettings()
-      } else {
-        throw new Error(res.data.error || '保存设置失败')
-      }
-    } catch (err) {
-      wx.hideLoading()
-      console.error('保存设置失败:', err)
-      
-      this.setData({ 
-        globalError: err.message || '网络请求失败，请重试' 
-      })
-      
-      wx.showToast({
-        title: '保存失败',
-        icon: 'none'
-      })
-    } finally {
-      this.setData({ submitting: false })
+    } else {
+      // 不支持编辑器，直接上传
+      this.uploadAvatar(filePath)
     }
   },
 
+  // 上传头像到服务器
+  uploadAvatar(filePath) {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      wx.showToast({
+        title: '登录已过期',
+        icon: 'none'
+      })
+      return
+    }
+
+    // 显示加载中
+    wx.showLoading({
+      title: '上传中...',
+    })
+    
+    // 上传文件
+    wx.uploadFile({
+      url: `${app.globalData.baseUrl}/api/v1/users/avatar`,
+      filePath: filePath,
+      name: 'avatar',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      success: (res) => {
+        let response
+        try {
+          response = JSON.parse(res.data)
+        } catch (e) {
+          console.error('解析响应失败:', e)
+          response = res.data
+        }
+
+        if (res.statusCode === 200) {
+          // 处理头像URL，确保格式正确
+          let avatarUrl = response.avatar_url
+          
+          // 移除可能的时间戳参数
+          avatarUrl = avatarUrl.split('?')[0]
+          
+          // 添加完整路径（如果需要）
+          if (!avatarUrl.startsWith('http')) {
+            if (!avatarUrl.startsWith('/')) {
+              avatarUrl = '/' + avatarUrl
+            }
+            avatarUrl = app.globalData.baseUrl + avatarUrl
+          }
+          
+          // 更新头像URL和时间戳
+          this.setData({
+            'userInfo.avatar_url': avatarUrl,
+            'avatarTimestamp': new Date().getTime() // 更新时间戳防止缓存
+          })
+          
+          // 保存头像URL到本地存储，防止刷新丢失
+          wx.setStorageSync('userAvatarUrl', avatarUrl)
+          
+          // 振动反馈
+          wx.vibrateShort({ type: 'light' })
+          
+          wx.showToast({
+            title: '头像更新成功',
+            icon: 'success'
+          })
+        } else {
+          wx.showToast({
+            title: response.error || '上传失败',
+            icon: 'none'
+          })
+        }
+      },
+      fail: (err) => {
+        console.error('上传头像失败:', err)
+        wx.showToast({
+          title: '上传失败',
+          icon: 'none'
+        })
+      },
+      complete: () => {
+        wx.hideLoading()
+      }
+    })
+  },
+
+  // 显示头像操作选项
+  showAvatarOptions() {
+    wx.showActionSheet({
+      itemList: ['更换头像', '恢复默认头像'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 更换头像
+          this.chooseAvatar()
+        } else if (res.tapIndex === 1) {
+          // 恢复默认头像
+          this.resetToDefaultAvatar()
+        }
+      }
+    })
+  },
+
+  // 恢复默认头像
+  resetToDefaultAvatar() {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      wx.showToast({
+        title: '登录已过期',
+        icon: 'none'
+      })
+      return
+    }
+    
+    wx.showLoading({ title: '处理中...' })
+    
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/v1/users/avatar`,
+      method: 'DELETE',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          // 更新头像为默认头像
+          this.setData({
+            'userInfo.avatar_url': app.globalData.baseUrl + '/static/images/default-avatar.png',
+            'avatarTimestamp': new Date().getTime()
+          })
+          
+          // 清除本地存储的头像URL
+          wx.removeStorageSync('userAvatarUrl')
+          
+          wx.showToast({
+            title: '已恢复默认头像',
+            icon: 'success'
+          })
+        } else {
+          wx.showToast({
+            title: res.data.error || '操作失败',
+            icon: 'none'
+          })
+        }
+      },
+      fail: (err) => {
+        console.error('恢复默认头像失败:', err)
+        wx.showToast({
+          title: '操作失败',
+          icon: 'none'
+        })
+      },
+      complete: () => {
+        wx.hideLoading()
+      }
+    })
+  },
+  
   // 处理退出登录
   handleLogout() {
     wx.showModal({
@@ -190,20 +339,5 @@ Page({
         }
       }
     })
-  },
-
-  // 显示成功提示
-  showSuccess(message) {
-    this.setData({
-      showSuccessTip: true,
-      successMessage: message
-    })
-    
-    // 2秒后自动隐藏
-    setTimeout(() => {
-      this.setData({
-        showSuccessTip: false
-      })
-    }, 2000)
   }
 })
