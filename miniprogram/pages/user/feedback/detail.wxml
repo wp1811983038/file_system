@@ -1,0 +1,40 @@
+<view class="container">
+  <view class="feedback-card">
+    <view class="card-header">
+      <view class="type-tag">{{feedback.type}}</view>
+      <view class="status-tag {{feedback.status}}">{{statusText[feedback.status]}}</view>
+    </view>
+    
+    <view class="content-section">
+      <view class="section-title">问题描述</view>
+      <view class="content-text">{{feedback.content}}</view>
+      
+      <view class="image-section" wx:if="{{feedback.image_urls && feedback.image_urls.length > 0}}">
+        <view class="section-title">相关图片</view>
+        <view class="image-list">
+          <image 
+            wx:for="{{feedback.image_urls}}" 
+            wx:key="index" 
+            src="{{item}}" 
+            mode="aspectFill" 
+            class="feedback-image"
+            bindtap="previewImage"
+            data-url="{{item}}"
+          ></image>
+        </view>
+      </view>
+    </view>
+    
+    <view class="reply-section" wx:if="{{feedback.admin_comment}}">
+      <view class="section-title">管理员回复</view>
+      <view class="reply-content">{{feedback.admin_comment}}</view>
+    </view>
+    
+    <view class="card-footer">
+      <text class="time">提交时间：{{feedback.created_at}}</text>
+      <text class="time" wx:if="{{feedback.updated_at !== feedback.created_at}}">
+        更新时间：{{feedback.updated_at}}
+      </text>
+    </view>
+  </view>
+</view>

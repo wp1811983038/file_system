@@ -75,19 +75,19 @@ def upload_feedback_image(current_user):
         # 生成安全的文件名
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         original_filename = secure_filename(file.filename)
-        filename = f"feedback_{current_user.id}_{timestamp}_{original_filename}"
+        filename = f"{timestamp}_{original_filename}"
         
-        # 确保目录存在
-        upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'feedback')
-        os.makedirs(upload_folder, exist_ok=True)
+        # 创建用户专属目录
+        user_upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'feedback', str(current_user.id))
+        os.makedirs(user_upload_folder, exist_ok=True)
         
-        # 保存文件
-        file_path = os.path.join(upload_folder, filename)
+        # 保存文件到用户专属目录
+        file_path = os.path.join(user_upload_folder, filename)
         file.save(file_path)
         
-        # 生成访问URL
+        # 生成访问URL - 包含用户ID目录
         file_url = url_for('static', 
-                          filename=f'uploads/feedback/{filename}', 
+                          filename=f'uploads/feedback/{current_user.id}/{filename}', 
                           _external=True)
         
         return jsonify({
@@ -233,5 +233,67 @@ def update_feedback_status(current_user, feedback_id):
         })
     except Exception as e:
         current_app.logger.error(f"更新反馈状态失败: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+
+
+# 删除反馈
+# 在app/api/feedback.py中修改delete_feedback函数
+
+@bp.route('/<int:feedback_id>', methods=['DELETE'])
+@token_required
+def delete_feedback(current_user, feedback_id):
+    """删除用户反馈"""
+    try:
+        # 查询反馈记录
+        feedback = Feedback.query.get_or_404(feedback_id)
+        
+        # 确保用户只能删除自己的反馈
+        if feedback.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({'error': '无权限删除此反馈'}), 403
+            
+        # 删除相关图片
+        # 删除图片的代码片段，用于插入到删除反馈函数中
+        if feedback.image_urls:
+            try:
+                # 获取图片URL列表
+                image_urls = []
+                if isinstance(feedback.image_urls, list):
+                    image_urls = feedback.image_urls
+                elif isinstance(feedback.image_urls, str):
+                    if ',' in feedback.image_urls:
+                        image_urls = feedback.image_urls.split(',')
+                    else:
+                        image_urls = [feedback.image_urls]
+                
+                # 删除每张图片
+                for url in image_urls:
+                    # 从URL中提取文件路径
+                    if '/static/' in url:
+                        file_path = os.path.join(
+                            current_app.root_path, 
+                            'static', 
+                            url.split('/static/')[1].split('?')[0]  # 移除URL参数
+                        )
+                        
+                        # 检查文件是否存在并删除
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                            current_app.logger.info(f"已删除图片: {file_path}")
+                        else:
+                            current_app.logger.warning(f"图片不存在: {file_path}")
+            except Exception as e:
+                # 记录错误但继续执行删除反馈记录
+                current_app.logger.error(f"删除图片失败: {str(e)}")
+            
+        # 删除反馈记录
+        db.session.delete(feedback)
+        db.session.commit()
+        
+        return jsonify({'message': '反馈已删除'})
+    except Exception as e:
+        current_app.logger.error(f"删除反馈失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

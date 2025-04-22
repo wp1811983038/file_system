@@ -32,7 +32,7 @@ Component({
       selectedIconPath: "/images/file-active.png"
     }, 
     {
-      pagePath: "pages/user/feedback/index",
+      pagePath: "/pages/user/feedback/index",
       text: "问题反馈",
       iconPath: "/images/feedback.png",
       selectedIconPath: "/images/feedback-active.png"

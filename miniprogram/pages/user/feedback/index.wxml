@@ -1,51 +1,83 @@
 <view class="container">
-  <view class="feedback-card">
-    <view class="card-title">问题反馈</view>
-    <form bindsubmit="handleFeedbackSubmit">
-      <view class="form-group">
-        <text class="label">问题类型</text>
-        <picker bindchange="onTypeChange" value="{{typeIndex}}" range="{{typeOptions}}">
-          <view class="picker-view {{typeIndex < 0 ? 'placeholder' : ''}}">
-            {{typeIndex < 0 ? '请选择问题类型' : typeOptions[typeIndex]}}
-            <view class="picker-arrow">▼</view>
+  <!-- 顶部操作栏 -->
+  <view class="action-bar">
+    <view class="title">问题反馈</view>
+    <view class="add-btn" bindtap="showAddFeedbackModal">+ 新增反馈</view>
+  </view>
+  
+  <!-- 问题类型筛选区 -->
+  <view class="filter-section">
+    <scroll-view scroll-x="true" class="filter-scroll">
+      <view class="filter-item {{currentType === 'all' ? 'active' : ''}}" 
+            data-type="all" bindtap="filterByType">全部</view>
+            
+      <view wx:for="{{feedbackTypes}}" wx:key="index" class="filter-item-container">
+        <view class="filter-item {{currentType === item ? 'active' : ''}}" 
+              data-type="{{item}}" data-index="{{index}}" bindtap="filterByType" bindlongpress="showTypeOptions">
+          {{item}}
+        </view>
+        
+        <!-- 只对自定义类型显示删除按钮（默认的4个类型不能删除） -->
+        <view wx:if="{{index >= 4}}" class="type-delete-btn" catchtap="showDeleteTypeConfirm" data-index="{{index}}">×</view>
+      </view>
+      
+      <view class="filter-item custom" bindtap="showTypeModal">
+        <text class="iconfont icon-plus"></text> 自定义
+      </view>
+    </scroll-view>
+  </view>
+  
+  <!-- 问题反馈卡片列表 -->
+  <view class="feedback-list">
+    <block wx:if="{{filteredFeedbacks.length > 0}}">
+      <view class="feedback-card" wx:for="{{filteredFeedbacks}}" wx:key="id" 
+            bindtap="viewFeedbackDetail" data-id="{{item.id}}">
+        <view class="card-header">
+          <view class="type-tag">{{item.type}}</view>
+          <view class="status-tag {{item.status}}">{{statusText[item.status]}}</view>
+        </view>
+        <view class="card-content">
+          <text class="content-text">{{item.content}}</text>
+        </view>
+        <view class="card-footer">
+          <text class="time">{{item.created_at}}</text>
+          <view class="delete-btn" catchtap="deleteFeedback" data-id="{{item.id}}">
+            <image class="delete-icon" src="/images/delete.png" mode="aspectFit"></image>
           </view>
+        </view>
+      </view>
+    </block>
+    <view wx:else class="empty-tip">
+      <image class="empty-icon" src="/images/empty.png"></image>
+      <text>暂无反馈记录</text>
+    </view>
+  </view>
+  
+  <!-- 新增反馈弹窗 -->
+  <view class="modal" wx:if="{{showAddModal}}">
+    <view class="modal-content">
+      <view class="modal-title">新增问题反馈</view>
+      <view class="form-item">
+        <text class="label">问题类型</text>
+        <picker bindchange="typeChange" value="{{typeIndex}}" range="{{feedbackTypes}}">
+          <view class="picker">{{typeIndex >= 0 ? feedbackTypes[typeIndex] : '请选择问题类型'}}</view>
         </picker>
-        <view class="error-message" wx:if="{{errors.type}}">{{errors.type}}</view>
       </view>
-      
-      <view class="form-group">
+      <view class="form-item">
         <text class="label">问题描述</text>
-        <textarea 
-          class="textarea" 
-          name="content" 
-          value="{{content}}" 
-          placeholder="请详细描述您遇到的问题或建议..." 
-          bindinput="onContentInput"
-          maxlength="500"
-        ></textarea>
-        <view class="textarea-counter">{{contentLength}}/500</view>
-        <view class="error-message" wx:if="{{errors.content}}">{{errors.content}}</view>
+        <textarea class="input-area" placeholder="请详细描述您遇到的问题..." 
+                 bindinput="inputContent" value="{{newFeedback.content}}"></textarea>
       </view>
       
-      <view class="form-group">
-        <text class="label">联系方式</text>
-        <input 
-          class="input" 
-          name="contact_info" 
-          value="{{contactInfo}}" 
-          placeholder="请输入您的联系方式，方便我们回复"
-          bindinput="onContactInfoInput"
-        />
-        <view class="error-message" wx:if="{{errors.contact_info}}">{{errors.contact_info}}</view>
-      </view>
-      
-      <view class="form-group">
+      <!-- 上传图片区域 -->
+      <view class="form-item">
         <text class="label">上传截图(可选)</text>
         <view class="upload-area">
           <block wx:for="{{imageList}}" wx:key="index">
             <view class="image-item">
-              <image class="preview-image" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
-              <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+              <image class="preview-image" src="{{item}}" mode="aspectFill" 
+                     bindtap="previewImage" data-index="{{index}}"></image>
+              <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
             </view>
           </block>
           
@@ -57,15 +89,26 @@
         <view class="upload-tip">最多上传3张图片，每张不超过2MB</view>
       </view>
       
-      <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
-        {{submitting ? '提交中...' : '提交反馈'}}
-      </button>
-    </form>
+      <view class="form-buttons">
+        <button class="cancel-btn" bindtap="cancelAdd">取消</button>
+        <button class="confirm-btn" bindtap="submitFeedback">提交</button>
+      </view>
+    </view>
   </view>
   
-  <!-- 全局错误消息 -->
-  <view class="global-error" wx:if="{{globalError}}">{{globalError}}</view>
-  
-  <!-- 成功提示 -->
-  <view class="success-tip {{showSuccessTip ? 'show' : ''}}">{{successMessage}}</view>
+  <!-- 自定义类型弹窗 -->
+  <view class="modal" wx:if="{{showTypeModal}}">
+    <view class="modal-content">
+      <view class="modal-title">自定义问题类型</view>
+      <view class="form-item">
+        <text class="label">类型名称</text>
+        <input class="input" placeholder="请输入新的问题类型" 
+               bindinput="inputTypeName" value="{{newTypeName}}"></input>
+      </view>
+      <view class="form-buttons">
+        <button class="cancel-btn" bindtap="cancelTypeAdd">取消</button>
+        <button class="confirm-btn" bindtap="addFeedbackType">添加</button>
+      </view>
+    </view>
+  </view>
 </view>

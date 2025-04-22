@@ -25,7 +25,8 @@
     "pages/admin/settings/system-name",
     "pages/admin/settings/announcement",
     "pages/admin/settings/notification",
-    "pages/user/feedback/index"
+    "pages/user/feedback/index",
+    "pages/user/feedback/detail"
   ],
   "window": {
     "backgroundTextStyle": "light",
