@@ -241,3 +241,24 @@
   color: #666;
   background: rgba(255,255,255,0.9);
 }
+
+/* 反馈相关样式 */
+.related-feedback {
+  margin-top: 20rpx;
+}
+
+.content-text {
+  white-space: pre-wrap;
+  margin-top: 10rpx;
+  display: block;
+}
+
+.full-width {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.feedback-images {
+  margin-top: 20rpx;
+}
+

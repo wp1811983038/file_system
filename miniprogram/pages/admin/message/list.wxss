@@ -170,3 +170,6 @@
   border-radius: 8rpx;
   padding: 16rpx 0;
 }
+.message-icon.feedback {
+  background: rgba(194, 82, 196, 0.1);
+}

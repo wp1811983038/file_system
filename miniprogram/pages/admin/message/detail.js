@@ -186,5 +186,33 @@ Page({
       current: url,
       urls: urls
     });
+  },
+
+  // 预览反馈图片
+previewFeedbackImage(e) {
+  const url = e.currentTarget.dataset.url;
+  const urls = this.data.message.related_info.image_urls;
+  
+  wx.previewImage({
+    current: url,
+    urls: urls
+  });
+},
+
+// 查看反馈详情
+viewFeedbackDetail() {
+  if (!this.data.message.related_info || !this.data.message.related_info.id) {
+    wx.showToast({
+      title: '反馈信息不完整',
+      icon: 'none'
+    });
+    return;
   }
+  
+  const feedbackId = this.data.message.related_info.id;
+  wx.navigateTo({
+    url: `/pages/admin/feedback/detail?id=${feedbackId}`
+  });
+}
+
 });

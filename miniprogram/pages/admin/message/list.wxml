@@ -6,6 +6,8 @@
     <view class="tab {{activeTab === 'file_receive' ? 'active' : ''}}" bindtap="switchTab" data-type="file_receive">文件接收</view>
     <view class="tab {{activeTab === 'file_process' ? 'active' : ''}}" bindtap="switchTab" data-type="file_process">审批结果</view>
     <view class="tab {{activeTab === 'inspection_notice' ? 'active' : ''}}" bindtap="switchTab" data-type="inspection_notice">执法检查</view>
+    <view class="tab {{activeTab === 'feedback' ? 'active' : ''}}" bindtap="switchTab" data-type="feedback">问题反馈</view>
+    
   </view>
 
   <!-- 消息列表 -->
@@ -25,6 +27,7 @@
         <image wx:if="{{item.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
         <image wx:if="{{item.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
         <image wx:if="{{item.type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
+        <image wx:if="{{item.type === 'feedback'}}" src="/images/icon-feedback.png" mode="aspectFit"></image>
       </view>
       
       <!-- 消息内容 -->
