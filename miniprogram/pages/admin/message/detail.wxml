@@ -6,6 +6,7 @@
       <image wx:if="{{message.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
       <image wx:if="{{message.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
       <image wx:if="{{message.type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
+      <image wx:if="{{message.type === 'feedback'}}" src="/images/icon-feedback.png" mode="aspectFit"></image>
     </view>
     <view class="message-meta">
       <view class="message-title">{{message.title}}</view>
@@ -13,16 +14,83 @@
     </view>
   </view>
   
-  <!-- 消息内容 -->
-  <view class="message-content">
+  <!-- 反馈详情 -->
+  <view class="related-feedback" wx:if="{{message.related_type === 'feedback'}}">
+    <view class="section-title">反馈详情</view>
+    
+    <view class="info-card">
+      <!-- 基本信息 -->
+      <view class="info-item">
+        <text class="info-label">反馈类型：</text>
+        <text class="info-value">{{message.related_info.type}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">提交用户：</text>
+        <text class="info-value">{{message.related_info.user_name}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">联系方式：</text>
+        <text class="info-value">{{message.related_info.contact_info || '未提供'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">反馈时间：</text>
+        <text class="info-value">{{message.related_info.created_at}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">反馈状态：</text>
+        <text class="info-value status-{{message.related_info.status}}">
+          {{message.related_info.status === 'resolved' ? '已解决' : 
+            message.related_info.status === 'processing' ? '处理中' : '待处理'}}
+        </text>
+      </view>
+      
+      <!-- 反馈内容 -->
+      <view class="content-section">
+        <view class="content-title">反馈内容</view>
+        <view class="content-box">
+          <text class="content-text">{{message.related_info.content}}</text>
+        </view>
+      </view>
+      
+      <!-- 管理员回复 -->
+      <view class="reply-section" wx:if="{{message.related_info.admin_comment}}">
+        <view class="content-title">管理员回复</view>
+        <view class="reply-box">
+          <text class="reply-text">{{message.related_info.admin_comment}}</text>
+          <view class="reply-time" wx:if="{{message.related_info.updated_at}}">
+            回复时间：{{message.related_info.updated_at}}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 附件图片 -->
+  <view class="feedback-images" wx:if="{{message.related_info.image_urls && message.related_info.image_urls.length > 0}}">
+    <view class="section-title">附件图片</view>
+    <view class="photo-list">
+      <view class="photo-item" wx:for="{{message.related_info.image_urls}}" wx:key="index" bindtap="previewFeedbackImage" data-url="{{item}}">
+        <image class="photo-image" src="{{item}}" mode="aspectFill"></image>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="action-btns">
+    <button class="btn-view" bindtap="viewFeedbackDetail" wx:if="{{message.related_type === 'feedback'}}">
+      {{message.related_info.admin_comment ? '更新回复' : '回复反馈'}}
+    </button>
+  </view>
+  
+  <!-- 其他消息类型内容 -->
+  <view class="message-content" wx:if="{{message.type !== 'feedback'}}">
     <text>{{message.content}}</text>
   </view>
   
-  <!-- 关联信息 -->
-  <view class="related-info" wx:if="{{message.related_info}}">
-    <!-- 关联文件 -->
-    <view class="related-file" wx:if="{{message.related_type === 'user_file'}}">
-      <view class="related-title">相关文件信息</view>
+  <!-- 关联文件信息 -->
+  <view class="related-file" wx:if="{{message.related_type === 'user_file'}}">
+    <view class="section-title">相关文件</view>
+    <view class="info-card">
       <view class="info-item">
         <text class="info-label">文件名称：</text>
         <text class="info-value">{{message.related_info.filename}}</text>
@@ -46,124 +114,5 @@
         <button class="btn-view" bindtap="viewFile" wx:if="{{message.related_info.id}}">查看文件</button>
       </view>
     </view>
-    
-    <!-- 关联模板 -->
-    <view class="related-template" wx:if="{{message.related_type === 'file_template'}}">
-      <view class="related-title">相关模板信息</view>
-      <view class="info-item">
-        <text class="info-label">模板名称：</text>
-        <text class="info-value">{{message.related_info.name}}</text>
-      </view>
-      <view class="info-item">
-        <text class="info-label">模板说明：</text>
-        <text class="info-value">{{message.related_info.description || '无'}}</text>
-      </view>
-      <view class="action-btns">
-        <button class="btn-download" bindtap="downloadTemplate" wx:if="{{message.related_info.id}}">下载模板</button>
-      </view>
-    </view>
-    
-    <!-- 执法检查相关信息 -->
-    <!-- 执法检查相关信息 -->
-<view class="related-inspection" wx:if="{{message.related_type === 'inspection'}}">
-  <view class="section-title">检查信息</view>
-  
-  <!-- 基本信息 -->
-  <view class="info-card">
-    <view class="info-item">
-      <text class="info-label">企业名称：</text>
-      <text class="info-value">{{message.related_info.company_name}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">检查类型：</text>
-      <text class="info-value">{{message.related_info.inspection_type}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">检查时间：</text>
-      <text class="info-value">{{message.related_info.planned_date}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">检查状态：</text>
-      <text class="info-value">{{message.related_info.status === 'completed' ? '已完成' : '待执行'}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">检查内容：</text>
-      <text class="info-value">{{message.related_info.description}}</text>
-    </view>
-  </view>
-  
-  <!-- 问题列表 -->
-  <view class="problem-section" wx:if="{{message.related_info.problems && message.related_info.problems.length > 0}}">
-    <view class="section-title">检查问题 ({{message.related_info.problems.length}})</view>
-    <view class="problem-list">
-      <view class="problem-item" wx:for="{{message.related_info.problems}}" wx:key="id">
-        <view class="problem-header">
-          <view class="problem-type">类型: {{item.type}}</view>
-          <view class="problem-severity severity-{{item.severity}}">
-            {{item.severity === 'high' ? '严重' : (item.severity === 'medium' ? '中等' : '轻微')}}
-          </view>
-        </view>
-        <view class="problem-description">{{item.description}}</view>
-      </view>
-    </view>
-  </view>
-  
-  <!-- 照片列表 -->
-  <view class="photo-section" wx:if="{{message.related_info.photos && message.related_info.photos.length > 0}}">
-    <view class="section-title">现场照片 ({{message.related_info.photos.length}})</view>
-    <view class="photo-list">
-      <view class="photo-item" wx:for="{{message.related_info.photos}}" wx:key="id" bindtap="previewImage" data-url="{{item.photo_url}}">
-        <image class="photo-image" src="{{item.photo_url}}" mode="aspectFill"></image>
-        <view class="photo-description" wx:if="{{item.description}}">{{item.description}}</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 反馈详情 -->
-<view class="related-feedback" wx:if="{{message.related_type === 'feedback'}}">
-  <view class="section-title">反馈详情</view>
-  
-  <view class="info-card">
-    <view class="info-item">
-      <text class="info-label">反馈类型：</text>
-      <text class="info-value">{{message.related_info.type}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">提交用户：</text>
-      <text class="info-value">{{message.related_info.user_name}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">反馈时间：</text>
-      <text class="info-value">{{message.related_info.created_at}}</text>
-    </view>
-    <view class="info-item">
-      <text class="info-label">反馈状态：</text>
-      <text class="info-value status-{{message.related_info.status}}">
-        {{message.related_info.status === 'resolved' ? '已解决' : 
-           message.related_info.status === 'processing' ? '处理中' : '待处理'}}
-      </text>
-    </view>
-    <view class="info-item full-width">
-      <text class="info-label">反馈内容：</text>
-      <text class="info-value content-text">{{message.related_info.content}}</text>
-    </view>
-  </view>
-  
-  <!-- 反馈图片 -->
-  <view class="feedback-images" wx:if="{{message.related_info.image_urls && message.related_info.image_urls.length > 0}}">
-    <view class="section-title">附件图片</view>
-    <view class="photo-list">
-      <view class="photo-item" wx:for="{{message.related_info.image_urls}}" wx:key="index" bindtap="previewFeedbackImage" data-url="{{item}}">
-        <image class="photo-image" src="{{item}}" mode="aspectFill"></image>
-      </view>
-    </view>
-  </view>
-  
-  <view class="action-btns">
-    <button class="btn-view" bindtap="viewFeedbackDetail" wx:if="{{message.related_info.id}}">处理反馈</button>
-  </view>
-</view>
-
-</view>
   </view>
 </view>

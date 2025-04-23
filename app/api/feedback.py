@@ -34,8 +34,19 @@ def create_feedback(current_user):
         db.session.add(feedback)
         db.session.commit()
         
-        # 可以在这里添加通知管理员的逻辑
-        # ...
+        # 发送通知给管理员 - 新增代码
+        try:
+            from app.services.message_service import MessageService
+            
+            MessageService.create_feedback_message(
+                feedback_id=feedback.id,
+                user_id=current_user.id,
+                feedback_type=data['type'],
+                feedback_content=data['content']
+            )
+        except Exception as e:
+            current_app.logger.error(f"发送反馈通知失败: {str(e)}")
+            # 通知失败不影响反馈提交流程
         
         return jsonify({
             'message': '反馈提交成功',
@@ -46,6 +57,7 @@ def create_feedback(current_user):
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+    
         
 # 上传反馈图片
 @bp.route('/upload', methods=['POST'])
