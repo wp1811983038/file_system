@@ -4,7 +4,7 @@ import csv
 import json
 import traceback
 from datetime import datetime, timedelta
-from flask import jsonify, request, current_app, send_file
+from flask import jsonify, request, current_app, send_file, url_for
 from app.models.operation_log import OperationLog
 from app.models.user import User
 from app.models.file_template import FileTemplate
@@ -41,12 +41,35 @@ def get_logs(current_user):
             query = query.filter(OperationLog.type == log_type)
         
         # 日期筛选
+        # 日期筛选部分的代码
         if start_date:
-            start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            # 检查start_date是否已包含时间部分
+            if ' ' in start_date:  # 如果包含空格，说明已经有时间部分
+                try:
+                    start_datetime = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    # 尝试其他可能的时间格式
+                    start_datetime = datetime.strptime(start_date.split(' ')[0], "%Y-%m-%d")
+                    start_datetime = datetime.combine(start_datetime.date(), datetime.min.time())
+            else:
+                # 纯日期格式，添加时间部分
+                start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            
             query = query.filter(OperationLog.operate_time >= start_datetime)
-        
+
         if end_date:
-            end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            # 检查end_date是否已包含时间部分
+            if ' ' in end_date:  # 如果包含空格，说明已经有时间部分
+                try:
+                    end_datetime = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    # 尝试其他可能的时间格式
+                    end_datetime = datetime.strptime(end_date.split(' ')[0], "%Y-%m-%d")
+                    end_datetime = datetime.combine(end_datetime.date(), datetime.max.time().replace(microsecond=0))
+            else:
+                # 纯日期格式，添加时间部分
+                end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
+            
             query = query.filter(OperationLog.operate_time <= end_datetime)
         
         # 用户筛选 - 查询与指定用户相关的所有日志
@@ -127,13 +150,19 @@ def get_logs(current_user):
         return jsonify({'error': str(e)}), 500
 
 # 导出日志
+# 在export_logs函数中添加更详细的日志记录和错误处理
+
 @bp.route('/export', methods=['POST'])
 @token_required
 @admin_required
 def export_logs(current_user):
     """导出操作日志"""
     try:
+        current_app.logger.info("开始导出日志...")
         data = request.get_json()
+        
+        # 记录请求参数，便于排查
+        current_app.logger.info(f"导出参数: {data}")
         
         # 获取导出参数
         export_format = data.get('format', 'xlsx')
@@ -143,14 +172,15 @@ def export_logs(current_user):
         log_type = data.get('type')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        operator = data.get('operator')
-        target_user = data.get('target_user')
+        user_id = data.get('user_id')  # 添加用户ID参数
+        role = data.get('role')  # 添加角色参数
         include_template_files = data.get('include_template_files', False)
         
         # 验证必要参数
         if not fields:
+            current_app.logger.error("导出字段为空")
             return jsonify({'error': '导出字段不能为空'}), 400
-        
+            
         # 构建查询
         query = OperationLog.query
         
@@ -158,41 +188,48 @@ def export_logs(current_user):
         if log_type and log_type != 'all':
             query = query.filter(OperationLog.type == log_type)
         
-        # 日期筛选
+        # 日期筛选 - 改进的日期处理
         if start_date:
-            start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
-            query = query.filter(OperationLog.operate_time >= start_datetime)
+            current_app.logger.info(f"处理开始日期: {start_date}")
+            try:
+                # 检查是否已包含时间部分
+                if ' ' in start_date:
+                    start_datetime = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+                else:
+                    start_datetime = datetime.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S")
+                
+                query = query.filter(OperationLog.operate_time >= start_datetime)
+            except Exception as e:
+                current_app.logger.error(f"处理开始日期失败: {str(e)}")
+                return jsonify({'error': f'开始日期格式错误: {str(e)}'}), 400
         
         if end_date:
-            end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
-            query = query.filter(OperationLog.operate_time <= end_datetime)
+            current_app.logger.info(f"处理结束日期: {end_date}")
+            try:
+                if ' ' in end_date:
+                    end_datetime = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+                else:
+                    end_datetime = datetime.strptime(f"{end_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
+                
+                query = query.filter(OperationLog.operate_time <= end_datetime)
+            except Exception as e:
+                current_app.logger.error(f"处理结束日期失败: {str(e)}")
+                return jsonify({'error': f'结束日期格式错误: {str(e)}'}), 400
         
-        # 用户筛选
-        if operator:
-            # 根据用户名查找用户ID
-            operator_users = User.query.filter(User.username.ilike(f"%{operator}%")).all()
-            if operator_users:
-                operator_ids = [user.id for user in operator_users]
-                query = query.filter(OperationLog.operator_id.in_(operator_ids))
-            else:
-                # 没有匹配的用户，创建空的导出文件
-                return create_empty_export(export_format, fields)
+        # 用户ID筛选
+        if user_id:
+            query = query.filter(OperationLog.operator_id == user_id)
         
-        if target_user:
-            # 根据用户名查找用户ID
-            target_users = User.query.filter(User.username.ilike(f"%{target_user}%")).all()
-            if target_users:
-                target_ids = [user.id for user in target_users]
-                query = query.filter(OperationLog.target_user_id.in_(target_ids))
-            else:
-                # 没有匹配的用户，创建空的导出文件
-                return create_empty_export(export_format, fields)
-        
-        # 按时间倒序排序
-        query = query.order_by(OperationLog.operate_time.desc())
+        # 角色筛选
+        if role and not user_id:
+            role_users = User.query.filter_by(role=role).all()
+            if role_users:
+                role_user_ids = [user.id for user in role_users]
+                query = query.filter(OperationLog.operator_id.in_(role_user_ids))
         
         # 执行查询
         logs = query.all()
+        current_app.logger.info(f"查询到 {len(logs)} 条日志记录")
         
         # 处理导出
         if export_format == 'xlsx':
@@ -208,6 +245,8 @@ def export_logs(current_user):
 def export_logs_to_excel(logs, fields, include_template_files=False):
     """导出日志为Excel格式"""
     try:
+        current_app.logger.info("开始导出Excel...")
+        
         # 准备导出数据
         export_data = []
         template_files = []
@@ -248,52 +287,116 @@ def export_logs_to_excel(logs, fields, include_template_files=False):
                     template = FileTemplate.query.get(log.related_id)
                     if template and template.file_path and os.path.exists(template.file_path):
                         template_files.append((template.filename, template.file_path))
+                        current_app.logger.info(f"添加模板文件: {template.filename}")
                 except Exception as e:
                     current_app.logger.error(f"获取模板文件失败: {str(e)}")
+        
+        current_app.logger.info(f"共处理 {len(export_data)} 条日志记录")
+        
+        # 创建临时目录，确保存在
+        temp_dir = tempfile.gettempdir()
+        os.makedirs(temp_dir, exist_ok=True)
+        current_app.logger.info(f"使用临时目录: {temp_dir}")
+        
+        # 创建静态目录用于HTTP访问
+        static_temp_dir = os.path.join(current_app.root_path, 'static', 'temp')
+        os.makedirs(static_temp_dir, exist_ok=True)
         
         # 创建Excel文件
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         file_name = f"操作日志_{timestamp}.xlsx"
+        excel_path = os.path.join(temp_dir, file_name)
         
-        if include_template_files and template_files:
-            # 创建包含模板文件的压缩包
-            zip_path = os.path.join(tempfile.gettempdir(), f"操作日志_{timestamp}.zip")
-            
-            with zipfile.ZipFile(zip_path, 'w') as zipf:
-                # 创建并添加Excel文件
-                excel_path = os.path.join(tempfile.gettempdir(), file_name)
-                df = pd.DataFrame(export_data)
-                df.to_excel(excel_path, index=False)
-                zipf.write(excel_path, file_name)
-                
-                # 添加模板文件
-                for filename, filepath in template_files:
-                    zipf.write(filepath, os.path.join('templates', filename))
-            
-            # 发送压缩包文件
-            return send_file(
-                zip_path,
-                as_attachment=True,
-                download_name=f"操作日志和模板文件_{timestamp}.zip",
-                mimetype='application/zip'
-            )
+        current_app.logger.info(f"准备创建Excel文件: {excel_path}")
+        
+        # 检查数据是否为空
+        if not export_data:
+            current_app.logger.warning("没有数据可导出，创建空Excel文件")
+            # 创建空的DataFrame，但包含列标题
+            df = pd.DataFrame(columns=[field for field in fields])
         else:
-            # 只导出Excel文件
-            excel_path = os.path.join(tempfile.gettempdir(), file_name)
+            # 创建有数据的DataFrame
             df = pd.DataFrame(export_data)
-            df.to_excel(excel_path, index=False)
+        
+        # 保存Excel文件
+        try:
+            df.to_excel(excel_path, index=False, engine='openpyxl')
+            current_app.logger.info(f"Excel文件已创建: {excel_path}, 大小: {os.path.getsize(excel_path)} 字节")
+        except Exception as e:
+            current_app.logger.error(f"创建Excel文件失败: {str(e)}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({'error': f"创建Excel文件失败: {str(e)}"}), 500
+        
+        # 检查文件是否成功创建
+        if not os.path.exists(excel_path):
+            current_app.logger.error(f"Excel文件未找到: {excel_path}")
+            return jsonify({'error': "导出文件创建失败"}), 500
+        
+        # 文件URL和路径
+        final_url = ""
+        final_path = ""
+        
+        # 如果需要包含模板文件，创建压缩包
+        if include_template_files and template_files:
+            current_app.logger.info(f"创建包含模板文件的压缩包，共 {len(template_files)} 个文件")
+            zip_filename = f"操作日志_{timestamp}.zip"
+            zip_path = os.path.join(temp_dir, zip_filename)
             
-            # 发送Excel文件
-            return send_file(
-                excel_path,
-                as_attachment=True,
-                download_name=file_name,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
+            try:
+                with zipfile.ZipFile(zip_path, 'w') as zipf:
+                    # 添加Excel文件
+                    zipf.write(excel_path, os.path.basename(excel_path))
+                    
+                    # 添加模板文件
+                    for filename, filepath in template_files:
+                        # 创建安全的文件名，避免路径注入
+                        safe_filename = os.path.basename(filename)
+                        zipf.write(filepath, os.path.join('templates', safe_filename))
+                
+                current_app.logger.info(f"压缩包已创建: {zip_path}, 大小: {os.path.getsize(zip_path)} 字节")
+                
+                # 复制到静态目录
+                static_zip_path = os.path.join(static_temp_dir, zip_filename)
+                import shutil
+                shutil.copy2(zip_path, static_zip_path)
+                
+                # 生成下载URL
+                final_url = url_for('static', filename=f'temp/{zip_filename}', _external=True)
+                final_path = static_zip_path
+                
+            except Exception as e:
+                current_app.logger.error(f"创建压缩包失败: {str(e)}")
+                import traceback
+                current_app.logger.error(traceback.format_exc())
+                return jsonify({'error': f"创建压缩包失败: {str(e)}"}), 500
+        else:
+            # 只使用Excel文件
+            static_excel_path = os.path.join(static_temp_dir, file_name)
+            import shutil
+            shutil.copy2(excel_path, static_excel_path)
+            
+            # 生成下载URL
+            final_url = url_for('static', filename=f'temp/{file_name}', _external=True)
+            final_path = static_excel_path
+        
+        # 设置文件删除定时任务（可选）
+        # 这里可以添加代码，在一段时间后自动删除文件
+        
+        current_app.logger.info(f"导出成功，下载URL: {final_url}")
+        
+        # 返回下载URL而不是文件本身
+        return jsonify({
+            'message': '导出成功',
+            'download_url': final_url,
+            'filename': os.path.basename(final_path)
+        })
+        
     except Exception as e:
-        current_app.logger.error(f"导出Excel失败: {str(e)}")
+        current_app.logger.error(f"导出Excel过程中发生未知错误: {str(e)}")
+        import traceback
         current_app.logger.error(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f"导出Excel失败: {str(e)}"}), 500
 
 # 导出为CSV
 def export_logs_to_csv(logs, fields):

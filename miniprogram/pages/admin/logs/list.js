@@ -24,7 +24,7 @@ Page({
       { value: 'feedback', label: '问题反馈' }
     ],
     logTypeIndex: 0,
-    
+
     dateRangeOptions: [
       { value: 'today', label: '今日' },
       { value: 'yesterday', label: '昨日' },
@@ -38,12 +38,12 @@ Page({
     dateRangeIndex: 0,
     startDate: '',
     endDate: '',
-    
+
     // 用户筛选
     userRole: '', // 'admin', 'enforcer', 'user'
     selectedUserId: '',
     selectedUserName: '',
-    
+
     // 日志数据
     logs: [],
     page: 1,
@@ -51,13 +51,13 @@ Page({
     totalLogs: 0,
     hasMoreLogs: true,
     isLoading: false,
-    
+
     // 用户选择器
     showUserSelector: false,
     userList: [],
     userSearchText: '',
     isLoadingUsers: false,
-    
+
     // 导出选项
     showExportModal: false,
     exportFormat: 'xlsx',
@@ -80,7 +80,7 @@ Page({
     additionalOptions: []
   },
 
-  onLoad: function() {
+  onLoad: function () {
     // 初始化日期
     this.initDates();
     // 初始化字段选择
@@ -88,42 +88,42 @@ Page({
     // 加载日志数据
     this.loadLogs();
   },
-  
+
   // 初始化日期范围
-  initDates: function() {
+  initDates: function () {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    
+
     const todayString = `${year}-${month}-${day}`;
-    
+
     this.setData({
       startDate: todayString,
       endDate: todayString
     });
   },
-  
+
   // 初始化导出字段
-  initSelectedFields: function() {
+  initSelectedFields: function () {
     const allFields = this.data.availableFields.map(field => field.value);
     this.setData({
       selectedFields: allFields
     });
   },
-  
+
   // 日志类型选择器变更
-  onLogTypeChange: function(e) {
+  onLogTypeChange: function (e) {
     this.setData({
       logTypeIndex: parseInt(e.detail.value)
     });
   },
-  
+
   // 日期范围选择器变更
-  onDateRangeChange: function(e) {
+  onDateRangeChange: function (e) {
     const index = parseInt(e.detail.value);
     this.setData({ dateRangeIndex: index });
-    
+
     // 设置对应的日期范围
     if (this.data.dateRangeOptions[index].value !== 'custom') {
       const { startDate, endDate } = this.calculateDateRange(this.data.dateRangeOptions[index].value);
@@ -134,17 +134,17 @@ Page({
     }
     // 对于自定义范围，保留现有日期直到用户手动修改
   },
-  
+
   // 选择用户角色
-  selectUserRole: function(e) {
+  selectUserRole: function (e) {
     const role = e.currentTarget.dataset.role;
-    
+
     // 如果选择的是相同角色，不做处理
     if (this.data.userRole === role) return;
-    
+
     // 根据所选角色更新可用的日志类型
     let logTypeOptions = [...this.data.allLogTypeOptions]; // 复制全部选项
-    
+
     if (role === 'enforcer') {
       // 执法人员只显示执法检查日志
       logTypeOptions = [
@@ -162,7 +162,7 @@ Page({
       ];
     }
     // 管理员显示全部日志类型
-    
+
     this.setData({
       userRole: role,
       logTypeOptions: logTypeOptions,
@@ -171,84 +171,140 @@ Page({
       selectedUserName: '' // 清空用户显示名称
     });
   },
-  
+
   // 计算日期范围
-  calculateDateRange: function(range) {
+  calculateDateRange: function (range) {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
     const date = today.getDate();
     const day = today.getDay() || 7; // 将周日的0改为7
-    
+
     let startDate, endDate;
-    
+
     switch (range) {
       case 'today':
-        startDate = endDate = this.formatDate(today);
+        const todayStart = new Date(year, month, date);
+        const todayEnd = new Date(year, month, date, 23, 59, 59);
+        startDate = this.formatDateWithTime(todayStart, true);
+        endDate = this.formatDateWithTime(todayEnd, true);
         break;
+
       case 'yesterday':
-        const yesterday = new Date(year, month, date - 1);
-        startDate = endDate = this.formatDate(yesterday);
+        const yesterdayStart = new Date(year, month, date - 1);
+        const yesterdayEnd = new Date(year, month, date - 1, 23, 59, 59);
+        startDate = this.formatDateWithTime(yesterdayStart, true);
+        endDate = this.formatDateWithTime(yesterdayEnd, true);
         break;
+
       case 'this_week':
         const thisWeekStart = new Date(year, month, date - day + 1);
-        startDate = this.formatDate(thisWeekStart);
-        endDate = this.formatDate(today);
+        const thisWeekEnd = new Date(year, month, date, 23, 59, 59);
+        startDate = this.formatDateWithTime(thisWeekStart, true);
+        endDate = this.formatDateWithTime(thisWeekEnd, true);
         break;
+
       case 'last_week':
         const lastWeekStart = new Date(year, month, date - day - 6);
-        const lastWeekEnd = new Date(year, month, date - day);
-        startDate = this.formatDate(lastWeekStart);
-        endDate = this.formatDate(lastWeekEnd);
+        const lastWeekEnd = new Date(year, month, date - day, 23, 59, 59);
+        startDate = this.formatDateWithTime(lastWeekStart, true);
+        endDate = this.formatDateWithTime(lastWeekEnd, true);
         break;
+
       case 'this_month':
         const thisMonthStart = new Date(year, month, 1);
-        startDate = this.formatDate(thisMonthStart);
-        endDate = this.formatDate(today);
+        const thisMonthEnd = new Date(year, month, date, 23, 59, 59);
+        startDate = this.formatDateWithTime(thisMonthStart, true);
+        endDate = this.formatDateWithTime(thisMonthEnd, true);
         break;
+
       case 'last_month':
         const lastMonthStart = new Date(year, month - 1, 1);
-        const lastMonthEnd = new Date(year, month, 0);
-        startDate = this.formatDate(lastMonthStart);
-        endDate = this.formatDate(lastMonthEnd);
+        const lastMonthEnd = new Date(year, month, 0, 23, 59, 59);
+        startDate = this.formatDateWithTime(lastMonthStart, true);
+        endDate = this.formatDateWithTime(lastMonthEnd, true);
         break;
+
       case 'this_quarter':
         const quarter = Math.floor(month / 3);
         const quarterStart = new Date(year, quarter * 3, 1);
-        startDate = this.formatDate(quarterStart);
-        endDate = this.formatDate(today);
+        const quarterEnd = new Date(year, month, date, 23, 59, 59);
+        startDate = this.formatDateWithTime(quarterStart, true);
+        endDate = this.formatDateWithTime(quarterEnd, true);
         break;
+
       default:
-        startDate = endDate = this.formatDate(today);
+        // 默认为今天
+        const defaultStart = new Date(year, month, date);
+        const defaultEnd = new Date(year, month, date, 23, 59, 59);
+        startDate = this.formatDateWithTime(defaultStart, true);
+        endDate = this.formatDateWithTime(defaultEnd, true);
     }
-    
+
     return { startDate, endDate };
   },
-  
-  // 格式化日期
-  formatDate: function(date) {
+
+  // 格式化日期，添加时间部分
+  formatDateWithTime: function (date, includeTime = false) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    if (includeTime) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    return `${year}-${month}-${day}`;
+  },
+
+  // 原始的formatDate函数保留，以避免其他地方的依赖出问题
+  formatDate: function (date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   },
-  
+
+  // 格式化日期（添加时间部分）
+  formatDate: function (date, includeTime = false, isEndDay = false) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    // 基础日期部分
+    let result = `${year}-${month}-${day}`;
+
+    // 如果需要包含时间
+    if (includeTime) {
+      // 开始日期用 00:00:00，结束日期用 23:59:59
+      const time = isEndDay ? '23:59:59' : '00:00:00';
+      result += ` ${time}`;
+    }
+
+    return result;
+  },
+
   // 开始日期变更
-  onStartDateChange: function(e) {
+  onStartDateChange: function (e) {
+    // 为所选日期添加起始时间 00:00:00
     this.setData({
-      startDate: e.detail.value
+      startDate: e.detail.value + " 00:00:00"
     });
   },
-  
+
   // 结束日期变更
-  onEndDateChange: function(e) {
+  onEndDateChange: function (e) {
+    // 为所选日期添加结束时间 23:59:59
     this.setData({
-      endDate: e.detail.value
+      endDate: e.detail.value + " 23:59:59"
     });
   },
-  
+
   // 显示用户选择器
-  showUserSelector: function() {
+  showUserSelector: function () {
     // 如果还没选角色，不执行
     if (!this.data.userRole) {
       wx.showToast({
@@ -257,113 +313,112 @@ Page({
       });
       return;
     }
-    
+
     this.setData({
       showUserSelector: true,
       userSearchText: '',
       userList: []
     });
-    
+
     // 加载用户列表
     this.loadUserList();
   },
-  
+
   // 隐藏用户选择器
-  hideUserSelector: function() {
+  hideUserSelector: function () {
     this.setData({
       showUserSelector: false
     });
   },
-  
+
   // 用户搜索输入
-  onUserSearchInput: function(e) {
+  onUserSearchInput: function (e) {
     this.setData({
       userSearchText: e.detail.value
     });
-    
+
     // 搜索延迟触发
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.loadUserList();
     }, 500);
   },
-  
-  // 加载用户列表
-  // 加载用户列表
-loadUserList: function() {
-  this.setData({ isLoadingUsers: true });
-  
-  // 获取当前选择的用户角色
-  const role = this.data.userRole; // 'admin', 'enforcer' 或 'user'
-  
-  // 如果没有选择角色，不执行
-  if (!role) {
-    this.setData({ isLoadingUsers: false });
-    wx.showToast({
-      title: '请先选择用户类型',
-      icon: 'none'
-    });
-    return;
-  }
-  
-  // 构建查询参数 - 根据当前选择的角色筛选用户
-  let params = {
-    search: this.data.userSearchText || '',
-    role: role // 只查询当前选择的角色
-  };
-  
-  wx.request({
-    url: `${app.globalData.baseUrl}/api/v1/admin/users`,
-    method: 'GET',
-    header: {
-      'Authorization': `Bearer ${wx.getStorageSync('token')}`
-    },
-    data: params,
-    success: (res) => {
-      if (res.statusCode === 200 && res.data.users) {
-        this.setData({
-          userList: res.data.users
-        });
-        
-        // 如果结果为空，给出提示
-        if (res.data.users.length === 0) {
+
+  // 加载用户列表 - 修复后的正确版本
+  loadUserList: function () {
+    this.setData({ isLoadingUsers: true });
+
+    // 获取当前选择的用户角色
+    const role = this.data.userRole; // 'admin', 'enforcer' 或 'user'
+
+    // 如果没有选择角色，不执行
+    if (!role) {
+      this.setData({ isLoadingUsers: false });
+      wx.showToast({
+        title: '请先选择用户类型',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 构建查询参数 - 根据当前选择的角色筛选用户
+    let params = {
+      search: this.data.userSearchText || '',
+      role: role // 只查询当前选择的角色
+    };
+
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/v1/admin/users`,  // 正确的API路径
+      method: 'GET',  // 正确的请求方法
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      data: params,
+      success: (res) => {
+        if (res.statusCode === 200 && res.data.users) {
+          this.setData({
+            userList: res.data.users
+          });
+          
+          // 如果结果为空，给出提示
+          if (res.data.users.length === 0) {
+            wx.showToast({
+              title: `未找到${this.getRoleName(role)}用户`,
+              icon: 'none'
+            });
+          }
+        } else {
           wx.showToast({
-            title: `未找到${this.getRoleName(role)}用户`,
+            title: '加载用户失败',
             icon: 'none'
           });
         }
-      } else {
+      },
+      fail: (err) => {
+        console.error('加载用户失败:', err);
         wx.showToast({
           title: '加载用户失败',
           icon: 'none'
         });
+      },
+      complete: () => {
+        this.setData({ isLoadingUsers: false });
       }
-    },
-    fail: (err) => {
-      console.error('加载用户失败:', err);
-      wx.showToast({
-        title: '加载用户失败',
-        icon: 'none'
-      });
-    },
-    complete: () => {
-      this.setData({ isLoadingUsers: false });
-    }
-  });
-},
+    });
+  },
 
-// 获取角色名称的辅助函数
-getRoleName: function(role) {
-  const roleNames = {
-    'admin': '管理员',
-    'enforcer': '执法人员',
-    'user': '普通用户'
-  };
-  return roleNames[role] || '未知';
-},
-  
+  // 获取角色名称的辅助函数
+  getRoleName: function (role) {
+    const roleNames = {
+      'admin': '管理员',
+      'enforcer': '执法人员',
+      'user': '普通用户'
+    };
+    return roleNames[role] || '未知';
+  },
+
   // 选择用户
-  selectUser: function(e) {
+  selectUser: function (e) {
     const user = e.currentTarget.dataset.user;
     this.setData({
       selectedUserId: user.id,
@@ -371,9 +426,9 @@ getRoleName: function(role) {
     });
     this.hideUserSelector();
   },
-  
+
   // 重置筛选条件
-  resetFilters: function() {
+  resetFilters: function () {
     this.setData({
       logTypeIndex: 0,
       dateRangeIndex: 0,
@@ -382,27 +437,27 @@ getRoleName: function(role) {
       selectedUserName: '',
       logTypeOptions: [...this.data.allLogTypeOptions]  // 重置为全部日志类型选项
     });
-    
+
     this.initDates();
   },
-  
+
   // 查询日志
-  searchLogs: function() {
+  searchLogs: function () {
     this.setData({
       logs: [],
       page: 1,
       hasMoreLogs: true
     });
-    
+
     this.loadLogs();
   },
-  
+
   // 加载日志数据
-  loadLogs: function() {
+  loadLogs: function () {
     if (this.data.isLoading || !this.data.hasMoreLogs) return;
-    
+
     this.setData({ isLoading: true });
-    
+
     // 构建筛选参数
     const params = {
       page: this.data.page,
@@ -410,22 +465,22 @@ getRoleName: function(role) {
       start_date: this.data.startDate,
       end_date: this.data.endDate
     };
-    
+
     // 添加类型筛选
     if (this.data.logTypeIndex > 0) {
       params.type = this.data.logTypeOptions[this.data.logTypeIndex].value;
     }
-    
+
     // 添加用户筛选
     if (this.data.selectedUserId) {
       params.user_id = this.data.selectedUserId; // 使用统一的user_id参数
     }
-    
+
     // 添加角色筛选
     if (this.data.userRole && !this.data.selectedUserId) {
       params.role = this.data.userRole; // 如果选了角色但没选具体用户，则查询该角色所有用户的日志
     }
-    
+
     wx.request({
       url: `${app.globalData.baseUrl}/api/v1/admin/logs`,
       method: 'GET',
@@ -450,7 +505,7 @@ getRoleName: function(role) {
               remarks: log.remarks
             };
           });
-          
+
           this.setData({
             logs: [...this.data.logs, ...newLogs],
             page: this.data.page + 1,
@@ -478,9 +533,9 @@ getRoleName: function(role) {
       }
     });
   },
-  
+
   // 获取日志类型文本
-  getLogTypeText: function(type) {
+  getLogTypeText: function (type) {
     const typeTextMap = {
       'system_notice': '系统通知',
       'template': '模板管理',
@@ -491,9 +546,9 @@ getRoleName: function(role) {
     };
     return typeTextMap[type] || '未知类型';
   },
-  
+
   // 获取状态文本
-  getStatusText: function(status) {
+  getStatusText: function (status) {
     const statusTextMap = {
       'success': '成功',
       'pending': '待处理',
@@ -503,30 +558,30 @@ getRoleName: function(role) {
     };
     return statusTextMap[status] || '未知状态';
   },
-  
+
   // 加载更多日志
-  loadMoreLogs: function() {
+  loadMoreLogs: function () {
     this.loadLogs();
   },
-  
+
   // 查看日志详情
-  viewLogDetail: function(e) {
+  viewLogDetail: function (e) {
     const id = e.currentTarget.dataset.id;
     const index = this.data.logs.findIndex(log => log.id === id);
-    
+
     if (index === -1) return;
-    
+
     const log = this.data.logs[index];
-    
+
     wx.showModal({
       title: '日志详情',
       content: `类型: ${log.typeText}\n时间: ${log.operateTime}\n执行人: ${log.operator}\n内容: ${log.content}\n状态: ${log.statusText}${log.remarks ? '\n备注: ' + log.remarks : ''}`,
       showCancel: false
     });
   },
-  
+
   // 导出所有日志
-  exportAllLogs: function() {
+  exportAllLogs: function () {
     wx.showModal({
       title: '导出确认',
       content: '确定要导出所有日志记录吗？根据数据量大小，导出过程可能需要一些时间。',
@@ -541,34 +596,34 @@ getRoleName: function(role) {
       }
     });
   },
-  
+
   // 显示导出选项
-  showExportOptions: function() {
-    this.setData({ 
+  showExportOptions: function () {
+    this.setData({
       showExportModal: true,
       exportAllData: false
     });
   },
-  
+
   // 隐藏导出选项
-  hideExportOptions: function() {
+  hideExportOptions: function () {
     this.setData({ showExportModal: false });
   },
-  
+
   // 导出格式变更
-  onExportFormatChange: function(e) {
+  onExportFormatChange: function (e) {
     this.setData({
       exportFormat: e.detail.value
     });
   },
-  
+
   // 导出字段变更
-  onExportFieldsChange: function(e) {
+  onExportFieldsChange: function (e) {
     const values = e.detail.value;
-    
+
     // 检查是否包含"全选"
     const allSelected = values.includes('all');
-    
+
     if (allSelected) {
       // 如果全选，则选择所有字段
       const allFields = this.data.availableFields.map(field => field.value);
@@ -583,11 +638,11 @@ getRoleName: function(role) {
       });
     }
   },
-  
+
   // 切换全选字段
-  toggleAllFields: function() {
+  toggleAllFields: function () {
     const allFields = this.data.availableFields.map(field => field.value);
-    
+
     if (this.data.exportAllFields) {
       // 如果当前是全选，则切换为不选
       this.setData({
@@ -602,157 +657,220 @@ getRoleName: function(role) {
       });
     }
   },
-  
+
   // 附加选项变更
-  onAdditionalOptionsChange: function(e) {
+  onAdditionalOptionsChange: function (e) {
     this.setData({
       additionalOptions: e.detail.value
     });
   },
-  
+
   // 导出日志
-  exportLogs: function() {
-    // 检查导出字段
-    if (this.data.selectedFields.length === 0) {
-      wx.showToast({
-        title: '请至少选择一个导出字段',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    // 显示加载中提示
-    wx.showLoading({
-      title: '准备导出...',
-      mask: true
+  // 导出日志 - 修复后的完整函数
+exportLogs: function() {
+  // 检查导出字段
+  if (this.data.selectedFields.length === 0) {
+    wx.showToast({
+      title: '请至少选择一个导出字段',
+      icon: 'none'
     });
-    
-    // 构建导出参数
-    const params = {
-      format: this.data.exportFormat,
-      fields: this.data.selectedFields.join(',')
-    };
-    
-    // 如果不是导出全部数据，添加筛选条件
-    if (!this.data.exportAllData) {
-      params.start_date = this.data.startDate;
-      params.end_date = this.data.endDate;
-      
-      // 添加类型筛选
-      if (this.data.logTypeIndex > 0) {
-        params.type = this.data.logTypeOptions[this.data.logTypeIndex].value;
-      }
-      
-      // 添加用户筛选
-      if (this.data.selectedUserId) {
-        params.user_id = this.data.selectedUserId;
-      }
-      
-      // 添加角色筛选
-      if (this.data.userRole && !this.data.selectedUserId) {
-        params.role = this.data.userRole;
-      }
+    return;
+  }
+
+  // 显示加载中提示
+  wx.showLoading({
+    title: '准备导出...',
+    mask: true
+  });
+
+  // 构建导出参数
+  const params = {
+    format: this.data.exportFormat,
+    fields: this.data.selectedFields.join(',')
+  };
+
+  // 如果不是导出全部数据，添加筛选条件
+  if (!this.data.exportAllData) {
+    params.start_date = this.data.startDate;
+    params.end_date = this.data.endDate;
+
+    // 添加类型筛选
+    if (this.data.logTypeIndex > 0) {
+      params.type = this.data.logTypeOptions[this.data.logTypeIndex].value;
     }
-    
-    // 添加附加选项
-    if (this.data.additionalOptions.includes('include_template_files')) {
-      params.include_template_files = true;
+
+    // 添加用户筛选
+    if (this.data.selectedUserId) {
+      params.user_id = this.data.selectedUserId;
     }
-    
-    // 发起导出请求
-    wx.request({
-      url: `${app.globalData.baseUrl}/api/v1/admin/logs/export`,
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${wx.getStorageSync('token')}`,
-        'Content-Type': 'application/json'
-      },
-      data: params,
-      success: (res) => {
-        wx.hideLoading();
+
+    // 添加角色筛选
+    if (this.data.userRole && !this.data.selectedUserId) {
+      params.role = this.data.userRole;
+    }
+  }
+
+  // 添加附加选项
+  if (this.data.additionalOptions.includes('include_template_files')) {
+    params.include_template_files = true;
+  }
+
+  console.log('导出参数:', params);
+
+  // 发起导出请求
+  wx.request({
+    url: `${app.globalData.baseUrl}/api/v1/admin/logs/export`,
+    method: 'POST',
+    header: {
+      'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+      'Content-Type': 'application/json'
+    },
+    data: params,
+    success: (res) => {
+      console.log('导出响应:', res);
+      
+      if (res.statusCode === 200 && res.data && res.data.download_url) {
+        // 隐藏导出选项弹窗
+        this.hideExportOptions();
         
-        if (res.statusCode === 200 && res.data.download_url) {
-          // 隐藏导出选项弹窗
-          this.hideExportOptions();
-          
-          // 更新提示为下载中
-          wx.showLoading({
-            title: '正在下载...',
-            mask: true
-          });
-          
-          // 下载文件
-          wx.downloadFile({
-            url: res.data.download_url,
-            success: (result) => {
-              wx.hideLoading();
+        // 获取下载URL
+        const downloadUrl = res.data.download_url;
+        const filename = res.data.filename || '操作日志.xlsx';
+        
+        console.log('准备下载文件:', downloadUrl);
+        
+        // 显示下载中提示
+        wx.showLoading({
+          title: '正在下载...',
+          mask: true
+        });
+        
+        // 下载文件
+        wx.downloadFile({
+          url: downloadUrl,
+          success: (result) => {
+            console.log('下载结果:', result);
+            wx.hideLoading();
+            
+            if (result.statusCode === 200) {
+              const tempFilePath = result.tempFilePath;
               
-              if (result.statusCode === 200) {
-                // 打开文件
-                wx.openDocument({
-                  filePath: result.tempFilePath,
-                  success: () => {
-                    console.log('打开文档成功');
-                    wx.showToast({
-                      title: '导出成功',
-                      icon: 'success'
-                    });
-                  },
-                  fail: (err) => {
-                    console.error('打开文档失败:', err);
-                    wx.showToast({
-                      title: '打开文件失败',
-                      icon: 'none'
-                    });
-                  }
-                });
-              } else {
-                wx.showToast({
-                  title: '下载文件失败',
-                  icon: 'none'
-                });
-              }
-            },
-            fail: (err) => {
-              wx.hideLoading();
-              console.error('下载文件失败:', err);
+              // 打开文件
+              wx.openDocument({
+                filePath: tempFilePath,
+                fileType: this.data.exportFormat, // 指定文件类型
+                showMenu: true, // 显示顶部菜单，方便用户保存
+                success: () => {
+                  console.log('打开文件成功');
+                  wx.showToast({
+                    title: '导出成功',
+                    icon: 'success'
+                  });
+                },
+                fail: (err) => {
+                  console.error('打开文件失败:', err);
+                  
+                  // 如果打开失败，提供保存选项
+                  wx.showModal({
+                    title: '文件已下载',
+                    content: '无法自动打开文件，是否保存到手机?',
+                    confirmText: '保存',
+                    success: (res) => {
+                      if (res.confirm) {
+                        // 尝试保存文件
+                        this.saveFile(tempFilePath, filename);
+                      }
+                    }
+                  });
+                }
+              });
+            } else {
               wx.showToast({
                 title: '下载文件失败',
                 icon: 'none'
               });
             }
-          });
-        } else {
-          wx.showToast({
-            title: res.data && res.data.error ? res.data.error : '导出失败',
-            icon: 'none'
-          });
-        }
+          },
+          fail: (err) => {
+            wx.hideLoading();
+            console.error('下载文件失败:', err);
+            
+            wx.showModal({
+              title: '下载失败',
+              content: '无法下载文件，请检查网络连接或联系管理员',
+              showCancel: false
+            });
+          }
+        });
+      } else {
+        wx.hideLoading();
+        console.error('导出响应错误:', res);
+        
+        // 显示更详细的错误信息
+        wx.showModal({
+          title: '导出失败',
+          content: res.data && res.data.error ? res.data.error : '服务器返回无效数据',
+          showCancel: false
+        });
+      }
+    },
+    fail: (err) => {
+      wx.hideLoading();
+      console.error('导出请求失败:', err);
+      
+      wx.showModal({
+        title: '导出失败',
+        content: '请求服务器失败，请检查网络连接或联系管理员',
+        showCancel: false
+      });
+    }
+  });
+
+  // 导出完成后重置导出标记
+  this.setData({
+    exportAllData: false
+  });
+},
+
+// 新增：保存文件到本地（可选）
+saveFile: function(tempFilePath, filename) {
+  // 微信小程序不能直接保存到文件系统
+  // 对于非图片文件，可以提示用户手动保存
+  wx.showModal({
+    title: '保存提示',
+    content: '请在打开的文件中，点击右上角"..."，选择"保存"选项',
+    showCancel: false
+  });
+  
+  // 如果是图片，可以保存到相册
+  if (filename.endsWith('.png') || filename.endsWith('.jpg') || filename.endsWith('.jpeg')) {
+    wx.saveImageToPhotosAlbum({
+      filePath: tempFilePath,
+      success: (res) => {
+        wx.showToast({
+          title: '已保存到相册',
+          icon: 'success'
+        });
       },
       fail: (err) => {
-        wx.hideLoading();
-        console.error('导出日志失败:', err);
+        console.error('保存到相册失败:', err);
         wx.showToast({
-          title: '导出失败',
+          title: '保存失败',
           icon: 'none'
         });
       }
     });
-    
-    // 导出完成后重置导出标记
-    this.setData({
-      exportAllData: false
-    });
-  },
-  
+  }
+},
+
   // 下拉刷新
-  onPullDownRefresh: function() {
+  onPullDownRefresh: function () {
     this.setData({
       logs: [],
       page: 1,
       hasMoreLogs: true
     });
-    
+
     this.loadLogs();
   }
 });

@@ -116,9 +116,13 @@ def get_users(current_user):
         # 获取查询参数
         search_term = request.args.get('search', '')
         search_type = request.args.get('type', 'username')  # 搜索类型：username, company_name, contact_info 等
+        role = request.args.get('role')  # 获取角色参数
         
         # 构建查询
         query = User.query
+        # 添加角色筛选
+        if role:
+            query = query.filter_by(role=role)
         
         # 应用搜索过滤
         if search_term:
