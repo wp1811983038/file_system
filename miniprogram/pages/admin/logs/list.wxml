@@ -1,0 +1,248 @@
+<view class="container">
+  <!-- 筛选区域 -->
+  <view class="filter-section">
+    <view class="section-title">日志筛选</view>
+    
+    <!-- 日志类型和时间范围筛选 - 放在同一行 -->
+    <view class="filter-row">
+      <view class="filter-column">
+        <view class="filter-label">日志类型</view>
+        <picker bindchange="onLogTypeChange" value="{{logTypeIndex}}" range="{{logTypeOptions}}" range-key="label">
+          <view class="picker-view">
+            <text>{{logTypeOptions[logTypeIndex].label}}</text>
+            <image class="icon-arrow" src="/images/icon-arrow-down.png"></image>
+          </view>
+        </picker>
+      </view>
+      
+      <view class="filter-column">
+        <view class="filter-label">时间范围</view>
+        <picker bindchange="onDateRangeChange" value="{{dateRangeIndex}}" range="{{dateRangeOptions}}" range-key="label">
+          <view class="picker-view">
+            <text>{{dateRangeOptions[dateRangeIndex].label}}</text>
+            <image class="icon-arrow" src="/images/icon-arrow-down.png"></image>
+          </view>
+        </picker>
+      </view>
+    </view>
+    
+    <!-- 显示具体的日期范围 -->
+    <view class="date-display" wx:if="{{startDate && endDate}}">
+      <text class="date-text">{{startDate}} 至 {{endDate}}</text>
+      <block wx:if="{{dateRangeOptions[dateRangeIndex].value === 'custom'}}">
+        <view class="custom-date-range">
+          <picker mode="date" value="{{startDate}}" bindchange="onStartDateChange">
+            <view class="date-picker">
+              <text>开始日期</text>
+              <image class="icon-calendar" src="/images/icon-calendar.png"></image>
+            </view>
+          </picker>
+          <view class="date-separator">至</view>
+          <picker mode="date" value="{{endDate}}" bindchange="onEndDateChange">
+            <view class="date-picker">
+              <text>结束日期</text>
+              <image class="icon-calendar" src="/images/icon-calendar.png"></image>
+            </view>
+          </picker>
+        </view>
+      </block>
+    </view>
+    
+    <!-- 用户筛选 -->
+    <!-- 用户筛选 - 改为下拉列表 -->
+<!-- 用户角色筛选 -->
+    <view class="filter-item">
+      <view class="filter-label">用户筛选</view>
+      <view class="filter-content">
+        <!-- 用户角色选择 -->
+        <view class="user-role-tabs">
+          <view class="role-tab {{userRole === 'admin' ? 'active' : ''}}" 
+                bindtap="selectUserRole" data-role="admin">管理员</view>
+          <view class="role-tab {{userRole === 'enforcer' ? 'active' : ''}}" 
+                bindtap="selectUserRole" data-role="enforcer">执法人员</view>
+          <view class="role-tab {{userRole === 'user' ? 'active' : ''}}" 
+                bindtap="selectUserRole" data-role="user">普通用户</view>
+        </view>
+        
+        <!-- 选择具体用户 -->
+        <view class="user-select-container">
+          <input class="user-select-input" 
+                placeholder="{{userRole ? '点击选择具体用户' : '请先选择用户类型'}}" 
+                value="{{selectedUserName}}"
+                disabled="true"
+                bindtap="showUserSelector" />
+          <button class="btn btn-select" bindtap="showUserSelector" disabled="{{!userRole}}">选择</button>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 筛选操作按钮 -->
+    <view class="filter-actions">
+      <button class="btn btn-reset" bindtap="resetFilters">重置</button>
+      <button class="btn btn-search" bindtap="searchLogs">查询</button>
+      <button class="btn btn-export-all" bindtap="exportAllLogs">导出全部</button>
+    </view>
+  </view>
+  
+  <!-- 日志列表区域 -->
+  <view class="log-section">
+    <view class="section-header">
+      <view class="section-title">日志列表</view>
+      <view class="section-actions">
+        <button class="btn btn-export" bindtap="showExportOptions">导出筛选结果</button>
+      </view>
+    </view>
+    
+    <!-- 日志表格 -->
+    <view class="log-table">
+      <!-- 表头 -->
+      <view class="table-header">
+        <view class="th th-type">操作类型</view>
+        <view class="th th-time">操作时间</view>
+        <view class="th th-user">执行人</view>
+        <view class="th th-content">操作内容</view>
+        <view class="th th-status">状态</view>
+      </view>
+      
+      <!-- 表格内容 -->
+      <block wx:if="{{!logs || logs.length === 0}}">
+        <view class="empty-state">
+          <image class="empty-icon" src="/images/icon-empty.png"></image>
+          <text class="empty-text">暂无日志记录</text>
+        </view>
+      </block>
+      
+      <block wx:else>
+        <scroll-view scroll-y class="table-body" bindscrolltolower="loadMoreLogs">
+          <view class="table-row" wx:for="{{logs}}" wx:key="index" bindtap="viewLogDetail" data-id="{{item.id || index}}">
+            <view class="td td-type">
+              <view class="log-type-tag {{item.type}}">{{item.typeText}}</view>
+            </view>
+            <view class="td td-time">{{item.operateTime}}</view>
+            <view class="td td-user">{{item.operator}}</view>
+            <view class="td td-content text-ellipsis">{{item.content}}</view>
+            <view class="td td-status">
+              <view class="status-tag {{item.status}}">{{item.statusText}}</view>
+            </view>
+          </view>
+        </scroll-view>
+        
+        <!-- 加载更多 -->
+        <view class="load-more" wx:if="{{hasMoreLogs}}">
+          <text wx:if="{{isLoading}}">正在加载...</text>
+          <text wx:else>上拉加载更多</text>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>
+
+<!-- 导出选项弹窗 -->
+<view class="export-modal {{showExportModal ? 'show' : ''}}">
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">导出选项</text>
+      <image class="icon-close" src="/images/icon-close.png" bindtap="hideExportOptions"></image>
+    </view>
+    
+    <view class="modal-body">
+      <!-- 导出格式 -->
+      <view class="option-group">
+        <view class="option-label">导出格式</view>
+        <view class="option-content">
+          <radio-group bindchange="onExportFormatChange">
+            <label class="radio-item">
+              <radio value="xlsx" checked="{{exportFormat === 'xlsx'}}"/>Excel (.xlsx)
+            </label>
+            <label class="radio-item">
+              <radio value="csv" checked="{{exportFormat === 'csv'}}"/>CSV (.csv)
+            </label>
+          </radio-group>
+        </view>
+      </view>
+      
+      <!-- 导出字段 -->
+      <view class="option-group">
+        <view class="option-label">导出字段</view>
+        <view class="option-content">
+          <checkbox-group bindchange="onExportFieldsChange">
+            <label class="checkbox-item">
+              <checkbox value="all" checked="{{exportAllFields}}" bindtap="toggleAllFields"/>全选
+            </label>
+            <view class="checkbox-grid">
+              <label class="checkbox-item" wx:for="{{availableFields || []}}" wx:key="value">
+                <checkbox value="{{item.value}}" checked="{{selectedFields.includes(item.value)}}"/>
+                {{item.label}}
+              </label>
+            </view>
+          </checkbox-group>
+        </view>
+      </view>
+      
+      <!-- 其他选项 -->
+      <view class="option-group" wx:if="{{logTypeOptions && logTypeOptions[logTypeIndex].value === 'template' || logTypeOptions[logTypeIndex].value === 'all'}}">
+        <view class="option-label">附加选项</view>
+        <view class="option-content">
+          <checkbox-group bindchange="onAdditionalOptionsChange">
+            <label class="checkbox-item">
+              <checkbox value="include_template_files"/>包含模板文件(将生成压缩包)
+            </label>
+          </checkbox-group>
+        </view>
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-cancel" bindtap="hideExportOptions">取消</button>
+      <button class="btn btn-confirm" bindtap="exportLogs">确认导出</button>
+    </view>
+  </view>
+</view>
+
+<!-- 用户选择器弹窗 -->
+<view class="user-selector-modal {{showUserSelector ? 'show' : ''}}">
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">{{userFilterType === 'operator' ? '选择执行人' : '选择相关用户'}}</text>
+      <image class="icon-close" src="/images/icon-close.png" bindtap="hideUserSelector"></image>
+    </view>
+    
+    <view class="modal-body">
+      <!-- 搜索框 -->
+      <view class="search-box">
+        <input class="search-input" 
+               placeholder="搜索用户名/公司名" 
+               value="{{userSearchText}}"
+               bindinput="onUserSearchInput" />
+        <image class="icon-search" src="/images/icon-search.png"></image>
+      </view>
+      
+      <!-- 用户列表 -->
+      <scroll-view scroll-y class="user-list">
+        <block wx:if="{{!userList || userList.length === 0}}">
+          <view class="empty-state">
+            <text class="empty-text">未找到用户</text>
+          </view>
+        </block>
+        
+        <block wx:else>
+          <view class="user-item" 
+                wx:for="{{userList}}" 
+                wx:key="index" 
+                bindtap="selectUser" 
+                data-user="{{item}}">
+            <view class="user-info">
+              <view class="user-name">{{item.username}}</view>
+              <view class="user-company">{{item.company_name}}</view>
+            </view>
+            <view class="user-phone">{{item.contact_info}}</view>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-cancel" bindtap="hideUserSelector">取消</button>
+    </view>
+  </view>
+</view>

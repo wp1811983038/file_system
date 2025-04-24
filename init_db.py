@@ -9,6 +9,9 @@ from app.models.settings import Settings
 from app.models.file_template import FileTemplate
 from app.models.user_file import UserFile
 from app.models.file_approval import FileApproval
+from app.models.wx_subscription import WxSubscription
+from app.models.wx_notification_log import WxNotificationLog
+from app.models.operation_log import OperationLog  # 添加这一行
 from config import Config
 
 # 导入新增的执法端相关模型

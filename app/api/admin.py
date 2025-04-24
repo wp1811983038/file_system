@@ -364,6 +364,15 @@ def create_template(current_user):
         
         db.session.add(template)
         db.session.commit()
+
+        # 添加日志记录 - 新增代码
+        from app.services.log_service import LogService
+        LogService.log_template_operation(
+            operator_id=current_user.id,
+            operation='create',
+            template_id=template.id,
+            template_name=template.name
+        )
         
         # 发送微信订阅消息通知
         notification_results = {
@@ -376,7 +385,9 @@ def create_template(current_user):
             from app.services.notification_service import NotificationService
             
             # 获取所有非管理员用户
-            users = User.query.filter_by(is_admin=False).all()
+            # users = User.query.filter_by(is_admin=False).all()
+            # 向所有用户发送通知（包括管理员）
+            users = User.query.all()
             
             # 发送通知
             for user in users:
@@ -720,11 +731,12 @@ def get_settings(current_user):
         current_app.logger.error(f"获取设置失败: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+from app.services.message_service import MessageService
+
 @bp.route('/settings', methods=['PUT'])
 @token_required
 @admin_required
 def update_settings(current_user):
-    """更新系统设置"""
     try:
         data = request.get_json()
         settings = Settings.query.first()
@@ -737,6 +749,15 @@ def update_settings(current_user):
         settings.system_description = data.get('system_description', '')
         
         db.session.commit()
+        
+        # 创建系统通知
+        MessageService.broadcast_to_all_users(
+            title="系统通知已更新",
+            content=f"系统名称已更新为：{settings.system_name}\n系统通知：{settings.system_description}",
+            type='system',
+            admin_only=True  # 只通知管理员，如需通知所有用户，设为False
+        )
+        
         return jsonify({'message': '设置更新成功'})
     except Exception as e:
         db.session.rollback()

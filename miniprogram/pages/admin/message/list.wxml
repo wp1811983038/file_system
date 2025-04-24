@@ -1,13 +1,12 @@
 <view class="container">
   <!-- 消息类型标签栏 -->
+  <!-- 消息类型标签栏 -->
   <view class="message-tabs">
     <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-type="all">全部</view>
     <view class="tab {{activeTab === 'system' ? 'active' : ''}}" bindtap="switchTab" data-type="system">系统通知</view>
-    <view class="tab {{activeTab === 'file_receive' ? 'active' : ''}}" bindtap="switchTab" data-type="file_receive">文件接收</view>
-    <view class="tab {{activeTab === 'file_process' ? 'active' : ''}}" bindtap="switchTab" data-type="file_process">审批结果</view>
+    <view class="tab {{activeTab === 'submission_notice' ? 'active' : ''}}" bindtap="switchTab" data-type="submission_notice">提交通知</view>
     <view class="tab {{activeTab === 'inspection_notice' ? 'active' : ''}}" bindtap="switchTab" data-type="inspection_notice">执法检查</view>
     <view class="tab {{activeTab === 'feedback' ? 'active' : ''}}" bindtap="switchTab" data-type="feedback">问题反馈</view>
-    
   </view>
 
   <!-- 消息列表 -->
@@ -22,12 +21,12 @@
           bindtap="viewMessageDetail" 
           data-id="{{item.id}}">
       <!-- 消息图标 -->
-      <view class="message-icon {{item.type}}">
-        <image wx:if="{{item.type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
-        <image wx:if="{{item.type === 'file_receive'}}" src="/images/icon-file-receive.png" mode="aspectFit"></image>
-        <image wx:if="{{item.type === 'file_process'}}" src="/images/icon-file-process.png" mode="aspectFit"></image>
-        <image wx:if="{{item.type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
-        <image wx:if="{{item.type === 'feedback'}}" src="/images/icon-feedback.png" mode="aspectFit"></image>
+      <!-- 在首页消息预览部分也移除这些类型的消息图标引用 -->
+      <view class="message-icon {{messages[0].type}}">
+        <image wx:if="{{messages[0].type === 'system'}}" src="/images/icon-system.png" mode="aspectFit"></image>
+        <image wx:if="{{messages[0].type === 'submission_notice'}}" src="/images/icon-submission.png" mode="aspectFit"></image>
+        <image wx:if="{{messages[0].type === 'inspection_notice'}}" src="/images/icon-inspection.png" mode="aspectFit"></image>
+        <image wx:if="{{messages[0].type === 'feedback'}}" src="/images/icon-feedback.png" mode="aspectFit"></image>
       </view>
       
       <!-- 消息内容 -->

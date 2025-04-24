@@ -28,6 +28,7 @@
   </view>
 
   <!-- 系统管理选项 -->
+<!-- 系统管理选项 -->
   <view class="section-title">系统管理</view>
   <view class="menu-card">
     <navigator url="/pages/admin/settings/system-name" class="menu-item">
@@ -41,6 +42,12 @@
       <image class="menu-icon" src="/images/announcement.png"></image>
       <text class="menu-text">系统公告</text>
       <view class="menu-value">{{systemSettings.system_description ? '已设置' : '暂未设置'}}</view>
+      <view class="arrow-icon">＞</view>
+    </navigator>
+    
+    <navigator url="/pages/admin/logs/list" class="menu-item">
+      <image class="menu-icon" src="/images/log.png"></image>
+      <text class="menu-text">操作日志</text>
       <view class="arrow-icon">＞</view>
     </navigator>
   </view>

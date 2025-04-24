@@ -131,11 +131,12 @@ def upload_file(current_user, template_id):
             current_app.logger.info('更新现有文件记录')
             old_file.file_path = file_path
             old_file.filename = original_filename  # 使用真实原始文件名
-            old_file.update_time = datetime.utcnow()
+            old_file.upload_date = datetime.utcnow()
             # 添加这一行：重置为待审批状态
             old_file.status = 'pending'
             # 记录状态变更
             current_app.logger.info(f'文件重新提交，状态已重置为待审批: file_id={old_file.id}')
+            file_id = old_file.id
         else:
             current_app.logger.info('创建新的文件记录')
             user_file = UserFile(
@@ -145,9 +146,36 @@ def upload_file(current_user, template_id):
                 filename=original_filename  # 使用真实原始文件名
             )
             db.session.add(user_file)
+            db.session.flush()  # 获取新创建记录的ID
+            file_id = user_file.id
             
         db.session.commit()
         current_app.logger.info('数据库记录已更新')
+        
+        # 向管理员发送新文件提交通知
+        try:
+            # 导入消息服务
+            from app.services.message_service import MessageService
+            
+            # 获取所有管理员
+            admins = User.query.filter_by(is_admin=True).all()
+            
+                
+            for admin in admins:
+                MessageService.create_submission_notice(
+                    admin_id=admin.id,
+                    user_id=current_user.id,
+                    file_id=file_id,
+                    template_name=template.name,
+                    filename=original_filename
+                )
+                
+            current_app.logger.info(f'已向管理员发送文件提交通知')
+            
+        except Exception as e:
+            current_app.logger.error(f"发送提交通知失败: {str(e)}")
+            current_app.logger.error(traceback.format_exc())
+            # 通知发送失败不影响文件上传流程
         
         return jsonify({
             'message': '上传成功',
@@ -551,6 +579,18 @@ def approve_submission(current_user, file_id):
         # 更新用户文件状态
         user_file.status = approval_status
         db.session.commit()
+
+
+        # 添加日志记录 - 新增代码
+        from app.services.log_service import LogService
+        LogService.log_file_approval(
+            admin_id=current_user.id,
+            user_id=user_file.user_id,
+            file_id=file_id,
+            filename=user_file.filename,
+            status=approval_status,
+            comments=comments
+        )
         
         # 发送微信订阅消息通知
         try:

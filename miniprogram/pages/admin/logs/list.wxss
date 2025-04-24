@@ -1,0 +1,633 @@
+.container {
+  padding: 30rpx;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* 筛选区域样式 */
+.filter-section {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.filter-item {
+  margin-bottom: 30rpx;
+}
+
+.filter-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.filter-content {
+  width: 100%;
+}
+
+/* 选择器样式 */
+.picker-view {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.icon-arrow {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 日期筛选样式 */
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.date-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx;
+  background-color: #f8f8f8;
+  border-radius: 6rpx;
+}
+
+.date-separator {
+  margin: 0 20rpx;
+  color: #999;
+}
+
+.icon-calendar {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 用户筛选样式 */
+.user-filter {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-tabs {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  background-color: #f5f5f5;
+  transition: all 0.3s;
+}
+
+.tab:first-child {
+  border-radius: 8rpx 0 0 8rpx;
+}
+
+.tab:last-child {
+  border-radius: 0 8rpx 8rpx 0;
+}
+
+.tab.active {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 16rpx;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 6rpx;
+  font-size: 26rpx;
+}
+
+.btn-select {
+  width: 100rpx;
+  height: 70rpx;
+  line-height: 70rpx;
+  font-size: 24rpx;
+  background-color: #f5f5f5;
+  color: #666;
+  margin-left: 16rpx;
+}
+
+/* 筛选操作按钮 */
+.filter-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.btn {
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}
+
+.btn-reset {
+  background-color: #f5f5f5;
+  color: #666;
+  flex: 1;
+}
+
+.btn-search {
+  background-color: #1890ff;
+  color: #fff;
+  flex: 1;
+}
+
+.btn-export-all {
+  background-color: #722ed1;
+  color: #fff;
+  flex: 1;
+}
+
+.btn-export {
+  background-color: #52c41a;
+  color: #fff;
+}
+
+/* 日志列表区域样式 */
+.log-section {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.section-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+/* 表格样式 */
+.log-table {
+  width: 100%;
+  overflow: hidden;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 8rpx;
+}
+
+.table-header {
+  display: flex;
+  background-color: #fafafa;
+  border-bottom: 1rpx solid #e8e8e8;
+}
+
+.th {
+  padding: 24rpx 16rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #666;
+  text-align: left;
+}
+
+.th-type { width: 18%; }
+.th-time { width: 25%; }
+.th-user { width: 15%; }
+.th-content { width: 30%; }
+.th-status { width: 12%; }
+
+.table-body {
+  max-height: 800rpx;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.td {
+  padding: 24rpx 16rpx;
+  font-size: 26rpx;
+  color: #333;
+  text-align: left;
+}
+
+.td-type { width: 18%; }
+.td-time { width: 25%; }
+.td-user { width: 15%; }
+.td-content { width: 30%; }
+.td-status { width: 12%; }
+
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 日志类型标签 */
+.log-type-tag {
+  display: inline-block;
+  padding: 6rpx 12rpx;
+  border-radius: 4rpx;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.log-type-tag.system_notice {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.log-type-tag.template {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.log-type-tag.submission {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.log-type-tag.approval {
+  background-color: #fff2e8;
+  color: #fa541c;
+}
+
+.log-type-tag.inspection {
+  background-color: #f9f0ff;
+  color: #722ed1;
+}
+
+.log-type-tag.feedback {
+  background-color: #fff0f6;
+  color: #eb2f96;
+}
+
+/* 状态标签 */
+.status-tag {
+  display: inline-block;
+  padding: 6rpx 12rpx;
+  border-radius: 4rpx;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.status-tag.success {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.status-tag.pending {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.status-tag.rejected {
+  background-color: #fff1f0;
+  color: #f5222d;
+}
+
+.status-tag.processing {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 0;
+}
+
+.empty-icon {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 20rpx 0;
+  color: #999;
+  font-size: 26rpx;
+}
+
+/* 导出选项弹窗样式 */
+.export-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.export-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  width: 80%;
+  max-width: 600rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.icon-close {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.modal-body {
+  padding: 30rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.option-group {
+  margin-bottom: 30rpx;
+}
+
+.option-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.radio-item, .checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  padding: 20rpx 30rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.btn-confirm {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+/* 用户选择器弹窗样式 */
+.user-selector-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.user-selector-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 20rpx;
+}
+
+.search-input {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 0 80rpx 0 20rpx;
+  box-sizing: border-box;
+}
+
+.icon-search {
+  position: absolute;
+  top: 50%;
+  right: 20rpx;
+  transform: translateY(-50%);
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.user-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 24rpx 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.user-item:active {
+  background-color: #f9f9f9;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.user-company {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.user-phone {
+  font-size: 26rpx;
+  color: #666;
+}
+
+
+/* 添加到现有WXSS文件中 */
+
+/* 筛选行布局 */
+.filter-row {
+  display: flex;
+  margin-bottom: 20rpx;
+  gap: 20rpx;
+}
+
+.filter-column {
+  flex: 1;
+}
+
+/* 日期显示区域 */
+.date-display {
+  background: #f5f5f5;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  margin-bottom: 30rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.date-text {
+  font-size: 26rpx;
+  color: #1890ff;
+  margin-bottom: 10rpx;
+}
+
+/* 自定义日期范围选择器调整 */
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+}
+
+.date-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx;
+  background-color: #ffffff;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 6rpx;
+}
+
+.date-separator {
+  margin: 0 20rpx;
+  color: #999;
+}
+
+/* 用户角色选择标签 */
+.user-role-tabs {
+  display: flex;
+  margin-bottom: 16rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.role-tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.role-tab.active {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.user-select-container {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+}
+
+.user-select-input {
+  flex: 1;
+  padding: 20rpx;
+  background: #f8f8f8;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+}
+
+.btn-select {
+  width: 120rpx;
+  height: 70rpx;
+  line-height: 70rpx;
+  font-size: 24rpx;
+  background-color: #1890ff;
+  color: #fff;
+  margin-left: 16rpx;
+  border-radius: 8rpx;
+}
+
+.btn-select[disabled] {
+  background-color: #ccc;
+}
