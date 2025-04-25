@@ -761,6 +761,14 @@ def update_settings(current_user):
             type='system',
             admin_only=True  # 只通知管理员，如需通知所有用户，设为False
         )
+        # 添加日志记录
+        from app.services.log_service import LogService
+        LogService.log_system_notice(
+            operator_id=current_user.id,
+            title="系统通知已更新",
+            content=f"系统名称已更新为：{settings.system_name}\n系统通知：{settings.system_description}"
+        )# 添加日志记录
+
         
         return jsonify({'message': '设置更新成功'})
     except Exception as e:

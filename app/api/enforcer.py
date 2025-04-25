@@ -218,6 +218,20 @@ def create_inspection(current_user):
         
         db.session.add(inspection)
         db.session.commit()
+
+        # 在db.session.commit()之后、return之前添加：
+# 导入日志服务
+        from app.services.log_service import LogService
+
+        # 记录检查任务创建日志
+        LogService.log_inspection(
+            enforcer_id=current_user.id,
+            company_id=data['company_id'],
+            inspection_id=inspection.id,
+            inspection_type=data['inspection_type'],
+            status='pending'
+        )
+        current_app.logger.info(f"已记录检查任务创建日志: inspection_id={inspection.id}")
         
         # 通知管理员和企业（如果需要）
         try:
@@ -516,6 +530,22 @@ def complete_inspection(current_user, inspection_id):
         inspection.completed_at = datetime.utcnow()
         
         db.session.commit()
+
+        # 在db.session.commit()之后、发送通知之前添加：
+# 记录检查完成日志
+        try:
+            from app.services.log_service import LogService
+            LogService.log_inspection(
+                enforcer_id=current_user.id,
+                company_id=inspection.company_id,
+                inspection_id=inspection_id,
+                inspection_type=inspection.inspection_type,
+                status='completed'
+            )
+            current_app.logger.info(f"已记录检查完成日志: inspection_id={inspection_id}")
+        except Exception as e:
+            current_app.logger.error(f"记录检查完成日志失败: {str(e)}")
+            # 日志记录失败不影响业务流程
         
         # 发送通知
         try:

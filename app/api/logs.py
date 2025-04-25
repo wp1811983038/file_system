@@ -304,7 +304,12 @@ def export_logs_to_excel(logs, fields, include_template_files=False):
         
         # 创建Excel文件
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        file_name = f"操作日志_{timestamp}.xlsx"
+        # 使用ASCII文件名避免中文问题
+        use_ascii = request.json.get('use_ascii_filename', False)
+        if use_ascii:
+            file_name = f"logs_export_{timestamp}.xlsx"  # 纯英文文件名
+        else:
+            file_name = f"操作日志_{timestamp}.xlsx"  # 原中文文件名
         excel_path = os.path.join(temp_dir, file_name)
         
         current_app.logger.info(f"准备创建Excel文件: {excel_path}")

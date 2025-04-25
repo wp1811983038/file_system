@@ -20,6 +20,9 @@ def create_feedback(current_user):
         # 验证请求数据
         if not data or not data.get('content') or not data.get('type'):
             return jsonify({'error': '缺少必要参数'}), 400
+        
+        # 计算图片数量
+        images_count = len(data.get('image_urls', []))
             
         # 创建反馈记录
         feedback = Feedback(
@@ -33,6 +36,25 @@ def create_feedback(current_user):
         
         db.session.add(feedback)
         db.session.commit()
+
+        # 在db.session.commit()之后、MessageService调用之后添加：
+        # 记录详细日志
+        try:
+            from app.services.log_service import LogService
+            
+            LogService.log_feedback(
+                user_id=current_user.id,
+                feedback_id=feedback.id,
+                feedback_type=data['type'],
+                feedback_content=data['content'],
+                contact_info=feedback.contact_info,
+                company_name=current_user.company_name,
+                images_count=images_count
+            )
+            current_app.logger.info(f"已记录详细反馈提交日志: feedback_id={feedback.id}")
+        except Exception as e:
+            current_app.logger.error(f"记录反馈日志失败: {str(e)}")
+            # 日志记录失败不影响业务流程
         
         # 发送通知给管理员 - 新增代码
         try:
@@ -176,6 +198,25 @@ def reply_feedback(current_user, feedback_id):
         
         db.session.commit()
         
+        # 记录反馈回复日志 - 修复版本
+        try:
+            from app.services.log_service import LogService
+            
+            # 从反馈记录中获取必要的信息
+            LogService.log_feedback(
+                user_id=feedback.user_id,
+                feedback_id=feedback_id,
+                feedback_type=feedback.type,
+                feedback_content=feedback.content,  # 添加这一行 - 传递反馈内容
+                admin_id=current_user.id,
+                status=feedback.status,
+                reply=data['comment']
+            )
+            current_app.logger.info(f"已记录反馈回复日志: feedback_id={feedback_id}")
+        except Exception as e:
+            current_app.logger.error(f"记录反馈回复日志失败: {str(e)}")
+            # 日志记录失败不影响业务流程
+        
         # 可以添加通知用户的逻辑
         # ...
         
@@ -238,6 +279,23 @@ def update_feedback_status(current_user, feedback_id):
         feedback.updated_at = datetime.utcnow()
         
         db.session.commit()
+        
+        # 记录反馈状态更新日志 - 修复版本
+        try:
+            from app.services.log_service import LogService
+            
+            LogService.log_feedback(
+                user_id=feedback.user_id,
+                feedback_id=feedback_id,
+                feedback_type=feedback.type,
+                feedback_content=feedback.content,  # 添加这一行 - 传递反馈内容
+                admin_id=current_user.id,
+                status=feedback.status
+            )
+            current_app.logger.info(f"已记录反馈状态更新日志: feedback_id={feedback_id}")
+        except Exception as e:
+            current_app.logger.error(f"记录反馈状态更新日志失败: {str(e)}")
+            # 日志记录失败不影响业务流程
         
         return jsonify({
             'message': '状态更新成功',

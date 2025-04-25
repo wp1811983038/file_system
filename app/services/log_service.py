@@ -133,8 +133,9 @@ class LogService:
         )
     
     @staticmethod
-    def log_feedback(user_id, feedback_id, feedback_type, admin_id=None, status=None, reply=None):
-        """记录问题反馈日志"""
+    def log_feedback(user_id, feedback_id, feedback_type, feedback_content, contact_info='', 
+                    company_name='', images_count=0, admin_id=None, status=None, reply=None):
+        """记录详细的问题反馈日志"""
         if admin_id:
             # 管理员回复
             status_text = {
@@ -144,6 +145,7 @@ class LogService:
             }.get(status, status)
             
             log_content = f"回复问题反馈: {feedback_type} - {status_text}"
+            detailed_remarks = f"回复内容: {reply or '无'}\n反馈内容: {feedback_content[:100]}..."
             
             return LogService.create_log(
                 type='feedback',
@@ -151,7 +153,7 @@ class LogService:
                 target_user_id=user_id,
                 content=log_content,
                 status=status,
-                remarks=reply,
+                remarks=detailed_remarks,
                 related_id=feedback_id,
                 related_type='feedback'
             )
@@ -159,11 +161,20 @@ class LogService:
             # 用户提交
             log_content = f"提交问题反馈: {feedback_type}"
             
+            # 构建详细信息
+            detailed_remarks = (
+                f"反馈详细内容: {feedback_content}\n"
+                f"联系方式: {contact_info}\n"
+                f"单位名称: {company_name}\n"
+                f"附件图片数量: {images_count}张"
+            )
+            
             return LogService.create_log(
                 type='feedback',
                 operator_id=user_id,
                 content=log_content,
                 status='pending',
+                remarks=detailed_remarks,
                 related_id=feedback_id,
                 related_type='feedback'
             )

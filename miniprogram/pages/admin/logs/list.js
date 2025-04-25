@@ -667,6 +667,7 @@ Page({
 
   // 导出日志
   // 导出日志 - 修复后的完整函数
+// 导出日志函数 - 修复中文文件名问题
 exportLogs: function() {
   // 检查导出字段
   if (this.data.selectedFields.length === 0) {
@@ -686,31 +687,29 @@ exportLogs: function() {
   // 构建导出参数
   const params = {
     format: this.data.exportFormat,
-    fields: this.data.selectedFields.join(',')
+    fields: this.data.selectedFields.join(','),
+    use_ascii_filename: true  // 请求后端使用ASCII文件名
   };
 
-  // 如果不是导出全部数据，添加筛选条件
+  // 添加筛选条件
   if (!this.data.exportAllData) {
     params.start_date = this.data.startDate;
     params.end_date = this.data.endDate;
 
-    // 添加类型筛选
     if (this.data.logTypeIndex > 0) {
       params.type = this.data.logTypeOptions[this.data.logTypeIndex].value;
     }
 
-    // 添加用户筛选
     if (this.data.selectedUserId) {
       params.user_id = this.data.selectedUserId;
     }
 
-    // 添加角色筛选
     if (this.data.userRole && !this.data.selectedUserId) {
       params.role = this.data.userRole;
     }
   }
 
-  // 添加附加选项
+  // 附加选项
   if (this.data.additionalOptions.includes('include_template_files')) {
     params.include_template_files = true;
   }
@@ -727,17 +726,15 @@ exportLogs: function() {
     },
     data: params,
     success: (res) => {
-      console.log('导出响应:', res);
+      console.log('导出响应:', res.data);
       
       if (res.statusCode === 200 && res.data && res.data.download_url) {
         // 隐藏导出选项弹窗
         this.hideExportOptions();
         
-        // 获取下载URL
-        const downloadUrl = res.data.download_url;
-        const filename = res.data.filename || '操作日志.xlsx';
-        
-        console.log('准备下载文件:', downloadUrl);
+        // 确保URL是完整路径
+        let downloadUrl = res.data.download_url;
+        console.log('下载URL:', downloadUrl);
         
         // 显示下载中提示
         wx.showLoading({
@@ -749,7 +746,7 @@ exportLogs: function() {
         wx.downloadFile({
           url: downloadUrl,
           success: (result) => {
-            console.log('下载结果:', result);
+            console.log('下载成功:', result);
             wx.hideLoading();
             
             if (result.statusCode === 200) {
@@ -758,8 +755,8 @@ exportLogs: function() {
               // 打开文件
               wx.openDocument({
                 filePath: tempFilePath,
-                fileType: this.data.exportFormat, // 指定文件类型
-                showMenu: true, // 显示顶部菜单，方便用户保存
+                fileType: this.data.exportFormat,  // 指定文件类型
+                showMenu: true,  // 允许用户保存
                 success: () => {
                   console.log('打开文件成功');
                   wx.showToast({
@@ -770,23 +767,18 @@ exportLogs: function() {
                 fail: (err) => {
                   console.error('打开文件失败:', err);
                   
-                  // 如果打开失败，提供保存选项
+                  // 文件下载成功但无法打开时的处理
                   wx.showModal({
                     title: '文件已下载',
-                    content: '无法自动打开文件，是否保存到手机?',
-                    confirmText: '保存',
-                    success: (res) => {
-                      if (res.confirm) {
-                        // 尝试保存文件
-                        this.saveFile(tempFilePath, filename);
-                      }
-                    }
+                    content: '但无法自动打开，请手动查看"文件"应用中的下载项',
+                    showCancel: false
                   });
                 }
               });
             } else {
+              console.error('下载状态码异常:', result.statusCode);
               wx.showToast({
-                title: '下载文件失败',
+                title: '下载文件异常',
                 icon: 'none'
               });
             }
@@ -795,18 +787,18 @@ exportLogs: function() {
             wx.hideLoading();
             console.error('下载文件失败:', err);
             
+            // 针对中文文件名问题的特别处理
             wx.showModal({
               title: '下载失败',
-              content: '无法下载文件，请检查网络连接或联系管理员',
+              content: '可能是因为文件名包含中文字符，请联系管理员修改导出文件名格式',
               showCancel: false
             });
           }
         });
       } else {
         wx.hideLoading();
-        console.error('导出响应错误:', res);
+        console.error('导出响应无效:', res);
         
-        // 显示更详细的错误信息
         wx.showModal({
           title: '导出失败',
           content: res.data && res.data.error ? res.data.error : '服务器返回无效数据',
@@ -820,13 +812,13 @@ exportLogs: function() {
       
       wx.showModal({
         title: '导出失败',
-        content: '请求服务器失败，请检查网络连接或联系管理员',
+        content: '请求服务器失败，请检查网络连接',
         showCancel: false
       });
     }
   });
 
-  // 导出完成后重置导出标记
+  // 重置导出标记
   this.setData({
     exportAllData: false
   });

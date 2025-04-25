@@ -176,6 +176,23 @@ def upload_file(current_user, template_id):
             current_app.logger.error(f"发送提交通知失败: {str(e)}")
             current_app.logger.error(traceback.format_exc())
             # 通知发送失败不影响文件上传流程
+
+        # 在db.session.commit()之后添加：
+        try:
+            # 导入日志服务
+            from app.services.log_service import LogService
+            
+            # 记录文件提交日志
+            LogService.log_file_submission(
+                user_id=current_user.id,
+                template_id=template_id,
+                template_name=template.name,
+                filename=original_filename
+            )
+            current_app.logger.info(f'已记录文件提交日志: user_id={current_user.id}, file_id={file_id}')
+        except Exception as e:
+            current_app.logger.error(f"记录文件提交日志失败: {str(e)}")
+            # 日志记录失败不影响文件上传流程
         
         return jsonify({
             'message': '上传成功',
