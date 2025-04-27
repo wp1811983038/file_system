@@ -179,3 +179,32 @@
   font-size: 50rpx;
   font-weight: bold;
 }
+
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+  background: #fff;
+  border-radius: 12rpx;
+}
+
+.empty-icon {
+  font-size: 60rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  color: #999;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-action {
+  color: #07c160;
+  font-size: 28rpx;
+  padding: 10rpx 30rpx;
+  border: 1px solid #07c160;
+  border-radius: 30rpx;
+}

@@ -167,30 +167,76 @@
   margin-left: 8rpx;
 }
 
-/* 操作按钮 */
+/* 优化后的操作按钮样式 */
 .action-btns {
   display: flex;
   gap: 20rpx;
   margin-top: 20rpx;
 }
 
-.btn-detail, .btn-delete {
-  font-size: 24rpx;
-  padding: 8rpx 20rpx;
-  border-radius: 6rpx;
-  min-width: auto;
+.btn-execute {
+  background: #07c160; /* 鲜亮的绿色 */
+  color: #fff;
+  font-size: 28rpx;
+  padding: 12rpx 30rpx;
+  border-radius: 40rpx; /* 更圆润的按钮 */
+  border: none;
+  box-shadow: 0 6rpx 10rpx rgba(7, 193, 96, 0.2); /* 添加阴影效果 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1.5;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 160rpx;
 }
 
-.btn-detail {
-  background: #1890ff;
+.btn-execute:active {
+  transform: scale(0.98); /* 点击时的缩放效果 */
+  box-shadow: 0 2rpx 5rpx rgba(7, 193, 96, 0.2);
+}
+
+.btn-view {
+  background: #1890ff; /* 蓝色 */
   color: #fff;
+  font-size: 28rpx;
+  padding: 12rpx 30rpx;
+  border-radius: 40rpx;
+  border: none;
+  box-shadow: 0 6rpx 10rpx rgba(24, 144, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 160rpx;
+}
+
+.btn-view:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 5rpx rgba(24, 144, 255, 0.2);
 }
 
 .btn-delete {
   background: #fff;
   color: #ff4d4f;
-  border: 1rpx solid #ff4d4f;
+  font-size: 28rpx;
+  padding: 12rpx 30rpx;
+  border-radius: 40rpx;
+  border: 1px solid #ff4d4f;
+  box-shadow: 0 4rpx 8rpx rgba(255, 77, 79, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+  min-width: 120rpx;
+}
+
+.btn-delete:active {
+  background: rgba(255, 77, 79, 0.05);
+  transform: scale(0.98);
 }
 
 /* 加载更多 */
@@ -226,6 +272,7 @@
   padding: 16rpx 32rpx;
   border-radius: 40rpx;
   box-shadow: 0 6rpx 16rpx rgba(24, 144, 255, 0.3);
+  font-weight: 500;
 }
 
 .btn-icon {

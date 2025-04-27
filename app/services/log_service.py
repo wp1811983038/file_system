@@ -117,7 +117,8 @@ class LogService:
         """记录执法检查日志"""
         status_text = {
             'pending': '计划',
-            'completed': '完成'
+            'completed': '完成',
+            'deleted': '删除'  # 新增状态文本映射
         }.get(status, status)
         
         log_content = f"{status_text}{inspection_type}检查"

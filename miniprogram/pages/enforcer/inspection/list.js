@@ -17,7 +17,7 @@ Page({
     if (options.type && ['all', 'pending', 'completed'].includes(options.type)) {
       this.setData({ activeTab: options.type });
     }
-    
+
     // 加载检查任务列表
     this.loadInspections();
   },
@@ -49,7 +49,7 @@ Page({
   // 切换标签
   switchTab(e) {
     const type = e.currentTarget.dataset.type;
-    
+
     if (type !== this.data.activeTab) {
       this.setData({
         activeTab: type,
@@ -69,7 +69,7 @@ Page({
 
   // 清除关键词
   clearKeyword() {
-    this.setData({ 
+    this.setData({
       keyword: '',
       page: 1,
       inspections: [],
@@ -94,29 +94,29 @@ Page({
   // 加载检查任务列表
   loadInspections() {
     if (this.data.isLoading || !this.data.hasMoreData) return Promise.resolve();
-    
+
     this.setData({ isLoading: true });
-    
+
     return new Promise((resolve, reject) => {
       const token = wx.getStorageSync('token');
       if (!token) {
         wx.redirectTo({ url: '/pages/login/login' });
         return resolve();
       }
-      
+
       // 构建API请求参数
       let params = `page=${this.data.page}&limit=${this.data.perPage}`;
-      
+
       // 添加过滤条件
       if (this.data.activeTab !== 'all') {
         params += `&status=${this.data.activeTab}`;
       }
-      
+
       // 添加搜索关键词
       if (this.data.keyword) {
         params += `&keyword=${encodeURIComponent(this.data.keyword)}`;
       }
-      
+
       wx.request({
         url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections?${params}`,
         method: 'GET',
@@ -126,7 +126,7 @@ Page({
         success: (res) => {
           if (res.statusCode === 200) {
             const newData = res.data.inspections || [];
-            
+
             this.setData({
               inspections: [...this.data.inspections, ...newData],
               hasMoreData: newData.length >= this.data.perPage,
@@ -180,7 +180,7 @@ Page({
   // 显示删除确认对话框
   showDeleteConfirm(e) {
     const id = e.currentTarget.dataset.id;
-    
+
     wx.showModal({
       title: '确认删除',
       content: '确定要删除此检查任务吗？此操作不可恢复。',
@@ -195,12 +195,20 @@ Page({
     });
   },
 
+  // 执行检查
+  executeInspection(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/enforcer/inspection/execute?id=${id}`
+    });
+  },
+
   // 删除检查任务
   deleteInspection(id) {
     const token = wx.getStorageSync('token');
-    
+
     wx.showLoading({ title: '删除中...' });
-    
+
     wx.request({
       url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/${id}`,
       method: 'DELETE',
@@ -213,7 +221,7 @@ Page({
             title: '删除成功',
             icon: 'success'
           });
-          
+
           // 刷新列表
           this.setData({
             page: 1,

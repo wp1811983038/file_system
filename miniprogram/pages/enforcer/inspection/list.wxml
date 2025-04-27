@@ -53,10 +53,16 @@
         </view>
       </view>
       
-      <!-- 操作按钮 -->
+      <!-- 操作按钮 - 优化部分 -->
       <view class="action-btns">
-        <button class="btn-detail" bindtap="viewInspectionDetail" data-id="{{item.id}}">查看详情</button>
-        <button class="btn-delete" wx:if="{{item.status === 'pending'}}" bindtap="showDeleteConfirm" data-id="{{item.id}}">删除</button>
+        <button class="{{item.status === 'pending' ? 'btn-execute' : 'btn-view'}}" 
+                bindtap="{{item.status === 'pending' ? 'executeInspection' : 'viewInspectionDetail'}}" 
+                data-id="{{item.id}}">
+          {{item.status === 'pending' ? '执行检查' : '查看详情'}}
+        </button>
+        <button class="btn-delete" wx:if="{{item.status === 'pending'}}" bindtap="showDeleteConfirm" data-id="{{item.id}}">
+          删除
+        </button>
       </view>
     </view>
     
@@ -67,6 +73,5 @@
     </view>
   </scroll-view>
   
-  <!-- 底部新建按钮 -->
-  
+
 </view>

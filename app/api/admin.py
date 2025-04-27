@@ -473,6 +473,7 @@ def delete_template(current_user, template_id):
     """删除模板"""
     try:
         template = FileTemplate.query.get_or_404(template_id)
+        template_name = template.name  # 保存模板名称用于日志记录
         
         # 先查找关联的用户文件
         user_files = UserFile.query.filter_by(template_id=template_id).all()
@@ -503,6 +504,15 @@ def delete_template(current_user, template_id):
                 
         db.session.delete(template)
         db.session.commit()
+        
+        # 记录删除模板操作的日志 - 新增代码
+        from app.services.log_service import LogService
+        LogService.log_template_operation(
+            operator_id=current_user.id,
+            operation='delete',
+            template_id=template_id,
+            template_name=template_name
+        )
         
         return jsonify({'message': '模板删除成功'})
     except Exception as e:

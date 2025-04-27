@@ -554,7 +554,8 @@ Page({
       'pending': '待处理',
       'rejected': '已拒绝',
       'approved': '已通过',
-      'processing': '处理中'
+      'processing': '处理中',
+      'deleted': '已删除'  // 新增状态映射
     };
     return statusTextMap[status] || '未知状态';
   },

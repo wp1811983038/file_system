@@ -78,6 +78,10 @@
   "usingComponents": {
     "pie-chart": "/components/pie-chart/pie-chart"
   },
+  "requiredPrivateInfos": [
+    "getLocation",
+    "chooseLocation"
+  ],
   "permission": {
     "scope.userLocation": {
       "desc": "您的位置信息将用于导航到企业地址"

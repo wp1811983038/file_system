@@ -34,7 +34,11 @@
       <view class="action-btn">执行检查</view>
     </view>
   </view>
-  <view class="empty-tip" wx:else>暂无待检查企业</view>
+  <view class="empty-tip" wx:else>
+  <view class="empty-icon">📋</view>
+  <view class="empty-text">暂无待检查企业</view>
+  <view class="empty-action" bindtap="createNewInspection">请先创建检查任务</view>
+</view> 
 
   <view class="section-title">企业列表</view>
   <view class="company-list" wx:if="{{companies.length > 0}}">

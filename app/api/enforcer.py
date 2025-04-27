@@ -401,15 +401,11 @@ def get_inspection_detail(current_user, inspection_id):
 @enforcer_required
 def get_pending_inspections(current_user):
     try:
-        # 获取当前日期
-        today = datetime.now().date()
-        
-        # 查询今天或之前的待执行检查任务
+        # 移除日期过滤，直接查询所有待执行检查任务并限制为最近2个
         inspections = Inspection.query.filter(
             Inspection.enforcer_id == current_user.id,
-            Inspection.status == 'pending',
-            Inspection.planned_date <= today
-        ).order_by(Inspection.planned_date).all()
+            Inspection.status == 'pending'
+        ).order_by(Inspection.planned_date).limit(2).all()  # 限制返回最近的2个任务
         
         # 准备响应数据
         result = []
@@ -602,6 +598,10 @@ def delete_inspection(current_user, inspection_id):
             enforcer_id=current_user.id
         ).first_or_404()
         
+        # 保存检查任务信息用于日志记录
+        company_id = inspection.company_id
+        inspection_type = inspection.inspection_type
+        
         # 检查状态 - 只允许删除待执行的检查
         if inspection.status != 'pending':
             return jsonify({'error': '只能删除待执行的检查任务'}), 400
@@ -613,6 +613,16 @@ def delete_inspection(current_user, inspection_id):
         # 删除检查任务
         db.session.delete(inspection)
         db.session.commit()
+        
+        # 记录删除检查任务的日志 - 新增代码
+        from app.services.log_service import LogService
+        LogService.log_inspection(
+            enforcer_id=current_user.id,
+            company_id=company_id,
+            inspection_id=inspection_id,
+            inspection_type=inspection_type,
+            status='deleted'  # 新增状态：deleted表示已删除
+        )
         
         return jsonify({'message': '检查任务已删除'})
     except Exception as e:
