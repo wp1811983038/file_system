@@ -237,7 +237,7 @@ Page({
     
     const inspectionId = this.data.message.related_info.id;
     wx.navigateTo({
-      url: `/pages/admin/inspection/detail?id=${inspectionId}`
+      url: `/pages/enforcer/inspection/detail?id=${inspectionId}`
     });
   },
   
@@ -269,8 +269,8 @@ Page({
   viewFeedbackDetail() {
     // 使用related_id而不是related_info.id
     const feedbackId = this.data.message.related_id || 
-                       (this.data.message.related_info ? this.data.message.related_info.id : null);
-                       
+                     (this.data.message.related_info ? this.data.message.related_info.id : null);
+                     
     if (!feedbackId) {
       wx.showToast({
         title: '反馈信息不完整',

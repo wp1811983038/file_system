@@ -185,6 +185,8 @@ class MessageService:
         try:
             # 构建通知内容
             content = f"执法部门将于 {planned_datetime} 对您的企业进行{inspection_type}。\n\n"
+            # 构建通知内容
+  
             content += f"检查内容：{description}\n"
             if basis:
                 content += f"检查依据：{basis}\n"

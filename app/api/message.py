@@ -84,11 +84,10 @@ def get_unread_count(current_user):
         return jsonify({'error': str(e)}), 500
 
 # 获取消息详情
-# 获取消息详情
-# 获取消息详情
 @bp.route('/<int:message_id>', methods=['GET'])
 @token_required
 def get_message(current_user, message_id):
+    """获取消息详情"""
     try:
         message = Message.query.filter_by(
             id=message_id, 

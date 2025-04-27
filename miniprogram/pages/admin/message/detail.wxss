@@ -80,14 +80,15 @@
 }
 
 /* 关联信息 */
-.related-info {
+.related-info, .related-feedback, .related-file {
   background: #fff;
   border-radius: 12rpx;
   padding: 30rpx;
+  margin-bottom: 30rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
-.related-title {
+.related-title, .section-title {
   font-size: 30rpx;
   font-weight: 500;
   color: #333;
@@ -105,6 +106,7 @@
   width: 160rpx;
   font-size: 28rpx;
   color: #666;
+  flex-shrink: 0;
 }
 
 .info-value {
@@ -243,8 +245,8 @@
   color: #666;
 }
 
-/* 照片列表样式 - 调整为三列 */
-.photo-list {
+/* 照片列表样式 */
+.photo-list, .photo-section {
   display: flex;
   flex-wrap: wrap;
   margin: 0 -10rpx;

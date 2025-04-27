@@ -82,6 +82,74 @@
     </button>
   </view>
   
+  <!-- 执法检查相关信息 -->
+  <view class="related-info" wx:if="{{message.related_type === 'inspection'}}">
+    <view class="section-title">检查详情</view>
+    <view class="info-card">
+      <!-- 基本信息 -->
+      <view class="info-item">
+        <text class="info-label">检查类型：</text>
+        <text class="info-value">{{message.related_info.inspection_type}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">企业名称：</text>
+        <text class="info-value">{{message.related_info.company_name}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">计划时间：</text>
+        <text class="info-value highlight">
+          {{message.related_info.planned_date}} {{message.related_info.planned_time || ''}}
+        </text>
+      </view>
+  
+      <view class="info-item">
+        <text class="info-label">检查状态：</text>
+        <text class="info-value status-{{message.related_info.status}}">
+          {{message.related_info.status === 'completed' ? '已完成' : '待执行'}}
+        </text>
+      </view>
+      <view class="info-item" wx:if="{{message.related_info.completed_at}}">
+        <text class="info-label">完成时间：</text>
+        <text class="info-value">{{message.related_info.completed_at}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">检查内容：</text>
+        <text class="info-value">{{message.related_info.description || '无'}}</text>
+      </view>
+      <view class="info-item" wx:if="{{message.related_info.basis}}">
+        <text class="info-label">检查依据：</text>
+        <text class="info-value">{{message.related_info.basis}}</text>
+      </view>
+    </view>
+    
+    <!-- 问题列表 -->
+    <view class="problem-section" wx:if="{{message.related_info.problems && message.related_info.problems.length > 0}}">
+      <view class="section-title">问题记录 ({{message.related_info.problems.length}})</view>
+      <view class="problem-list">
+        <view class="problem-item" wx:for="{{message.related_info.problems}}" wx:key="id">
+          <view class="problem-header">
+            <view class="problem-type">{{item.type}}</view>
+            <view class="problem-severity severity-{{item.severity}}">
+              {{item.severity === 'high' ? '严重' : (item.severity === 'medium' ? '中等' : '轻微')}}
+            </view>
+          </view>
+          <view class="problem-description">{{item.description}}</view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 照片列表 -->
+    <view class="photo-section" wx:if="{{message.related_info.photos && message.related_info.photos.length > 0}}">
+      <view class="section-title">检查照片 ({{message.related_info.photos.length}})</view>
+      <view class="photo-list">
+        <view class="photo-item" wx:for="{{message.related_info.photos}}" wx:key="id" bindtap="previewImage" data-url="{{item.photo_url}}">
+          <image class="photo-image" src="{{item.photo_url}}" mode="aspectFill"></image>
+          <view class="photo-description" wx:if="{{item.description}}">{{item.description}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+  
   <!-- 其他消息类型内容 -->
   <view class="message-content" wx:if="{{message.type !== 'feedback'}}">
     <text>{{message.content}}</text>
