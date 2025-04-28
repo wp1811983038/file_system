@@ -9,7 +9,7 @@ class Inspection(db.Model):
     enforcer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     inspection_type = db.Column(db.String(50), nullable=False)
-    planned_date = db.Column(db.Date, nullable=False)
+    planned_datetime = db.Column(db.DateTime, nullable=False)  # 修改为DateTime类型
     description = db.Column(db.Text)
     basis = db.Column(db.Text)
     status = db.Column(db.String(20), default='pending')  # pending, completed
@@ -23,13 +23,14 @@ class Inspection(db.Model):
     photos = db.relationship('InspectionPhoto', backref='inspection', lazy='dynamic', cascade='all, delete-orphan')
     
     def to_dict(self):
+        # 保持向后兼容，依然返回planned_date字段
         return {
             'id': self.id,
             'enforcer_id': self.enforcer_id,
             'company_id': self.company_id,
             'company_name': self.company.company_name,
             'inspection_type': self.inspection_type,
-            'planned_date': self.planned_date.strftime('%Y-%m-%d') if self.planned_date else None,
+            'planned_date': self.planned_datetime.strftime('%Y-%m-%d %H:%M') if self.planned_datetime else None,
             'description': self.description,
             'basis': self.basis,
             'status': self.status,

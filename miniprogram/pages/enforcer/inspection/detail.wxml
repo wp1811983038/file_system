@@ -46,8 +46,8 @@
         </view>
         
         <view class="meta-item">
-          <text class="meta-label">计划时间：</text>
-          <text class="meta-value highlight">{{inspection.inspection.planned_date}}</text>
+          <text class="meta-label">计划时间：</text>          
+            <text class="meta-value highlight">{{message.related_info.planned_date}}</text>
         </view>
         
         <view class="meta-item" wx:if="{{inspection.inspection.completed_at}}">

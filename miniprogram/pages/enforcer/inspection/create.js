@@ -179,46 +179,46 @@ Page({
   },
 
   // 提交表单
-  async submitForm() {
-    // 表单验证
-    if (!this.validateForm()) return
+// 提交表单
+async submitForm() {
+  // 表单验证
+  if (!this.validateForm()) return
+  
+  this.setData({ submitting: true })
+  
+  try {
+    // 合并日期和时间
+    const plannedDateTime = `${this.data.formData.planned_date} ${this.data.formData.planned_time}`;
+    console.log('计划检查时间:', plannedDateTime);
     
-    this.setData({ submitting: true })
-    
-    try {
-      // 合并日期和时间
-      const plannedDateTime = `${this.data.formData.planned_date} ${this.data.formData.planned_time}`;
-      console.log('计划检查时间:', plannedDateTime);
-      
-      // 正确包装wx.request为Promise
-      const res = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/create`,
-          method: 'POST',
-          data: {
-            company_id: this.data.companyId,
-            inspection_type: this.data.inspectionTypes[this.data.typeIndex],
-            planned_date: this.data.formData.planned_date,
-            planned_time: this.data.formData.planned_time,
-            planned_datetime: plannedDateTime,
-            description: this.data.formData.description,
-            basis: this.data.formData.basis,
-            notify_company: this.data.formData.notify_company
-          },
-          header: {
-            'Authorization': `Bearer ${wx.getStorageSync('token')}`,
-            'Content-Type': 'application/json'
-          },
-          success: result => {
-            console.log('请求成功，响应数据:', result);
-            resolve(result);
-          },
-          fail: error => {
-            console.error('请求失败:', error);
-            reject(error);
-          }
-        });
+    // 正确包装wx.request为Promise
+    const res = await new Promise((resolve, reject) => {
+      wx.request({
+        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/create`,
+        method: 'POST',
+        data: {
+          company_id: this.data.companyId,
+          inspection_type: this.data.inspectionTypes[this.data.typeIndex],
+          planned_date: this.data.formData.planned_date,
+          planned_time: this.data.formData.planned_time,
+          description: this.data.formData.description,
+          basis: this.data.formData.basis,
+          notify_company: this.data.formData.notify_company
+        },
+        header: {
+          'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+          'Content-Type': 'application/json'
+        },
+        success: result => {
+          console.log('请求成功，响应数据:', result);
+          resolve(result);
+        },
+        fail: error => {
+          console.error('请求失败:', error);
+          reject(error);
+        }
       });
+    });
       
       console.log('响应状态码:', res.statusCode);
       console.log('响应数据:', res.data);

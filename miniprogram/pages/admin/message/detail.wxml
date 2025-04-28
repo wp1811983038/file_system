@@ -95,11 +95,9 @@
         <text class="info-label">企业名称：</text>
         <text class="info-value">{{message.related_info.company_name}}</text>
       </view>
-      <view class="info-item">
-        <text class="info-label">计划时间：</text>
-        <text class="info-value highlight">
-          {{message.related_info.planned_date}} {{message.related_info.planned_time || ''}}
-        </text>
+      <view class="meta-item">
+        <text class="meta-label">计划时间：</text>
+        <text class="meta-value highlight">{{message.related_info.planned_date}}</text>
       </view>
   
       <view class="info-item">

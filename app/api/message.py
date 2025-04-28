@@ -155,7 +155,8 @@ def get_message(current_user, message_id):
                         'inspection_type': inspection.inspection_type,
                         'company_id': inspection.company_id,
                         'company_name': inspection.company.company_name if inspection.company else "未知企业",
-                        'planned_date': inspection.planned_date.strftime('%Y-%m-%d') if inspection.planned_date else None,
+                        # 修改这一行，使用完整的日期时间格式
+                        'planned_date': inspection.planned_datetime.strftime('%Y-%m-%d %H:%M') if inspection.planned_datetime else None,
                         'description': inspection.description,
                         'basis': inspection.basis,
                         'status': inspection.status,

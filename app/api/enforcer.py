@@ -190,13 +190,12 @@ def create_inspection(current_user):
         planned_date_str = data['planned_date']
         planned_time_str = data.get('planned_time', '00:00')  # 默认时间为00:00
         
+        # 存储完整时间字符串用于消息显示
+        display_datetime = f"{planned_date_str} {planned_time_str}"
+        
         try:
-            # 如果提供了完整日期时间
-            if 'planned_datetime' in data:
-                planned_datetime = datetime.strptime(data['planned_datetime'], '%Y-%m-%d %H:%M')
-            else:
-                # 否则组合日期和时间
-                planned_datetime = datetime.strptime(f"{planned_date_str} {planned_time_str}", '%Y-%m-%d %H:%M')
+            # 解析为完整的datetime对象
+            planned_datetime = datetime.strptime(f"{planned_date_str} {planned_time_str}", '%Y-%m-%d %H:%M')
         except ValueError:
             return jsonify({'error': '日期时间格式无效'}), 400
         
@@ -204,12 +203,12 @@ def create_inspection(current_user):
         company = User.query.get(data['company_id'])
         company_name = company.company_name if company else "未知企业"
         
-        # 创建检查任务
+        # 创建检查任务 - 使用planned_datetime字段
         inspection = Inspection(
             enforcer_id=current_user.id,
             company_id=data['company_id'],
             inspection_type=data['inspection_type'],
-            planned_date=planned_datetime,  # 使用包含时间的日期时间对象
+            planned_datetime=planned_datetime,  # 使用正确的字段名
             description=data['description'],
             basis=data.get('basis', ''),
             status='pending',
@@ -219,11 +218,8 @@ def create_inspection(current_user):
         db.session.add(inspection)
         db.session.commit()
 
-        # 在db.session.commit()之后、return之前添加：
-# 导入日志服务
-        from app.services.log_service import LogService
-
         # 记录检查任务创建日志
+        from app.services.log_service import LogService
         LogService.log_inspection(
             enforcer_id=current_user.id,
             company_id=data['company_id'],
@@ -238,9 +234,9 @@ def create_inspection(current_user):
             # 获取所有管理员
             admins = User.query.filter_by(is_admin=True).all()
             
-            # 创建通知内容
+            # 创建通知内容 - 使用display_datetime
             notification_content = f"执法人员 {current_user.username} 创建了针对企业 {company_name} 的检查任务，"
-            notification_content += f"计划检查时间为 {planned_date_str}。"
+            notification_content += f"计划检查时间为 {display_datetime}。"
             notification_content += f"\n检查类型：{data['inspection_type']}"
             notification_content += f"\n检查内容：{data['description']}"
             if data.get('basis'):
@@ -258,7 +254,7 @@ def create_inspection(current_user):
             # 如果需要通知企业
             if data.get('notify_company', False):
                 # 发送通知给企业
-                company_notification = f"执法部门将于 {planned_date_str} 对您的企业进行{data['inspection_type']}，请做好准备。"
+                company_notification = f"执法部门将于 {display_datetime} 对您的企业进行{data['inspection_type']}，请做好准备。"
                 company_notification += f"\n检查内容：{data['description']}"
                 
                 MessageService.create_inspection_message(
@@ -294,7 +290,7 @@ def get_inspections(current_user):
         company_id = request.args.get('company_id')
         keyword = request.args.get('keyword', '')
         
-        # 构建查询
+        # 构建查询 - 这一行初始化query变量
         query = Inspection.query.filter_by(enforcer_id=current_user.id)
         
         # 过滤状态
@@ -327,7 +323,7 @@ def get_inspections(current_user):
                 'company_id': insp.company_id,
                 'company_name': insp.company.company_name,
                 'inspection_type': insp.inspection_type,
-                'planned_date': insp.planned_date.strftime('%Y-%m-%d') if insp.planned_date else None,
+                'planned_date': insp.planned_datetime.strftime('%Y-%m-%d %H:%M') if insp.planned_datetime else None,
                 'description': insp.description,
                 'status': insp.status,
                 'created_at': insp.created_at.strftime('%Y-%m-%d %H:%M:%S'),
@@ -405,7 +401,7 @@ def get_pending_inspections(current_user):
         inspections = Inspection.query.filter(
             Inspection.enforcer_id == current_user.id,
             Inspection.status == 'pending'
-        ).order_by(Inspection.planned_date).limit(2).all()  # 限制返回最近的2个任务
+        ).order_by(Inspection.planned_datetime).limit(2).all()  # 限制返回最近的2个任务
         
         # 准备响应数据
         result = []
@@ -416,7 +412,7 @@ def get_pending_inspections(current_user):
                 'company_name': insp.company.company_name,
                 'company_address': insp.company.company_address,
                 'inspection_type': insp.inspection_type,
-                'planned_time': insp.planned_date.strftime('%Y-%m-%d') if insp.planned_date else None,
+                'planned_date': insp.planned_datetime.strftime('%Y-%m-%d %H:%M') if insp.planned_datetime else None,
                 'description': insp.description
             })
         
