@@ -1,7 +1,7 @@
 <!-- miniprogram/pages/enforcer/index/index.wxml -->
 <view class="container">
   <view class="search-bar">
-    <icon type="search" size="18" color="#999"></icon>
+    <icon type="search" size="18" color="#64748b"></icon>
     <input placeholder="搜索企业名称" bindinput="onSearchInput" value="{{searchKeyword}}" confirm-type="search" bindconfirm="searchCompany"/>
     <view class="search-btn" bindtap="searchCompany">搜索</view>
   </view>
@@ -27,31 +27,38 @@
       <view class="company-info">
         <view class="company-name">{{item.company_name}}</view>
         <view class="company-address">{{item.company_address}}</view>
+        <view class="inspection-time">
+          <text>计划检查: {{item.planned_date}}</text>
+        </view>
       </view>
-      <view class="inspection-time">
-        <text>计划检查: {{item.planned_time}}</text>
+      <view class="action-btn-container">
+        <button class="action-btn" catchtap="navigateToInspection" data-id="{{item.id}}">执行检查</button>
       </view>
-      <view class="action-btn">执行检查</view>
     </view>
   </view>
   <view class="empty-tip" wx:else>
-  <view class="empty-icon">📋</view>
-  <view class="empty-text">暂无待检查企业</view>
-  <view class="empty-action" bindtap="createNewInspection">请先创建检查任务</view>
-</view> 
+    <view class="empty-icon">📋</view>
+    <view class="empty-text">暂无待检查企业</view>
+    <view class="empty-action" bindtap="showCompanySelector">创建检查任务</view>
+  </view>
 
   <view class="section-title">企业列表</view>
   <view class="company-list" wx:if="{{companies.length > 0}}">
-    <view class="company-item" wx:for="{{companies}}" wx:key="id" bindtap="selectCompany" data-id="{{item.id}}">
+    <view class="company-item" wx:for="{{companies}}" wx:key="id" data-id="{{item.id}}">
       <view class="company-info">
         <view class="company-name">{{item.company_name}}</view>
         <view class="company-address">{{item.company_address}}</view>
+        <view class="industry-badge">{{item.industry}}</view>
       </view>
-      <view class="industry-badge">{{item.industry}}</view>
-      <view class="action-btn">发起检查</view>
+      <view class="action-btn-container">
+        <button class="action-btn" catchtap="selectCompany" data-id="{{item.id}}">发起检查</button>
+      </view>
     </view>
   </view>
-  <view class="empty-tip" wx:else>暂无匹配企业</view>
+  <view class="empty-tip" wx:else>
+    <view class="empty-icon">🏢</view>
+    <view class="empty-text">暂无匹配企业</view>
+  </view>
   
   <view class="load-more" wx:if="{{hasMoreCompanies}}" bindtap="loadMoreCompanies">加载更多</view>
 

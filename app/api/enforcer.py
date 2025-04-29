@@ -396,12 +396,17 @@ def get_inspection_detail(current_user, inspection_id):
 @token_required
 @enforcer_required
 def get_pending_inspections(current_user):
+    # 添加更多日志
+    current_app.logger.info(f"获取待执行检查任务: user_id={current_user.id}")
+    
     try:
-        # 移除日期过滤，直接查询所有待执行检查任务并限制为最近2个
+        # 查询条件
         inspections = Inspection.query.filter(
             Inspection.enforcer_id == current_user.id,
             Inspection.status == 'pending'
-        ).order_by(Inspection.planned_datetime).limit(2).all()  # 限制返回最近的2个任务
+        ).order_by(Inspection.planned_datetime).all()  # 移除limit
+        
+        current_app.logger.info(f"找到待执行检查任务: {len(inspections)}个")
         
         # 准备响应数据
         result = []

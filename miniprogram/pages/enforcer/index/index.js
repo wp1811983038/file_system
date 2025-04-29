@@ -145,31 +145,37 @@ Page({
     try {
       console.log('开始加载待检查任务');
       
-      const res = await app.request({
-        url: '/api/v1/enforcer/inspections/pending',
-        method: 'GET'
+      // 使用原生wx.request确保获取完整响应
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/pending`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          },
+          success: (result) => {
+            console.log('完整响应对象:', result);
+            resolve(result);
+          },
+          fail: (error) => {
+            console.error('请求失败:', error);
+            reject(error);
+          }
+        });
       });
-  
-      console.log('待检查任务响应:', res.data);
       
-      if (res.data && res.data.inspections) {
+      console.log('待检查任务完整响应:', res);
+      
+      if (res.statusCode === 200 && res.data && res.data.inspections) {
         this.setData({
           pendingInspections: res.data.inspections || []
         });
-        
-        // 检查数据不一致的情况
-        if (res.data.inspections.length !== this.data.stats.pending_count) {
-          console.warn('待检查任务数量与统计数据不一致');
-          // 重新获取统计数据来保持一致性
-          this.loadDashboardData();
-        }
+        console.log('设置后的待检查任务:', this.data.pendingInspections);
+      } else {
+        console.error('获取待检查任务失败:', res);
       }
     } catch (err) {
-      console.error('加载待检查任务失败:', err);
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      });
+      console.error('加载待检查任务异常:', err);
     }
   },
 

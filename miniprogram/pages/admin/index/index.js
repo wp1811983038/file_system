@@ -27,9 +27,20 @@ Page({
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
-        selected: 0  // 首页
+        selected: 0
       })
     }
+    
+    // 每次页面显示时，刷新所有数据
+    this.setData({
+      page: 1,
+      companies: [],
+      pendingInspections: []
+    }, () => {
+      this.loadDashboardData();
+      this.loadCompanies();
+      this.loadPendingInspections();
+    });
   },
 
   onPullDownRefresh() {
