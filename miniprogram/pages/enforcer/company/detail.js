@@ -15,6 +15,12 @@ Page({
     defaultLocation: {
       latitude: 34.746,
       longitude: 113.625
+    },
+    filesStats: {
+      total: 0,
+      approved: 0,
+      rejected: 0,
+      pending: 0
     }
   },
 
@@ -38,70 +44,112 @@ Page({
   },
 
   // 加载企业详细信息
-  loadCompanyDetail() {
-    wx.showLoading({ title: '加载中...' });
-    
-    const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`;
-    console.log('请求URL:', url);
-    console.log('公司ID:', this.data.companyId);
-    
-    wx.request({
-      url: url,
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${wx.getStorageSync('token')}`
-      },
-      success: (res) => {
-        console.log('请求成功:', res);
-        if (res.statusCode === 200) {
-          this.setData({ company: res.data });
-          if (res.data.company_address) {
-            this.geocodeAddress(res.data.company_address);
+// 加载企业详情数据
+loadCompanyDetail() {
+  wx.showLoading({ title: '加载中...' });
+  
+  const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}`;
+  console.log('请求企业详情URL:', url);
+  
+  wx.request({
+    url: url,
+    method: 'GET',
+    header: {
+      'Authorization': `Bearer ${wx.getStorageSync('token')}`
+    },
+    success: (res) => {
+      console.log('企业详情数据:', res);
+      if (res.statusCode === 200) {
+        // 设置企业基本信息
+        this.setData({ 
+          company: res.data,
+          inspectionStats: res.data.inspection_stats || {
+            total: 0,
+            pending_count: 0,
+            completed_count: 0
           }
-        } else {
-          console.error('API错误:', res);
-          wx.showToast({
-            title: '获取企业信息失败',
-            icon: 'none'
-          });
+        });
+        
+        if (res.data.company_address) {
+          this.geocodeAddress(res.data.company_address);
         }
-      },
-      fail: (err) => {
-        console.error('请求失败详情:', err);
+      } else {
         wx.showToast({
-          title: '网络请求失败',
+          title: '获取企业信息失败',
           icon: 'none'
         });
-      },
-      complete: () => {
-        wx.hideLoading();
       }
-    });
-  },
+    },
+    fail: (err) => {
+      console.error('请求失败:', err);
+      wx.showToast({
+        title: '网络请求失败',
+        icon: 'none'
+      });
+    },
+    complete: () => {
+      wx.hideLoading();
+    }
+  });
+},
 
   // 加载检查历史
-  async loadInspectionHistory() {
-    try {
-      const res = await wx.request({
-        url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections`,
-        method: 'GET',
-        data: {
-          company_id: this.data.companyId
-        },
-        header: {
-          'Authorization': `Bearer ${wx.getStorageSync('token')}`
-        }
-      })
-      
-      if (res.statusCode === 200) {
-        this.setData({
-          inspectionHistory: res.data.inspections || []
-        })
+// pages/enforcer/company/detail.js
+// 修改loadInspectionHistory函数，分离待执行和已完成的检查任务
+async loadInspectionHistory() {
+  try {
+    const res = await wx.request({
+      url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections`,
+      method: 'GET',
+      data: {
+        company_id: this.data.companyId
+      },
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
       }
-    } catch (err) {
-      console.error('加载检查历史失败:', err)
+    })
+    
+    if (res.statusCode === 200) {
+      const inspections = res.data.inspections || [];
+      
+      // 分离待执行和已完成的检查
+      const pendingInspections = [];
+      const completedInspections = [];
+      
+      inspections.forEach(inspection => {
+        if (inspection.status === 'pending') {
+          pendingInspections.push(inspection);
+        } else if (inspection.status === 'completed') {
+          completedInspections.push(inspection);
+        }
+      });
+      
+      // 计算统计信息
+      const inspectionStats = {
+        total: inspections.length,
+        pending: pendingInspections.length,
+        completed: completedInspections.length
+      };
+      
+      this.setData({
+        inspectionHistory: inspections,
+        pendingInspections,
+        completedInspections,
+        inspectionStats
+      });
     }
-  },
+  } catch (err) {
+    console.error('加载检查历史失败:', err)
+  }
+},
+
+// 添加执行检查的方法
+executeInspection(e) {
+  const id = e.currentTarget.dataset.id;
+  wx.navigateTo({
+    url: `/pages/enforcer/inspection/execute?id=${id}`
+  });
+},
 
   // 加载企业文件
   async loadCompanyFiles() {
@@ -133,14 +181,35 @@ Page({
           }
         })
         
-        this.setData({ files })
+        this.setData({ files }, () => {
+          this.calculateFileStats();
+        })
       }
     } catch (err) {
       console.error('加载企业文件失败:', err)
     }
   },
 
-  // 地址解析为坐标 - 修改版本，添加错误处理
+  // 计算文件统计信息
+  calculateFileStats() {
+    const files = this.data.files || [];
+    const stats = {
+      total: files.length,
+      approved: 0,
+      rejected: 0,
+      pending: 0
+    };
+    
+    files.forEach(file => {
+      if (file.status === 'approved') stats.approved++;
+      else if (file.status === 'rejected') stats.rejected++;
+      else stats.pending++;
+    });
+    
+    this.setData({ filesStats: stats });
+  },
+
+  // 地址解析为坐标
   geocodeAddress(address) {
     app.geocoder(address).then(res => {
       const location = res.location
@@ -189,7 +258,7 @@ Page({
     }
   },
 
-  // 地图导航 - 修改版本，兜底使用默认坐标
+  // 地图导航
   openLocation() {
     // 检查mapLocation是否有效，否则使用默认坐标
     const location = this.data.mapLocation || this.data.defaultLocation
@@ -203,7 +272,7 @@ Page({
     })
   },
   
-  // 新增：点击地址直接导航
+  // 点击地址直接导航
   navigateToAddress() {
     this.openLocation();
   },

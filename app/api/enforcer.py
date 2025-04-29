@@ -125,6 +125,11 @@ def get_company_detail(current_user, company_id):
         # 查询企业用户
         company = User.query.filter_by(id=company_id, role='user').first_or_404()
         
+        # 查询检查统计
+        inspections = Inspection.query.filter_by(company_id=company_id).all()
+        pending_inspections = [i for i in inspections if i.status == 'pending']
+        completed_inspections = [i for i in inspections if i.status == 'completed']
+        
         # 准备响应数据
         result = {
             'id': company.id,
@@ -133,12 +138,52 @@ def get_company_detail(current_user, company_id):
             'contact_info': company.contact_info,
             'company_address': company.company_address,
             'industry': company.industry,
-            'recruitment_unit': company.recruitment_unit
+            'recruitment_unit': company.recruitment_unit,
+            'inspection_stats': {
+                'total': len(inspections),
+                'pending_count': len(pending_inspections),
+                'completed_count': len(completed_inspections),
+                'last_inspection_date': max([i.completed_at for i in completed_inspections], default=None)
+            }
         }
         
         return jsonify(result)
     except Exception as e:
         current_app.logger.error(f"获取企业详情失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    
+
+# 新增：获取企业检查统计信息
+@bp.route('/companies/<int:company_id>/inspection_stats', methods=['GET'])
+@token_required
+@enforcer_required
+def get_company_inspection_stats(current_user, company_id):
+    """获取企业检查统计信息"""
+    try:
+        # 查询所有检查记录
+        inspections = Inspection.query.filter_by(company_id=company_id).all()
+        
+        # 计算统计数据
+        total = len(inspections)
+        pending_count = sum(1 for insp in inspections if insp.status == 'pending')
+        completed_count = sum(1 for insp in inspections if insp.status == 'completed')
+        
+        # 计算问题统计
+        problem_count = 0
+        for insp in inspections:
+            if insp.status == 'completed':
+                problem_count += insp.problems.count()
+        
+        return jsonify({
+            'total': total,
+            'pending_count': pending_count,
+            'completed_count': completed_count,
+            'problem_count': problem_count,
+            'last_inspection_date': max([insp.completed_at for insp in inspections if insp.completed_at], default=None)
+        })
+    except Exception as e:
+        current_app.logger.error(f"获取企业检查统计失败: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
@@ -372,9 +417,26 @@ def get_inspection_detail(current_user, inspection_id):
                 'description': photo.description
             })
         
+        # 添加执法人员名称
+        enforcer_name = inspection.enforcer.username if inspection.enforcer else "未知执法人员"
+        
         # 准备响应数据
         result = {
-            'inspection': inspection.to_dict(),
+            'inspection': {
+                'id': inspection.id,
+                'enforcer_id': inspection.enforcer_id,
+                'enforcer_name': enforcer_name,  # 添加执法人员名称
+                'company_id': inspection.company_id,
+                'inspection_type': inspection.inspection_type,
+                'planned_date': inspection.planned_datetime.strftime('%Y-%m-%d %H:%M') if inspection.planned_datetime else None,
+                'description': inspection.description,
+                'basis': inspection.basis,
+                'status': inspection.status,
+                'created_at': inspection.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'completed_at': inspection.completed_at.strftime('%Y-%m-%d %H:%M:%S') if inspection.completed_at else None,
+                'problem_count': len(problems),
+                'photo_count': len(photos)
+            },
             'company': {
                 'id': inspection.company.id,
                 'company_name': inspection.company.company_name,
@@ -630,4 +692,67 @@ def delete_inspection(current_user, inspection_id):
         current_app.logger.error(f"删除检查任务失败: {str(e)}")
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@bp.route('/companies/<int:company_id>/pending_inspections', methods=['GET'])
+@token_required
+@enforcer_required
+def get_company_pending_inspections(current_user, company_id):
+    """获取企业待执行检查任务"""
+    try:
+        inspections = Inspection.query.filter(
+            Inspection.company_id == company_id,
+            Inspection.status == 'pending'
+        ).order_by(Inspection.planned_datetime).all()
+        
+        result = []
+        for insp in inspections:
+            result.append({
+                'id': insp.id,
+                'inspection_type': insp.inspection_type,
+                'planned_date': insp.planned_datetime.strftime('%Y-%m-%d %H:%M') if insp.planned_datetime else None,
+                'description': insp.description,
+                'status': insp.status
+            })
+        
+        return jsonify({
+            'pending_inspections': result
+        })
+    except Exception as e:
+        current_app.logger.error(f"获取企业待执行检查失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/companies/<int:company_id>/completed_inspections', methods=['GET'])
+@token_required
+@enforcer_required
+def get_company_completed_inspections(current_user, company_id):
+    """获取企业已完成检查任务"""
+    try:
+        inspections = Inspection.query.filter(
+            Inspection.company_id == company_id,
+            Inspection.status == 'completed'
+        ).order_by(Inspection.completed_at.desc()).all()
+        
+        result = []
+        for insp in inspections:
+            result.append({
+                'id': insp.id,
+                'inspection_type': insp.inspection_type,
+                'planned_date': insp.planned_datetime.strftime('%Y-%m-%d %H:%M') if insp.planned_datetime else None,
+                'completed_time': insp.completed_at.strftime('%Y-%m-%d %H:%M:%S') if insp.completed_at else None,
+                'description': insp.description,
+                'status': insp.status,
+                'problem_count': insp.problems.count(),
+                'photo_count': insp.photos.count()
+            })
+        
+        return jsonify({
+            'completed_inspections': result
+        })
+    except Exception as e:
+        current_app.logger.error(f"获取企业已完成检查失败: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500

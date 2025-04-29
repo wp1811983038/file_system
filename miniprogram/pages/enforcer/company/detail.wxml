@@ -20,33 +20,63 @@
     
     <view class="info-item">
       <text class="info-label">企业地址：</text>
-      <text class="info-value">{{company.company_address}}</text>
+      <view class="address-container" bindtap="navigateToAddress">
+        <text class="info-value">{{company.company_address || '暂无地址'}}</text>
+        <text class="navigate-text" wx:if="{{company.company_address}}">导航</text>
+      </view>
     </view>
     
     <view class="info-item">
       <text class="info-label">招商单位：</text>
       <text class="info-value">{{company.recruitment_unit || '未知'}}</text>
     </view>
-    
-    <view class="info-item">
-  <text class="info-label">企业地址：</text>
-  <view class="address-container" bindtap="navigateToAddress">
-    <text class="info-value">{{company.company_address || '暂无地址'}}</text>
-    <text class="navigate-text" wx:if="{{company.company_address}}">导航</text>
   </view>
-</view>
+  
+  <!-- 执法统计卡片 -->
+  <view class="inspection-stats-card">
+    <view class="stat-item">
+      <text class="stat-number">{{inspectionStats.pending_count}}</text>
+      <text class="stat-label">待执法</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{inspectionStats.completed_count}}</text>
+      <text class="stat-label">已完成</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{inspectionStats.total}}</text>
+      <text class="stat-label">检查总数</text>
+    </view>
   </view>
+  
+  <!-- 待执法任务 -->
+  <view class="section-title">待执法任务</view>
+  <view class="inspection-list" wx:if="{{pendingInspections.length > 0}}">
+    <view class="inspection-item" wx:for="{{pendingInspections}}" wx:key="id" bindtap="viewInspectionDetail" data-id="{{item.id}}">
+      <view class="inspection-header">
+        <view class="inspection-time">{{item.planned_date}}</view>
+        <view class="inspection-status pending">待执行</view>
+      </view>
+      <view class="inspection-desc">{{item.description || '常规检查'}}</view>
+      <view class="action-row">
+        <button class="action-btn execute" catchtap="executeInspection" data-id="{{item.id}}">执行检查</button>
+      </view>
+    </view>
+  </view>
+  <view class="empty-tip" wx:else>暂无待执法任务</view>
   
   <!-- 检查历史 -->
   <view class="section-title">检查历史</view>
-  <view class="inspection-list" wx:if="{{inspectionHistory.length > 0}}">
-    <view class="inspection-item" wx:for="{{inspectionHistory}}" wx:key="id" bindtap="viewInspectionDetail" data-id="{{item.id}}">
-      <view class="inspection-time">{{item.inspection_time}}</view>
-      <view class="inspection-status {{item.status === 'completed' ? 'completed' : 'pending'}}">
-        {{item.status === 'completed' ? '已完成' : '进行中'}}
+  <view class="inspection-list" wx:if="{{completedInspections.length > 0}}">
+    <view class="inspection-item" wx:for="{{completedInspections}}" wx:key="id" bindtap="viewInspectionDetail" data-id="{{item.id}}">
+      <view class="inspection-header">
+        <view class="inspection-time">{{item.completed_time || item.planned_date}}</view>
+        <view class="inspection-status completed">已完成</view>
       </view>
       <view class="inspection-desc">{{item.description || '常规检查'}}</view>
-      <view class="arrow-right"></view>
+      <view class="inspection-result" wx:if="{{item.problem_count || item.photo_count}}">
+        <text wx:if="{{item.problem_count}}">发现问题: {{item.problem_count}}项</text>
+        <text wx:if="{{item.photo_count}}">照片: {{item.photo_count}}张</text>
+      </view>
     </view>
   </view>
   <view class="empty-tip" wx:else>暂无检查历史</view>

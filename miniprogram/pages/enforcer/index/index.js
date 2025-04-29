@@ -141,43 +141,55 @@ Page({
   },
 
   // 加载待检查任务
-  async loadPendingInspections() {
-    try {
-      console.log('开始加载待检查任务');
-      
-      // 使用原生wx.request确保获取完整响应
-      const res = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.baseUrl}/api/v1/enforcer/inspections/pending`,
-          method: 'GET',
-          header: {
-            'Authorization': `Bearer ${wx.getStorageSync('token')}`
-          },
-          success: (result) => {
-            console.log('完整响应对象:', result);
-            resolve(result);
-          },
-          fail: (error) => {
-            console.error('请求失败:', error);
-            reject(error);
-          }
-        });
-      });
-      
-      console.log('待检查任务完整响应:', res);
-      
-      if (res.statusCode === 200 && res.data && res.data.inspections) {
+  // 加载待执行检查任务
+loadPendingInspections() {
+  const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}/pending_inspections`;
+  console.log('请求待执行检查URL:', url);
+  
+  wx.request({
+    url: url,
+    method: 'GET',
+    header: {
+      'Authorization': `Bearer ${wx.getStorageSync('token')}`
+    },
+    success: (res) => {
+      console.log('待执行检查数据:', res);
+      if (res.statusCode === 200) {
         this.setData({
           pendingInspections: res.data.inspections || []
         });
-        console.log('设置后的待检查任务:', this.data.pendingInspections);
-      } else {
-        console.error('获取待检查任务失败:', res);
       }
-    } catch (err) {
-      console.error('加载待检查任务异常:', err);
+    },
+    fail: (err) => {
+      console.error('加载待执行检查失败:', err);
     }
-  },
+  });
+},
+// 加载已完成检查任务
+loadCompletedInspections() {
+  const url = `${app.globalData.baseUrl}/api/v1/enforcer/companies/${this.data.companyId}/completed_inspections`;
+  console.log('请求已完成检查URL:', url);
+  
+  wx.request({
+    url: url,
+    method: 'GET',
+    header: {
+      'Authorization': `Bearer ${wx.getStorageSync('token')}`
+    },
+    success: (res) => {
+      console.log('已完成检查数据:', res);
+      if (res.statusCode === 200) {
+        this.setData({
+          completedInspections: res.data.inspections || []
+        });
+      }
+    },
+    fail: (err) => {
+      console.error('加载已完成检查失败:', err);
+    }
+  });
+},
+
 
   // 搜索输入处理
   onSearchInput(e) {

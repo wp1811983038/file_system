@@ -9,7 +9,7 @@
   background: #fff;
   border-radius: 12rpx;
   padding: 30rpx;
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
 }
 
@@ -62,29 +62,45 @@
   margin-left: 20rpx;
 }
 
-/* 地图容器 */
-.map-container {
-  margin-top: 20rpx;
-  position: relative;
-  height: 300rpx;
-  border-radius: 8rpx;
-  overflow: hidden;
+/* 执法统计卡片 */
+.inspection-stats-card {
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
 }
 
-map {
-  width: 100%;
-  height: 100%;
+.stat-item {
+  text-align: center;
 }
 
-.map-btn {
-  position: absolute;
-  bottom: 20rpx;
-  right: 20rpx;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 24rpx;
-  padding: 10rpx 20rpx;
-  border-radius: 30rpx;
+.stat-number {
+  font-size: 42rpx;
+  font-weight: bold;
+  color: #1890ff;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.stat-item:nth-child(1) .stat-number {
+  color: #f59e0b;
+}
+
+.stat-item:nth-child(2) .stat-number {
+  color: #52c41a;
+}
+
+.stat-item:nth-child(3) .stat-number {
+  color: #1890ff;
+}
+
+.stat-label {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
 }
 
 /* 标题样式 */
@@ -96,7 +112,7 @@ map {
   border-left: 8rpx solid #07c160;
 }
 
-/* 检查历史列表 */
+/* 检查列表 */
 .inspection-list, .file-list {
   background: #fff;
   border-radius: 12rpx;
@@ -107,16 +123,19 @@ map {
 .inspection-item, .file-item {
   padding: 25rpx 30rpx;
   border-bottom: 1rpx solid #eee;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
   position: relative;
+}
+
+.inspection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
 }
 
 .inspection-time {
   font-size: 26rpx;
   color: #666;
-  margin-right: 20rpx;
 }
 
 .inspection-status {
@@ -138,8 +157,34 @@ map {
 .inspection-desc {
   font-size: 28rpx;
   color: #333;
-  margin-top: 10rpx;
-  width: 100%;
+  margin-bottom: 12rpx;
+}
+
+.inspection-result {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #888;
+}
+
+.action-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16rpx;
+}
+
+.action-btn {
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  line-height: 1.5;
+  margin: 0;
+  background: #fff;
+}
+
+.action-btn.execute {
+  background: #07c160;
+  color: #fff;
 }
 
 .file-icon {
@@ -198,6 +243,10 @@ map {
   border-top: 4rpx solid #ccc;
   border-right: 4rpx solid #ccc;
   transform: rotate(45deg);
+  position: absolute;
+  top: 50%;
+  right: 30rpx;
+  margin-top: -8rpx;
 }
 
 /* 空列表提示 */
