@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title class="system-name">个人设置 - 文件管理系统</title>
+    <title>个人设置 - 文件管理系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* 基础变量定义 - 与base.html保持一致 */
+        /* 基础变量定义 */
         :root {
             --primary-color: #1890ff;
             --primary-hover: #40a9ff;
@@ -40,7 +39,7 @@
             line-height: 1.5;
         }
 
-        /* 顶部导航栏 - 继承自base.html */
+        /* 顶部导航栏 */
         .header {
             height: 60px;
             background-color: #fff;
@@ -73,6 +72,56 @@
             display: flex;
             align-items: center;
             gap: 20px;
+        }
+        
+        /* 添加消息指示器样式 */
+        .notification-indicator {
+            position: relative;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .notification-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .notification-icon:hover {
+            color: var(--primary-color);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        
+        /* 统计指示器 */
+        .stats-indicator {
+            position: relative;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .stats-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .stats-icon:hover {
+            color: var(--primary-color);
         }
 
         .user-info {
@@ -451,6 +500,67 @@
             font-size: 12px;
             color: var(--text-secondary);
         }
+        
+        /* 头像管理样式 */
+        .avatar-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .avatar-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .avatar-wrapper:hover .avatar-overlay {
+            opacity: 1;
+        }
+        
+        .avatar-actions {
+            margin-top: 10px;
+        }
+        
+        .avatar-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        
+        .avatar-btn:hover {
+            background-color: rgba(24, 144, 255, 0.1);
+        }
 
         /* 消息提示样式 */
         .toast-container {
@@ -496,6 +606,14 @@
 
         .toast-error i {
             color: var(--danger-color);
+        }
+        
+        .toast-info {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .toast-info i {
+            color: var(--primary-color);
         }
 
         .toast-content {
@@ -565,8 +683,19 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="header-right">
+            <!-- 消息通知指示器 -->
+            <div class="notification-indicator" onclick="navigateToMessages()">
+                <i class="fas fa-bell notification-icon"></i>
+                <div class="notification-badge" id="unreadMessageBadge" style="display: none;">0</div>
+            </div>
+            
+            <!-- 统计分析指示器 -->
+            <div class="stats-indicator" onclick="navigateToStats()">
+                <i class="fas fa-chart-bar stats-icon"></i>
+            </div>
+            
             <div class="user-info">
-                <i class="fas fa-user-circle"></i>
+                <i class="fas fa-user-circle" id="userAvatar"></i>
                 <span class="user-name" id="username"></span>
                 <span class="company-info" id="companyInfo"></span>
             </div>
@@ -585,6 +714,24 @@
                     <a href="/templates/user/files.html">
                         <i class="fas fa-file-alt"></i>
                         文件管理
+                    </a>
+                </li>
+                <li class="menu-item" id="messagesMenuItem">
+                    <a href="/templates/user/messages.html">
+                        <i class="fas fa-bell"></i>
+                        消息中心
+                    </a>
+                </li>
+                <li class="menu-item" id="statsMenuItem">
+                    <a href="/templates/user/stats.html">
+                        <i class="fas fa-chart-line"></i>
+                        统计分析
+                    </a>
+                </li>
+                <li class="menu-item" id="feedbackMenuItem">
+                    <a href="/templates/user/feedback.html">
+                        <i class="fas fa-comment-alt"></i>
+                        问题反馈
                     </a>
                 </li>
                 <li class="menu-item active" id="settingsMenuItem">
@@ -620,6 +767,32 @@
 
             <!-- 设置内容 -->
             <div class="settings-container">
+                <!-- 头像管理卡片 -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <i class="fas fa-user-circle"></i>
+                        <h3 class="card-title">头像管理</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="avatar-container">
+                            <div class="avatar-wrapper" onclick="chooseAvatar()">
+                                <img id="avatarImage" class="avatar-image" src="/static/images/default-avatar.png" alt="用户头像">
+                                <div class="avatar-overlay">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                            </div>
+                            <div class="avatar-actions">
+                                <button type="button" class="avatar-btn" onclick="chooseAvatar()">
+                                    <i class="fas fa-upload"></i> 更换头像
+                                </button>
+                                <button type="button" class="avatar-btn" onclick="resetAvatar()">
+                                    <i class="fas fa-undo"></i> 恢复默认
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- 个人信息卡片 -->
                 <div class="settings-card">
                     <div class="card-header">
@@ -770,6 +943,12 @@
             
             // 初始化手机号码验证
             initContactValidation();
+            
+            // 初始化头像
+            initAvatar();
+            
+            // 加载未读消息数
+            loadUnreadMessageCount();
         }
 
         // 初始化菜单切换
@@ -847,15 +1026,6 @@
             });
         }
 
-        // 添加 storage 事件监听
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'systemName' && e.newValue) {
-                updateSystemName(e.newValue);
-            } else if (e.key === 'settingsUpdated') {
-                loadSystemName();
-            }
-        });
-
         // 加载用户信息
         async function loadUserInfo() {
             const token = checkAuth();
@@ -898,12 +1068,22 @@
 
             const headerUsername = document.getElementById('username');
             const headerCompanyInfo = document.getElementById('companyInfo');
+            const userAvatar = document.getElementById('userAvatar');
 
             if (headerUsername) headerUsername.textContent = userData.username || '';
             if (headerCompanyInfo) {
                 headerCompanyInfo.textContent = userData.company_name ?
                     `${userData.company_name}` : '';
                 headerCompanyInfo.style.display = userData.company_name ? 'inline-block' : 'none';
+            }
+            
+            // 更新头像
+            if (userData.avatar_url) {
+                userAvatar.innerHTML = `<img src="${userData.avatar_url}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%;">`;
+                userAvatar.classList.remove('fas', 'fa-user-circle');
+            } else {
+                userAvatar.innerHTML = '';
+                userAvatar.classList.add('fas', 'fa-user-circle');
             }
         }
 
@@ -980,7 +1160,7 @@
             toast.id = id;
 
             toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
                 <div class="toast-content">
                     <div class="toast-message">${escapeHtml(message)}</div>
                 </div>
@@ -1135,6 +1315,238 @@
                 }
             });
         }
+        
+        // 初始化头像
+        function initAvatar() {
+            // 加载用户头像
+            loadUserAvatar();
+        }
+        
+        // 加载用户头像
+        async function loadUserAvatar() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                
+                // 先从本地存储获取
+                const cachedAvatarUrl = localStorage.getItem('userAvatarUrl');
+                if (cachedAvatarUrl) {
+                    document.getElementById('avatarImage').src = cachedAvatarUrl;
+                }
+                
+                // 然后从服务器获取最新的
+                const response = await fetch('/api/v1/users/avatar', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 更新头像显示
+                    if (data.avatar_url) {
+                        document.getElementById('avatarImage').src = data.avatar_url;
+                        
+                        // 缓存头像URL
+                        localStorage.setItem('userAvatarUrl', data.avatar_url);
+                    }
+                }
+            } catch (error) {
+                console.error('加载头像失败:', error);
+            }
+        }
+        
+        // 选择头像
+        function chooseAvatar() {
+            // 创建文件选择器
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            // 监听文件选择事件
+            input.onchange = function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    
+                    // 检查文件类型
+                    const fileType = file.type;
+                    if (!fileType.startsWith('image/')) {
+                        showToast('请选择图片文件', 'error');
+                        return;
+                    }
+                    
+                    // 检查文件大小（最大2MB）
+                    if (file.size > 2 * 1024 * 1024) {
+                        showToast('图片大小不能超过2MB', 'error');
+                        return;
+                    }
+                    
+                    // 上传头像
+                    uploadAvatar(file);
+                }
+            };
+            
+            // 触发文件选择器
+            input.click();
+        }
+        
+        // 上传头像
+        async function uploadAvatar(file) {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 显示加载提示
+                showToast('正在上传头像...', 'info');
+                
+                // 创建表单数据
+                const formData = new FormData();
+                formData.append('avatar', file);
+                
+                const response = await fetch('/api/v1/users/avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '上传失败');
+                }
+                
+                const data = await response.json();
+                
+                // 更新头像显示
+                if (data.avatar_url) {
+                    // 添加时间戳防止缓存
+                    const avatarUrl = data.avatar_url + '?t=' + Date.now();
+                    document.getElementById('avatarImage').src = avatarUrl;
+                    
+                    // 更新头像显示
+                    updateUserAvatar(data.avatar_url);
+                    
+                    // 缓存头像URL
+                    localStorage.setItem('userAvatarUrl', data.avatar_url);
+                    
+                    // 触发存储事件，通知其他页面更新头像
+                    localStorage.setItem('userAvatarUpdated', Date.now());
+                }
+                
+                showToast('头像上传成功', 'success');
+                
+            } catch (error) {
+                console.error('上传头像失败:', error);
+                showToast(error.message || '上传失败，请重试', 'error');
+            }
+        }
+        
+        // 更新用户头像显示
+        function updateUserAvatar(avatarUrl) {
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (userAvatar) {
+                // 如果有图片URL，则创建img元素
+                if (avatarUrl) {
+                    userAvatar.innerHTML = `<img src="${avatarUrl}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%;">`;
+                    userAvatar.classList.remove('fas', 'fa-user-circle');
+                } else {
+                    // 否则使用默认图标
+                    userAvatar.innerHTML = '';
+                    userAvatar.classList.add('fas', 'fa-user-circle');
+                }
+            }
+        }
+        
+        // 恢复默认头像
+        async function resetAvatar() {
+            if (!confirm('确定要恢复默认头像吗？')) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 显示加载提示
+                showToast('正在处理...', 'info');
+                
+                const response = await fetch('/api/v1/users/avatar', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '操作失败');
+                }
+                
+                // 更新为默认头像
+                document.getElementById('avatarImage').src = '/static/images/default-avatar.png';
+                
+                // 更新顶部头像
+                const userAvatar = document.getElementById('userAvatar');
+                userAvatar.innerHTML = '';
+                userAvatar.classList.add('fas', 'fa-user-circle');
+                
+                // 清除缓存的头像URL
+                localStorage.removeItem('userAvatarUrl');
+                
+                // 触发存储事件，通知其他页面更新头像
+                localStorage.setItem('userAvatarUpdated', Date.now());
+                
+                showToast('已恢复默认头像', 'success');
+                
+            } catch (error) {
+                console.error('恢复默认头像失败:', error);
+                showToast(error.message || '操作失败，请重试', 'error');
+            }
+        }
+        
+        // 获取未读消息数
+        async function loadUnreadMessageCount() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                
+                const response = await fetch('/api/v1/messages/unread/count', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUnreadBadge(data.count || 0);
+                }
+            } catch (error) {
+                console.error('获取未读消息数失败:', error);
+            }
+        }
+        
+        // 更新未读消息徽章
+        function updateUnreadBadge(count) {
+            const badge = document.getElementById('unreadMessageBadge');
+            
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // 导航到消息页面
+        function navigateToMessages() {
+            window.location.href = '/templates/user/messages.html';
+        }
+        
+        // 导航到统计分析页面
+        function navigateToStats() {
+            window.location.href = '/templates/user/stats.html';
+        }
 
         // 个人信息表单提交
         document.getElementById('profileForm').addEventListener('submit', async function (e) {
@@ -1190,7 +1602,7 @@
                     updateUserInfoDisplay(data.user);
                 }
 
-                showToast('个人信息已成功更新');
+                showToast('个人信息已成功更新', 'success');
             } catch (error) {
                 console.error('更新个人信息失败:', error);
                 showToast(error.message || '更新个人信息失败，请重试', 'error');
@@ -1259,7 +1671,7 @@
                     throw new Error(data.error || '修改密码失败');
                 }
 
-                showToast('密码已成功修改，即将跳转到登录页面...');
+                showToast('密码已成功修改，即将跳转到登录页面...', 'success');
 
                 // 清除表单
                 document.getElementById('passwordForm').reset();
@@ -1279,7 +1691,17 @@
                 submitButton.innerHTML = originalText;
             }
         });
+
+        // 添加 storage 事件监听
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'systemName' && e.newValue) {
+                updateSystemName(e.newValue);
+            } else if (e.key === 'settingsUpdated') {
+                loadSystemName();
+            } else if (e.key === 'userAvatarUpdated') {
+                loadUserAvatar();
+            }
+        });
     </script>
 </body>
-
 </html>

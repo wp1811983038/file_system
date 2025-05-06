@@ -1,0 +1,905 @@
+<!-- 问题反馈页面 feedback.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="system-name">问题反馈 - 文件管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 引入基础样式 */
+        /* 反馈页面样式 */
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #f5f5f5;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .filter-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .filter-tab.custom {
+            background: #e6f7ff;
+            color: var(--primary-color);
+        }
+        
+        .delete-type {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 5;
+        }
+        
+        .feedback-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .feedback-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+        
+        .feedback-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .type-tag {
+            padding: 5px 10px;
+            background: #e6f7ff;
+            color: var(--primary-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status-tag {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status-tag.pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        
+        .status-tag.processing {
+            background: #e6f7ff;
+            color: var(--primary-color);
+        }
+        
+        .status-tag.resolved {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .card-content {
+            margin-bottom: 15px;
+        }
+        
+        .content-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .delete-btn {
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        
+        .delete-btn:hover {
+            background: rgba(255, 77, 79, 0.1);
+        }
+        
+        /* 上传图片区域 */
+        .upload-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .image-preview {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .upload-button {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .upload-button:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .upload-icon {
+            font-size: 24px;
+            color: #bbb;
+            margin-bottom: 5px;
+        }
+        
+        .upload-text {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入页面头部和侧边栏 -->
+    
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 问题反馈内容 -->
+        <div class="action-header">
+            <h2 class="page-title">
+                <i class="fas fa-comment-alt"></i>
+                问题反馈
+            </h2>
+            <button class="action-btn btn-primary" onclick="showAddFeedbackModal()">
+                <i class="fas fa-plus"></i> 新增反馈
+            </button>
+        </div>
+        
+        <!-- 问题类型筛选区 -->
+        <div class="filter-tabs" id="filterTabs">
+            <div class="filter-tab active" data-type="all" onclick="filterByType('all')">全部</div>
+            <!-- 其他类型将通过JS动态加载 -->
+            <div class="filter-tab custom" onclick="showTypeModal()">
+                <i class="fas fa-plus"></i> 自定义
+            </div>
+        </div>
+        
+        <!-- 反馈列表 -->
+        <div class="feedback-list" id="feedbackList">
+            <!-- 反馈将通过JS动态加载 -->
+        </div>
+    </main>
+    
+    <!-- 新增反馈模态框 -->
+    <div id="addFeedbackModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-comment-alt"></i>
+                    新增问题反馈
+                </h3>
+                <button class="modal-close" onclick="closeModal('addFeedbackModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label for="feedbackType">问题类型</label>
+                    <select id="feedbackType" name="type" class="form-control" required>
+                        <option value="">请选择问题类型</option>
+                        <!-- 类型选项将通过JS动态加载 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="feedbackContent">问题描述</label>
+                    <textarea id="feedbackContent" name="content" class="form-control" 
+                              rows="5" required
+                              placeholder="请详细描述您遇到的问题..."></textarea>
+                    <small class="help-text">请至少输入10个字符</small>
+                </div>
+                <div class="form-group">
+                    <label>上传截图(可选)</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-button" onclick="chooseImage()">
+                            <div class="upload-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="upload-text">添加图片</div>
+                        </div>
+                    </div>
+                    <small class="help-text">最多上传3张图片，每张不超过2MB</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn btn-default" onclick="closeModal('addFeedbackModal')">
+                        取消
+                    </button>
+                    <button type="submit" class="action-btn btn-primary">
+                        提交
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 自定义类型模态框 -->
+    <div id="typeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-tags"></i>
+                    自定义问题类型
+                </h3>
+                <button class="modal-close" onclick="closeModal('typeModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="typeForm">
+                <div class="form-group">
+                    <label for="typeName">类型名称</label>
+                    <input type="text" id="typeName" name="typeName" class="form-control" 
+                           required placeholder="请输入新的问题类型">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn btn-default" onclick="closeModal('typeModal')">
+                        取消
+                    </button>
+                    <button type="submit" class="action-btn btn-primary">
+                        添加
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let feedbacks = [];
+        let feedbackTypes = ['功能问题', '使用建议', '内容错误', '其他问题'];
+        let currentType = 'all';
+        const statusText = {
+            'pending': '待处理',
+            'processing': '处理中',
+            'resolved': '已解决'
+        };
+        
+        // 图片上传相关
+        let imageList = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化应用
+            initApp();
+            
+            // 加载反馈类型
+            loadFeedbackTypes();
+            
+            // 加载反馈列表
+            loadFeedbacks();
+            
+            // 绑定表单提交事件
+            document.getElementById('feedbackForm').addEventListener('submit', submitFeedback);
+            document.getElementById('typeForm').addEventListener('submit', addFeedbackType);
+        });
+        
+        // 加载反馈类型
+        function loadFeedbackTypes() {
+            // 从本地存储加载自定义类型
+            const storedTypes = localStorage.getItem('feedbackTypes');
+            if (storedTypes) {
+                try {
+                    const customTypes = JSON.parse(storedTypes);
+                    
+                    // 确保默认类型始终存在
+                    const defaultTypes = ['功能问题', '使用建议', '内容错误', '其他问题'];
+                    const mergedTypes = [...defaultTypes];
+                    
+                    // 添加自定义类型（去重）
+                    customTypes.forEach(type => {
+                        if (!defaultTypes.includes(type) && !mergedTypes.includes(type)) {
+                            mergedTypes.push(type);
+                        }
+                    });
+                    
+                    feedbackTypes = mergedTypes;
+                } catch (e) {
+                    console.error('解析存储的类型失败:', e);
+                }
+            }
+            
+            // 渲染类型标签
+            renderTypeTabs();
+            
+            // 渲染类型下拉选项
+            renderTypeOptions();
+        }
+        
+        // 渲染类型标签
+        function renderTypeTabs() {
+            const filterTabs = document.getElementById('filterTabs');
+            
+            // 保留"全部"和"自定义"标签
+            filterTabs.innerHTML = `
+                <div class="filter-tab ${currentType === 'all' ? 'active' : ''}" 
+                     data-type="all" onclick="filterByType('all')">全部</div>
+            `;
+            
+            // 添加类型标签
+            feedbackTypes.forEach((type, index) => {
+                const isDefault = index < 4; // 前4个是默认类型
+                
+                filterTabs.innerHTML += `
+                    <div class="filter-tab ${currentType === type ? 'active' : ''}" 
+                         data-type="${type}" data-index="${index}" 
+                         onclick="filterByType('${type}')" 
+                         oncontextmenu="return showTypeOptions(event, ${index})">
+                        ${type}
+                        ${!isDefault ? `<span class="delete-type" onclick="event.stopPropagation(); showDeleteTypeConfirm(${index})">×</span>` : ''}
+                    </div>
+                `;
+            });
+            
+            // 添加"自定义"标签
+            filterTabs.innerHTML += `
+                <div class="filter-tab custom" onclick="showTypeModal()">
+                    <i class="fas fa-plus"></i> 自定义
+                </div>
+            `;
+        }
+        
+        // 渲染类型下拉选项
+        function renderTypeOptions() {
+            const typeSelect = document.getElementById('feedbackType');
+            
+            // 清空现有选项
+            typeSelect.innerHTML = '<option value="">请选择问题类型</option>';
+            
+            // 添加类型选项
+            feedbackTypes.forEach(type => {
+                typeSelect.innerHTML += `<option value="${type}">${type}</option>`;
+            });
+        }
+        
+        // 加载反馈列表
+        async function loadFeedbacks() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('/api/v1/feedback', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('获取反馈列表失败');
+                }
+                
+                const data = await response.json();
+                feedbacks = data.feedbacks || [];
+                
+                // 根据当前类型筛选
+                filterByType(currentType);
+                
+            } catch (error) {
+                console.error('加载反馈失败:', error);
+                showToast('加载反馈失败，请重试', 'error');
+            }
+        }
+        
+        // 筛选反馈
+        function filterByType(type) {
+            // 更新UI
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                if (tab.dataset.type === type) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // 更新当前类型
+            currentType = type;
+            
+            // 筛选数据
+            let filtered = feedbacks;
+            if (type !== 'all') {
+                filtered = feedbacks.filter(item => item.type === type);
+            }
+            
+            // 渲染列表
+            renderFeedbacks(filtered);
+        }
+        
+        // 渲染反馈列表
+        function renderFeedbacks(data) {
+            const feedbackList = document.getElementById('feedbackList');
+            
+            if (!data || data.length === 0) {
+                feedbackList.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-inbox"></i>
+                        <p>暂无反馈</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            feedbackList.innerHTML = data.map(item => `
+                <div class="feedback-card" onclick="viewFeedbackDetail(${item.id})">
+                    <div class="card-header">
+                        <div class="type-tag">${escapeHtml(item.type)}</div>
+                        <div class="status-tag ${item.status}">${statusText[item.status]}</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-text">${escapeHtml(item.content)}</div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="time">${formatDate(item.created_at)}</div>
+                        <div class="delete-btn" onclick="event.stopPropagation(); deleteFeedback(${item.id})">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 显示新增反馈模态框
+        function showAddFeedbackModal() {
+            // 重置表单
+            document.getElementById('feedbackForm').reset();
+            
+            // 清空图片列表
+            imageList = [];
+            
+            // 重置上传区域
+            document.getElementById('uploadArea').innerHTML = `
+                <div class="upload-button" onclick="chooseImage()">
+                    <div class="upload-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="upload-text">添加图片</div>
+                </div>
+            `;
+            
+            // 显示模态框
+            document.getElementById('addFeedbackModal').style.display = 'block';
+        }
+        
+        // 显示自定义类型模态框
+        function showTypeModal() {
+            document.getElementById('typeForm').reset();
+            document.getElementById('typeModal').style.display = 'block';
+        }
+        
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // 选择图片
+        function chooseImage() {
+            // 检查是否已达到最大数量
+            if (imageList.length >= 3) {
+                showToast('最多只能上传3张图片', 'error');
+                return;
+            }
+            
+            // 创建文件选择器
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = imageList.length < 2;
+            
+            // 监听文件选择事件
+            input.onchange = function() {
+                const files = Array.from(this.files);
+                
+                // 验证文件数量
+                if (files.length + imageList.length > 3) {
+                    showToast(`最多只能上传3张图片，您还可以选择${3 - imageList.length}张`, 'error');
+                    return;
+                }
+                
+                // 验证文件大小
+                const invalidFiles = files.filter(file => file.size > 2 * 1024 * 1024);
+                if (invalidFiles.length > 0) {
+                    showToast('图片大小不能超过2MB', 'error');
+                    return;
+                }
+                
+                // 处理选择的图片
+                files.forEach(file => {
+                    // 创建预览
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageIndex = imageList.length;
+                        
+                        // 添加到图片列表
+                        imageList.push({
+                            file: file,
+                            preview: e.target.result
+                        });
+                        
+                        // 添加预览元素
+                        addImagePreview(imageIndex);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+            
+            // 触发文件选择器
+            input.click();
+        }
+        
+        // 添加图片预览
+        function addImagePreview(index) {
+            const uploadArea = document.getElementById('uploadArea');
+            const image = imageList[index];
+            
+            // 创建预览元素
+            const preview = document.createElement('div');
+            preview.className = 'image-preview';
+            preview.innerHTML = `
+                <img src="${image.preview}" alt="预览图片">
+                <div class="image-delete" onclick="deleteImage(${index})">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            
+            // 添加到上传区域
+            uploadArea.insertBefore(preview, uploadArea.lastChild);
+            
+            // 如果已达到最大数量，隐藏上传按钮
+            if (imageList.length >= 3) {
+                uploadArea.lastChild.style.display = 'none';
+            }
+        }
+        
+        // 删除图片
+        function deleteImage(index) {
+            // 移除图片
+            imageList.splice(index, 1);
+            
+            // 重新渲染预览
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.innerHTML = `
+                <div class="upload-button" onclick="chooseImage()">
+                    <div class="upload-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="upload-text">添加图片</div>
+                </div>
+            `;
+            
+            // 重新添加预览元素
+            imageList.forEach((image, i) => {
+                const preview = document.createElement('div');
+                preview.className = 'image-preview';
+                preview.innerHTML = `
+                    <img src="${image.preview}" alt="预览图片">
+                    <div class="image-delete" onclick="deleteImage(${i})">
+                        <i class="fas fa-times"></i>
+                    </div>
+                `;
+                uploadArea.insertBefore(preview, uploadArea.lastChild);
+            });
+            
+            // 显示上传按钮
+            uploadArea.lastChild.style.display = 'block';
+        }
+        
+        // 上传图片
+        async function uploadImages() {
+            if (imageList.length === 0) return [];
+            
+            try {
+                const token = localStorage.getItem('token');
+                const uploadPromises = imageList.map(async (image) => {
+                    const formData = new FormData();
+                    formData.append('image', image.file);
+                    
+                    const response = await fetch('/api/v1/feedback/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || '上传图片失败');
+                    }
+                    
+                    const data = await response.json();
+                    return data.file_url;
+                });
+                
+                return await Promise.all(uploadPromises);
+            } catch (error) {
+                console.error('上传图片失败:', error);
+                throw error;
+            }
+        }
+        
+        // 提交反馈
+        async function submitFeedback(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const feedbackType = form.elements.type.value;
+            const feedbackContent = form.elements.content.value;
+            
+            // 表单验证
+            if (!feedbackType) {
+                showToast('请选择问题类型', 'error');
+                return;
+            }
+            
+            if (!feedbackContent || feedbackContent.trim().length < 10) {
+                showToast('请输入至少10个字符的问题描述', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 显示加载提示
+                showToast('正在提交...', 'info');
+                
+                // 上传图片
+                let imageUrls = [];
+                if (imageList.length > 0) {
+                    imageUrls = await uploadImages();
+                }
+                
+                // 提交反馈
+                const response = await fetch('/api/v1/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: feedbackType,
+                        content: feedbackContent,
+                        image_urls: imageUrls
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '提交失败');
+                }
+                
+                // 提交成功
+                showToast('提交成功', 'success');
+                
+                // 关闭模态框
+                closeModal('addFeedbackModal');
+                
+                // 重新加载反馈列表
+                await loadFeedbacks();
+                
+            } catch (error) {
+                console.error('提交反馈失败:', error);
+                showToast(error.message || '提交失败，请重试', 'error');
+            }
+        }
+        
+        // 添加自定义问题类型
+        function addFeedbackType(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const typeName = form.elements.typeName.value.trim();
+            
+            // 验证
+            if (!typeName) {
+                showToast('请输入类型名称', 'error');
+                return;
+            }
+            
+            // 检查是否已存在
+            if (feedbackTypes.includes(typeName)) {
+                showToast('此类型已存在', 'error');
+                return;
+            }
+            
+            // 添加新类型
+            feedbackTypes.push(typeName);
+            
+            // 保存到本地存储
+            localStorage.setItem('feedbackTypes', JSON.stringify(feedbackTypes));
+            
+            // 更新UI
+            renderTypeTabs();
+            renderTypeOptions();
+            
+            // 切换到新类型
+            filterByType(typeName);
+            
+            // 关闭模态框
+            closeModal('typeModal');
+            
+            showToast('类型添加成功', 'success');
+        }
+        
+        // 显示删除类型确认
+        function showDeleteTypeConfirm(index) {
+            // 不允许删除默认类型
+            if (index < 4) {
+                showToast('默认类型不能删除', 'error');
+                return;
+            }
+            
+            const type = feedbackTypes[index];
+            
+            if (confirm(`确定要删除问题类型"${type}"吗？`)) {
+                deleteType(index);
+            }
+        }
+        
+        // 长按显示类型操作
+        function showTypeOptions(event, index) {
+            // 阻止默认的右键菜单
+            event.preventDefault();
+            
+            // 不允许对默认类型显示操作
+            if (index < 4) return false;
+            
+            showDeleteTypeConfirm(index);
+            return false;
+        }
+        
+        // 删除问题类型
+        function deleteType(index) {
+            const typeToDelete = feedbackTypes[index];
+            
+            // 创建新的类型数组（移除指定索引的类型）
+            feedbackTypes.splice(index, 1);
+            
+            // 保存到本地存储
+            localStorage.setItem('feedbackTypes', JSON.stringify(feedbackTypes));
+            
+            // 如果当前选中的是要删除的类型，则切换到"全部"
+            if (currentType === typeToDelete) {
+                currentType = 'all';
+            }
+            
+            // 更新UI
+            renderTypeTabs();
+            renderTypeOptions();
+            
+            // 重新筛选
+            filterByType(currentType);
+            
+            showToast('类型已删除', 'success');
+        }
+        
+        // 查看反馈详情
+        function viewFeedbackDetail(id) {
+            window.location.href = `/templates/user/feedback-detail.html?id=${id}`;
+        }
+        
+        // 删除反馈
+        function deleteFeedback(id) {
+            if (confirm('确定要删除此条反馈记录吗？')) {
+                deleteFeedbackById(id);
+            }
+        }
+        
+        // 通过ID删除反馈
+        async function deleteFeedbackById(id) {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // 显示加载提示
+                showToast('正在删除...', 'info');
+                
+                const response = await fetch(`/api/v1/feedback/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '删除失败');
+                }
+                
+                // 删除成功
+                showToast('删除成功', 'success');
+                
+                // 重新加载反馈列表
+                await loadFeedbacks();
+                
+            } catch (error) {
+                console.error('删除反馈失败:', error);
+                showToast(error.message || '删除失败，请重试', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

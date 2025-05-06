@@ -146,6 +146,7 @@ def get_company_detail(current_user, company_id):
                 'last_inspection_date': max([i.completed_at for i in completed_inspections], default=None)
             }
         }
+        # print("企业详情：",result)
         
         return jsonify(result)
     except Exception as e:

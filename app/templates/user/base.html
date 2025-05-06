@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title class="system-name">文件管理系统</title>
+    <title>{% block title %}文件管理系统{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* 基础变量定义 */
@@ -72,6 +72,56 @@
             display: flex;
             align-items: center;
             gap: 20px;
+        }
+        
+        /* 添加消息指示器样式 */
+        .notification-indicator {
+            position: relative;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .notification-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .notification-icon:hover {
+            color: var(--primary-color);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        
+        /* 统计指示器 */
+        .stats-indicator {
+            position: relative;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .stats-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .stats-icon:hover {
+            color: var(--primary-color);
         }
         
         .user-info {
@@ -231,202 +281,6 @@
         .announcement-close:hover {
             opacity: 1;
         }
-
-        /* 表格样式 */
-        .table-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: #fafafa;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-        
-        tr:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .action-btn {
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            border: none;
-            margin-right: 8px;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: var(--danger-hover);
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            opacity: 0.9;
-        }
-
-        /* 状态标签 */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            gap: 5px;
-        }
-
-        .status-submitted {
-            background-color: #e6f7ff;
-            border: 1px solid #91d5ff;
-            color: var(--primary-color);
-        }
-
-        .status-pending {
-            background-color: #fff7e6;
-            border: 1px solid #ffd591;
-            color: #fa8c16;
-        }
-        
-        /* 模态框样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 25px;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: var(--card-shadow);
-            animation: modalFadeIn 0.3s;
-        }
-        
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .modal-title {
-            font-size: 18px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .modal-title i {
-            color: var(--primary-color);
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: var(--transition);
-        }
-        
-        .modal-close:hover {
-            color: var(--text-color);
-        }
-
-        /* 表单样式 */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            transition: var(--transition);
-            font-size: 14px;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-        }
-
-        .modal-footer {
-            margin-top: 20px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
         
         /* 消息提示样式 */
         .toast-container {
@@ -474,6 +328,14 @@
             color: var(--danger-color);
         }
         
+        .toast-info {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .toast-info i {
+            color: var(--primary-color);
+        }
+        
         .toast-content {
             flex: 1;
         }
@@ -505,7 +367,67 @@
                 margin-left: 0;
             }
         }
+
+        /* 通用表格和按钮样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #fafafa;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            margin-right: 8px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-default {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+        }
+
+        .btn-default:hover {
+            background-color: #e0e0e0;
+        }
     </style>
+    <!-- 子模板可以在此处添加自定义样式 -->
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <!-- 顶部导航栏 -->
@@ -518,8 +440,19 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="header-right">
+            <!-- 消息通知指示器 -->
+            <div class="notification-indicator" onclick="navigateToMessages()">
+                <i class="fas fa-bell notification-icon"></i>
+                <div class="notification-badge" id="unreadMessageBadge" style="display: none;">0</div>
+            </div>
+            
+            <!-- 统计分析指示器 -->
+            <div class="stats-indicator" onclick="navigateToStats()">
+                <i class="fas fa-chart-bar stats-icon"></i>
+            </div>
+            
             <div class="user-info">
-                <i class="fas fa-user-circle"></i>
+                <i class="fas fa-user-circle" id="userAvatar"></i>
                 <span class="user-name" id="username"></span>
                 <span class="company-info" id="companyInfo"></span>
             </div>
@@ -538,6 +471,24 @@
                     <a href="/templates/user/files.html">
                         <i class="fas fa-file-alt"></i>
                         文件管理
+                    </a>
+                </li>
+                <li class="menu-item" id="messagesMenuItem">
+                    <a href="/templates/user/messages.html">
+                        <i class="fas fa-bell"></i>
+                        消息中心
+                    </a>
+                </li>
+                <li class="menu-item" id="statsMenuItem">
+                    <a href="/templates/user/stats.html">
+                        <i class="fas fa-chart-line"></i>
+                        统计分析
+                    </a>
+                </li>
+                <li class="menu-item" id="feedbackMenuItem">
+                    <a href="/templates/user/feedback.html">
+                        <i class="fas fa-comment-alt"></i>
+                        问题反馈
                     </a>
                 </li>
                 <li class="menu-item" id="settingsMenuItem">
@@ -564,7 +515,7 @@
             </div>
             
             <!-- 内容将由子页面填充 -->
-            <div id="pageContent"></div>
+            {% block content %}{% endblock %}
         </main>
     </div>
     
@@ -596,6 +547,9 @@
             
             // 设置活动菜单
             setActiveMenuItem();
+            
+            // 加载未读消息数
+            loadUnreadMessageCount();
         }
         
         // 初始化菜单切换
@@ -663,6 +617,7 @@
                     // 更新顶部导航栏的用户信息
                     const headerUsername = document.getElementById('username');
                     const headerCompanyInfo = document.getElementById('companyInfo');
+                    const userAvatar = document.getElementById('userAvatar');
                     
                     if (headerUsername) headerUsername.textContent = data.username || '';
                     if (headerCompanyInfo) {
@@ -670,6 +625,12 @@
                             `${data.company_name}` : '';
                         headerCompanyInfo.style.display = data.company_name ? 'inline-block' : 'none';
                     }
+                    
+                    // 保存当前用户ID到localStorage中
+                    localStorage.setItem('userId', data.id);
+                    
+                    // 加载用户头像
+                    loadUserAvatar();
                     
                     return data;
                 } else {
@@ -679,6 +640,58 @@
                 console.error('加载用户信息失败:', error);
                 showToast('获取用户信息失败', 'error');
                 return null;
+            }
+        }
+        
+        // 加载用户头像
+        async function loadUserAvatar() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                
+                // 先从本地存储获取
+                const cachedAvatarUrl = localStorage.getItem('userAvatarUrl');
+                if (cachedAvatarUrl) {
+                    updateUserAvatar(cachedAvatarUrl);
+                }
+                
+                // 然后从服务器获取最新的
+                const response = await fetch('/api/v1/users/avatar', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.avatar_url) {
+                        // 更新头像
+                        updateUserAvatar(data.avatar_url);
+                        
+                        // 缓存头像URL
+                        localStorage.setItem('userAvatarUrl', data.avatar_url);
+                    }
+                }
+            } catch (error) {
+                console.error('加载头像失败:', error);
+            }
+        }
+        
+        // 更新用户头像显示
+        function updateUserAvatar(avatarUrl) {
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (userAvatar) {
+                // 如果有图片URL，则创建img元素
+                if (avatarUrl) {
+                    userAvatar.innerHTML = `<img src="${avatarUrl}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%;">`;
+                    userAvatar.classList.remove('fas', 'fa-user-circle');
+                } else {
+                    // 否则使用默认图标
+                    userAvatar.innerHTML = '';
+                    userAvatar.classList.add('fas', 'fa-user-circle');
+                }
             }
         }
 
@@ -701,6 +714,9 @@
                     
                     // 更新公告
                     updateAnnouncement(data.system_description);
+                    
+                    // 保存系统名称到本地存储，便于其他页面使用
+                    localStorage.setItem('systemName', data.system_name || '文件管理系统');
                 }
             } catch (error) {
                 console.error('加载系统设置失败:', error);
@@ -711,7 +727,8 @@
         function updateSystemName(name) {
             if (!name) return;
             
-            document.title = name;
+            document.title = document.title.replace('文件管理系统', name);
+            
             const systemNameElements = document.querySelectorAll('.system-name');
             systemNameElements.forEach(element => {
                 element.textContent = name;
@@ -749,6 +766,12 @@
                 document.getElementById('filesMenuItem').classList.add('active');
             } else if (path.includes('settings.html')) {
                 document.getElementById('settingsMenuItem').classList.add('active');
+            } else if (path.includes('messages.html')) {
+                document.getElementById('messagesMenuItem').classList.add('active');
+            } else if (path.includes('stats.html')) {
+                document.getElementById('statsMenuItem').classList.add('active');
+            } else if (path.includes('feedback.html')) {
+                document.getElementById('feedbackMenuItem').classList.add('active');
             }
         }
 
@@ -758,6 +781,8 @@
                 localStorage.removeItem('token');
                 localStorage.removeItem('isAdmin');
                 localStorage.removeItem('userId');
+                localStorage.removeItem('userAvatarUrl');
+                localStorage.removeItem('systemName');
                 window.location.href = '/';
             }
         }
@@ -772,7 +797,7 @@
             toast.id = id;
             
             toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
                 <div class="toast-content">
                     <div class="toast-message">${escapeHtml(message)}</div>
                 </div>
@@ -819,13 +844,80 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+        
+        // 获取未读消息数
+        async function loadUnreadMessageCount() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                
+                const response = await fetch('/api/v1/messages/unread/count', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUnreadBadge(data.count || 0);
+                }
+            } catch (error) {
+                console.error('获取未读消息数失败:', error);
+            }
+        }
+        
+        // 更新未读消息徽章
+        function updateUnreadBadge(count) {
+            const badge = document.getElementById('unreadMessageBadge');
+            
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // 导航到消息页面
+        function navigateToMessages() {
+            window.location.href = '/templates/user/messages.html';
+        }
+        
+        // 导航到统计分析页面
+        function navigateToStats() {
+            window.location.href = '/templates/user/stats.html';
+        }
 
         // 监听设置更新
         window.addEventListener('storage', function(e) {
             if (e.key === 'settingsUpdated') {
                 loadSystemSettings();
+            } else if (e.key === 'userAvatarUpdated') {
+                loadUserAvatar();
             }
         });
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            try {
+                const date = new Date(dateString);
+                
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
     </script>
+    <!-- 子模板可以在此处添加自定义脚本 -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>

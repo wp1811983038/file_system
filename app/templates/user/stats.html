@@ -1,0 +1,479 @@
+<!-- 统计分析页面 stats.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="system-name">统计分析 - 文件管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 引入基础样式 */
+        /* 统计卡片样式 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .legend-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        
+        .legend-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入页面头部和侧边栏 -->
+    
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 统计分析内容 -->
+        <div class="page-header">
+            <h2 class="page-title">
+                <i class="fas fa-chart-line"></i>
+                统计分析
+            </h2>
+        </div>
+        
+        <!-- 数据概览 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">总模板数</div>
+                <div class="stat-value" id="totalTemplates">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">已提交数</div>
+                <div class="stat-value" id="submittedFiles">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">已通过数</div>
+                <div class="stat-value" id="approvedFiles">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">提交率</div>
+                <div class="stat-value" id="submissionRate">0%</div>
+            </div>
+        </div>
+        
+        <!-- 提交状态分布 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">提交状态分布</div>
+            </div>
+            <div class="chart-body">
+                <canvas id="statusChart" class="chart-canvas"></canvas>
+                <div class="legend-container" id="statusLegend"></div>
+            </div>
+        </div>
+        
+        <!-- 审批时效分析 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">审批时效分析</div>
+            </div>
+            <div class="chart-body">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">平均审批时间(小时)</div>
+                        <div class="stat-value" id="averageHours">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">审批通过率</div>
+                        <div class="stat-value" id="approvalRate">0%</div>
+                    </div>
+                </div>
+                
+                <!-- 时效详情列表 -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>模板名称</th>
+                                <th>审批结果</th>
+                                <th>耗时(小时)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="efficiencyTableBody">
+                            <!-- 数据将通过JS动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 模板提交情况 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">模板提交情况</div>
+            </div>
+            <div class="chart-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>模板名称</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templateTableBody">
+                            <!-- 数据将通过JS动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 颜色定义
+        const colors = {
+            approved: '#10b981',
+            rejected: '#ef4444',
+            pending: '#f59e0b',
+            notSubmitted: '#9ca3af'
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化应用
+            initApp();
+            
+            // 加载所有统计数据
+            loadAllStatistics();
+        });
+        
+        // 加载所有统计数据
+        async function loadAllStatistics() {
+            try {
+                // 并行加载所有数据
+                await Promise.all([
+                    loadTemplateStats(),
+                    loadSubmissionStatus(),
+                    loadApprovalEfficiency()
+                ]);
+                
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                showToast('加载统计数据失败', 'error');
+            }
+        }
+        
+        // 加载模板统计数据
+        async function loadTemplateStats() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('/api/v1/stats/templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('获取模板统计失败');
+                }
+                
+                const data = await response.json();
+                
+                // 更新概览数据
+                document.getElementById('totalTemplates').textContent = data.summary.total || 0;
+                document.getElementById('submittedFiles').textContent = data.summary.submitted || 0;
+                document.getElementById('approvedFiles').textContent = data.summary.approved || 0;
+                document.getElementById('submissionRate').textContent = (data.summary.submission_rate || 0) + '%';
+                
+                // 渲染模板表格
+                renderTemplateTable(data.templates || []);
+                
+            } catch (error) {
+                console.error('加载模板统计失败:', error);
+                throw error;
+            }
+        }
+        
+        // 加载提交状态数据
+        async function loadSubmissionStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('/api/v1/stats/submissions/status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('获取提交状态失败');
+                }
+                
+                const data = await response.json();
+                
+                // 计算未提交数量
+                const totalTemplates = parseInt(document.getElementById('totalTemplates').textContent) || 0;
+                const notSubmitted = totalTemplates - data.total;
+                
+                // 渲染状态图表
+                renderStatusChart({
+                    approved: data.status_counts.approved || 0,
+                    rejected: data.status_counts.rejected || 0,
+                    pending: data.status_counts.pending || 0,
+                    notSubmitted: notSubmitted
+                });
+                
+            } catch (error) {
+                console.error('加载提交状态失败:', error);
+                throw error;
+            }
+        }
+        
+        // 加载审批时效数据
+        async function loadApprovalEfficiency() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch('/api/v1/stats/approval/efficiency', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('获取审批时效失败');
+                }
+                
+                const data = await response.json();
+                
+                // 更新时效数据
+                document.getElementById('averageHours').textContent = data.average_hours || 0;
+                document.getElementById('approvalRate').textContent = (data.approval_rate || 0) + '%';
+                
+                // 按时间排序，最近的在前面
+                const sortedDetails = data.details ? 
+                    [...data.details].sort((a, b) => new Date(b.approval_date) - new Date(a.approval_date)) : 
+                    [];
+                
+                // 最多显示5条记录
+                const limitedDetails = sortedDetails.slice(0, 5);
+                
+                // 渲染时效表格
+                renderEfficiencyTable(limitedDetails);
+                
+            } catch (error) {
+                console.error('加载审批时效失败:', error);
+                throw error;
+            }
+        }
+        
+        // 渲染状态图表
+        function renderStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            // 创建饼图
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已通过', '未通过', '审核中', '未提交'],
+                    datasets: [{
+                        data: [data.approved, data.rejected, data.pending, data.notSubmitted],
+                        backgroundColor: [
+                            colors.approved,
+                            colors.rejected,
+                            colors.pending,
+                            colors.notSubmitted
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // 渲染图例
+            renderStatusLegend(data);
+        }
+        
+        // 渲染状态图例
+        function renderStatusLegend(data) {
+            const legend = document.getElementById('statusLegend');
+            
+            // 计算总数
+            const total = data.approved + data.rejected + data.pending + data.notSubmitted;
+            
+            // 计算百分比
+            const percentages = {
+                approved: total > 0 ? Math.round((data.approved / total) * 100) : 0,
+                rejected: total > 0 ? Math.round((data.rejected / total) * 100) : 0,
+                pending: total > 0 ? Math.round((data.pending / total) * 100) : 0,
+                notSubmitted: total > 0 ? Math.round((data.notSubmitted / total) * 100) : 0
+            };
+            
+            // 渲染图例
+            legend.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors.approved}"></div>
+                    <div class="legend-text">已通过 (${data.approved}, ${percentages.approved}%)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors.rejected}"></div>
+                    <div class="legend-text">未通过 (${data.rejected}, ${percentages.rejected}%)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors.pending}"></div>
+                    <div class="legend-text">审核中 (${data.pending}, ${percentages.pending}%)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors.notSubmitted}"></div>
+                    <div class="legend-text">未提交 (${data.notSubmitted}, ${percentages.notSubmitted}%)</div>
+                </div>
+            `;
+        }
+        
+        // 渲染时效表格
+        function renderEfficiencyTable(details) {
+            const tbody = document.getElementById('efficiencyTableBody');
+            
+            if (!details || details.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="no-data">暂无审批数据</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = details.map(item => `
+                <tr>
+                    <td>${escapeHtml(item.template_name)}</td>
+                    <td>
+                        <span class="status-badge status-${item.status}">
+                            ${item.status === 'approved' ? '通过' : '拒绝'}
+                        </span>
+                    </td>
+                    <td>${item.hours}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // 渲染模板表格
+        function renderTemplateTable(templates) {
+            const tbody = document.getElementById('templateTableBody');
+            
+            if (!templates || templates.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="no-data">暂无模板数据</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = templates.map(item => {
+                let statusClass = 'status-not-submitted';
+                let statusText = '未提交';
+                
+                if (item.has_submitted) {
+                    if (item.status === 'approved') {
+                        statusClass = 'status-approved';
+                        statusText = '已通过';
+                    } else if (item.status === 'rejected') {
+                        statusClass = 'status-rejected';
+                        statusText = '未通过';
+                    } else {
+                        statusClass = 'status-pending';
+                        statusText = '审核中';
+                    }
+                }
+                
+                return `
+                    <tr>
+                        <td>${escapeHtml(item.name)}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
